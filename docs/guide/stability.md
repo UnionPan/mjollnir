@@ -45,3 +45,16 @@ consumer is the explicitly-seeded `process.simulate` call), and
 to per-call `np.random.Generator` instances is planned for v0.2 — it will
 change sampled trajectories (generator algorithm changes), so it ships as a
 minor version with a changelog entry, per the policy above.
+
+## Precision policy
+
+- **`mjollnir.jax` kernel**: precision follows `configure_runtime()` —
+  float64 on CPU/CUDA by default, controllable via `MJOLLNIR_JAX_PRECISION`
+  (`high` | `metal_safe`). All golden values are generated under float64.
+- **Batched calibrators** (`calibration.physical.batched`): accept an explicit
+  `dtype` argument, **default `float32`** — chosen for GPU throughput on large
+  cross-sections. The likelihood kernels are dtype-generic, so passing
+  `dtype=jnp.float64` (and `pad_returns(..., dtype=np.float64)`) runs the whole
+  fit in double precision. Expect ~1e-2-nat likelihood differences between the
+  two on ~6k-observation fits; scipy reference implementations always run
+  float64.

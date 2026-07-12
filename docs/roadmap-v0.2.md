@@ -9,7 +9,7 @@ each verified (tests + lint + docs --strict) before the next begins.
       COS pricers; add golden-key tests for each new export.
 - [x] **W3. Env vars**: `OPTIONS_DESK_JAX_*` → `MJOLLNIR_JAX_*`, no fallback;
       audit and update every consumer (incl. monorepo mirror note).
-- [ ] **W10. Precision policy**: explicit `dtype` parameter on batched
+- [x] **W10. Precision policy**: explicit `dtype` parameter on batched
       calibrators (float32 default documented); stability-guide section.
 - [ ] **W4. Examples gallery**: end-to-end calibrate→simulate→backtest page and
       minimal deep-hedging loop page; executed as tests so they can't rot.

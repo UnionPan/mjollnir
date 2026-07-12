@@ -165,7 +165,7 @@ def _make_fit_single_start_fn(k_max):
 _FIT_SINGLE_START_CACHE = {}
 
 
-def fit_batch(returns, mask, dt, k_max=5):
+def fit_batch(returns, mask, dt, k_max=5, dtype=jnp.float32):
     """
     Calibrate Merton jump-diffusion parameters for a batch of assets.
 
@@ -199,8 +199,8 @@ def fit_batch(returns, mask, dt, k_max=5):
             n_observations: (N,) number of observations per asset
             converged: (N,) boolean array, True if optimization succeeded
     """
-    returns_jax = jnp.asarray(returns, dtype=jnp.float32)
-    mask_jax = jnp.asarray(mask, dtype=jnp.float32)
+    returns_jax = jnp.asarray(returns, dtype=dtype)
+    mask_jax = jnp.asarray(mask, dtype=dtype)
 
     N = returns_jax.shape[0]
 

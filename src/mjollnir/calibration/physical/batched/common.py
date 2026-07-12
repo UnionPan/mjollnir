@@ -5,7 +5,7 @@ import numpy as np
 import jax.numpy as jnp
 
 
-def pad_returns(returns_list: list[np.ndarray]) -> tuple[np.ndarray, np.ndarray]:
+def pad_returns(returns_list: list[np.ndarray], dtype=np.float32) -> tuple[np.ndarray, np.ndarray]:
     """
     Pad list of variable-length return arrays to uniform shape.
 
@@ -13,7 +13,7 @@ def pad_returns(returns_list: list[np.ndarray]) -> tuple[np.ndarray, np.ndarray]
         returns_list: List of 1-D float arrays (log-returns)
 
     Returns:
-        returns: Shape (N, T) float32, right-padded with zeros
+        returns: Shape (N, T) in ``dtype`` (default float32), right-padded with zeros
         mask: Shape (N, T) float32, 1.0 for valid entries, 0.0 for padding
 
     where N = len(returns_list), T = max length.
@@ -24,8 +24,8 @@ def pad_returns(returns_list: list[np.ndarray]) -> tuple[np.ndarray, np.ndarray]
     n = len(returns_list)
     t = max(len(r) for r in returns_list)
 
-    returns = np.zeros((n, t), dtype=np.float32)
-    mask = np.zeros((n, t), dtype=np.float32)
+    returns = np.zeros((n, t), dtype=dtype)
+    mask = np.zeros((n, t), dtype=dtype)
 
     for i, r in enumerate(returns_list):
         L = len(r)

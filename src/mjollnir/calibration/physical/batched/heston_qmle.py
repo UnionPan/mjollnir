@@ -228,7 +228,7 @@ def _fit_heston_qmle(returns_full, mask_full, returns_aligned, mask_aligned, dt,
     }
 
 
-def fit_batch(returns, mask, dt, smooth_window=10):
+def fit_batch(returns, mask, dt, smooth_window=10, dtype=jnp.float32):
     """
     Calibrate Heston QMLE parameters for a batch of assets using close-close returns.
 
@@ -252,8 +252,8 @@ def fit_batch(returns, mask, dt, smooth_window=10):
             converged: (N,) boolean array (always True for method-of-moments)
             n_observations: (N,) number of valid returns per asset
     """
-    returns_jax = jnp.asarray(returns, dtype=jnp.float32)
-    mask_jax = jnp.asarray(mask, dtype=jnp.float32)
+    returns_jax = jnp.asarray(returns, dtype=dtype)
+    mask_jax = jnp.asarray(mask, dtype=dtype)
 
     # Compute squared returns (variance proxy before smoothing)
     sq_returns = returns_jax ** 2
@@ -292,7 +292,7 @@ def fit_batch(returns, mask, dt, smooth_window=10):
     return {k: np.asarray(v, dtype=np.float64 if v.dtype != bool else bool) for k, v in result.items()}
 
 
-def fit_batch_ohlc(open_, high, low, close, mask, dt, smooth_window=10):
+def fit_batch_ohlc(open_, high, low, close, mask, dt, smooth_window=10, dtype=jnp.float32):
     """
     Calibrate Heston QMLE parameters using Garman-Klass OHLC variance proxy.
 
@@ -308,11 +308,11 @@ def fit_batch_ohlc(open_, high, low, close, mask, dt, smooth_window=10):
     Returns:
         Dictionary with Heston parameters (same keys as fit_batch)
     """
-    open_jax = jnp.asarray(open_, dtype=jnp.float32)
-    high_jax = jnp.asarray(high, dtype=jnp.float32)
-    low_jax = jnp.asarray(low, dtype=jnp.float32)
-    close_jax = jnp.asarray(close, dtype=jnp.float32)
-    mask_jax = jnp.asarray(mask, dtype=jnp.float32)
+    open_jax = jnp.asarray(open_, dtype=dtype)
+    high_jax = jnp.asarray(high, dtype=dtype)
+    low_jax = jnp.asarray(low, dtype=dtype)
+    close_jax = jnp.asarray(close, dtype=dtype)
+    mask_jax = jnp.asarray(mask, dtype=dtype)
 
     # Compute Garman-Klass variance
     gk_var = _garman_klass_variance(open_jax, high_jax, low_jax, close_jax, dt)

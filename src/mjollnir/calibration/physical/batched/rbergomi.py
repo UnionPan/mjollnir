@@ -208,7 +208,7 @@ def _fit_rbergomi_variogram(returns, mask, dt, window, max_lag):
     }
 
 
-def fit_batch(returns, mask, dt, window=20, max_lag=10):
+def fit_batch(returns, mask, dt, window=20, max_lag=10, dtype=jnp.float32):
     """
     Calibrate rough Bergomi parameters for a batch of assets.
 
@@ -238,7 +238,7 @@ def fit_batch(returns, mask, dt, window=20, max_lag=10):
             converged: (N,) boolean array (True if at least 2 valid lags)
             n_observations: (N,) number of valid returns per asset
     """
-    returns_jax = jnp.asarray(returns, dtype=jnp.float32)
+    returns_jax = jnp.asarray(returns, dtype=dtype)
     mask_jax = jnp.asarray(mask, dtype=jnp.float32)
 
     # Call core estimation

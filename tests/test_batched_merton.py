@@ -193,3 +193,15 @@ def test_padding_does_not_leak():
     assert result_together["sigma_j"][0] == pytest.approx(result_alone["sigma_j"][0], rel=0.1)
     # Likelihood should be close even if parameters differ slightly
     assert result_together["log_likelihood"][0] == pytest.approx(result_alone["log_likelihood"][0], rel=1e-2)
+
+
+def test_fit_batch_dtype_parameter():
+    """fit_batch accepts an explicit dtype; float64 must not be worse than
+    float32 by more than trivial noise."""
+    import jax.numpy as jnp
+    returns = _simulate_merton(0.05, 0.15, 10.0, -0.02, 0.04, 2000, dt=1 / 252, seed=1)
+    R32, M32 = pad_returns([returns])
+    R64, M64 = pad_returns([returns], dtype=np.float64)
+    r32 = bmerton.fit_batch(R32, M32, 1 / 252)
+    r64 = bmerton.fit_batch(R64, M64, 1 / 252, dtype=jnp.float64)
+    assert r64["log_likelihood"][0] >= r32["log_likelihood"][0] - 0.05

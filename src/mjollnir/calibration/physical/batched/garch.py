@@ -252,7 +252,7 @@ def _fit_single_asset(returns, mask, dt, init_params_list):
     }
 
 
-def fit_batch(returns, mask, dt):
+def fit_batch(returns, mask, dt, dtype=jnp.float32):
     """
     Calibrate GARCH(1,1) parameters for a batch of assets.
 
@@ -275,8 +275,8 @@ def fit_batch(returns, mask, dt):
             n_observations: (N,) number of observations per asset
             converged: (N,) boolean array, True if optimization succeeded
     """
-    returns_jax = jnp.asarray(returns, dtype=jnp.float32)
-    mask_jax = jnp.asarray(mask, dtype=jnp.float32)
+    returns_jax = jnp.asarray(returns, dtype=dtype)
+    mask_jax = jnp.asarray(mask, dtype=dtype)
 
     N = returns_jax.shape[0]
 
