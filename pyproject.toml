@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "mjollnir"
 version = "0.1.0"
-description = "A stable, reproducible, differentiable market-simulation & calibration substrate for RL research and backtesting"
+description = "Counterfactual market simulation and backtesting for RL research, with market-model calibration pipelines"
 readme = "README.md"
 requires-python = ">=3.11"  # floor set by jax 0.9 / flax (both >=3.11)
 license = "MIT"

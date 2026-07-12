@@ -1,12 +1,11 @@
 # mjollnir
 
-A stable, reproducible, differentiable market-simulation and calibration substrate
-for RL research (deep hedging / POMARL) and backtesting.
+A tool for **counterfactual market simulation and backtesting**: differentiable,
+reproducible market models that enable RL research, with calibration pipelines to
+source model parameters from market data.
 
-Extracted from an internal research monorepo; this library is
-the foundation the actual research sits on, not the end product. Research-grade and
-usable at some scale — explicitly **not** exchange connectivity, tick data, or
-latency-guaranteed infrastructure.
+Research-grade and usable at some scale — explicitly **not** exchange connectivity,
+tick data, or latency-guaranteed infrastructure.
 
 ## Install
 
