@@ -101,7 +101,7 @@ def merton_price_slice(
 ) -> np.ndarray:
     if T <= 0:
         prices = np.zeros(len(strikes))
-        for i, (K, opt_type) in enumerate(zip(strikes, option_types)):
+        for i, (K, opt_type) in enumerate(zip(strikes, option_types, strict=False)):
             intrinsic = max(S - K, 0) if opt_type == 'call' else max(K - S, 0)
             prices[i] = intrinsic
         return prices
@@ -122,7 +122,7 @@ def merton_price_slice(
     )
 
     prices = np.zeros(len(strikes))
-    for i, (K, opt_type) in enumerate(zip(strikes, option_types)):
+    for i, (K, opt_type) in enumerate(zip(strikes, option_types, strict=False)):
         prices[i] = vanilla_option_price_from_mgf(
             log_mgf_grid=log_mgf_grid,
             phi_grid=phi_grid,

@@ -231,7 +231,7 @@ class BlackScholesPricer(Pricer):
         # Initial guess: ATM volatility approximation
         sigma = np.sqrt(2 * np.pi / T) * market_price / S0
 
-        for i in range(max_iterations):
+        for _i in range(max_iterations):
             # Price and vega at current sigma
             if "call" in contract_type:
                 price = self._bs_call(S0, K, T, r, q, sigma)

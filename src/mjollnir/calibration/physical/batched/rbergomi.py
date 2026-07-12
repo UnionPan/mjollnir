@@ -22,7 +22,7 @@ def _rolling_mean_masked(x, mask, window):
         rolled: (N, T-window+1) rolling mean
         rolled_mask: (N, T-window+1) mask (1.0 if all entries in window valid)
     """
-    N, T = x.shape
+    _N, _T = x.shape
 
     # Kernel for rolling window
     kernel = jnp.ones(window)
@@ -71,7 +71,7 @@ def _fit_rbergomi_variogram(returns, mask, dt, window, max_lag):
     Returns:
         Dictionary with estimated parameters (all shape (N,))
     """
-    N, T = returns.shape
+    _N, _T = returns.shape
 
     # Step 1: Rolling realized variance
     sq_returns = returns ** 2

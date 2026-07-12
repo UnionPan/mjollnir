@@ -16,6 +16,7 @@ author: Yunian Pan
 email: yp1170@nyu.edu
 """
 
+from typing import ClassVar
 import requests
 import pandas as pd
 from datetime import datetime, timedelta, date
@@ -50,7 +51,7 @@ class BinanceFetcher:
     BASE_URL_US = "https://api.binance.us"  # US-specific endpoint
 
     # Popular trading pairs (symbol: description)
-    POPULAR_PAIRS = {
+    POPULAR_PAIRS: ClassVar[dict] = {
         'BTCUSDT': 'Bitcoin/USD Tether',
         'ETHUSDT': 'Ethereum/USD Tether',
         'BNBUSDT': 'Binance Coin/USD Tether',
@@ -68,7 +69,7 @@ class BinanceFetcher:
     }
 
     # Available intervals
-    INTERVALS = {
+    INTERVALS: ClassVar[dict] = {
         '1m': '1 minute',
         '3m': '3 minutes',
         '5m': '5 minutes',
@@ -109,7 +110,7 @@ class BinanceFetcher:
             time.sleep(self.rate_limit_delay - elapsed)
         self.last_request_time = time.time()
 
-    def _make_request(self, endpoint: str, params: dict = None) -> dict:
+    def _make_request(self, endpoint: str, params: dict | None = None) -> dict:
         """
         Make API request with error handling.
 
@@ -134,7 +135,7 @@ class BinanceFetcher:
 
         except requests.exceptions.HTTPError as e:
             if response.status_code == 429:
-                warnings.warn("Rate limit exceeded. Waiting 60 seconds...")
+                warnings.warn("Rate limit exceeded. Waiting 60 seconds...", stacklevel=2)
                 time.sleep(60)
                 return self._make_request(endpoint, params)  # Retry
             else:
@@ -381,7 +382,7 @@ class BinanceFetcher:
                 )
                 results[symbol] = df
             except Exception as e:
-                warnings.warn(f"Failed to fetch {symbol}: {e}")
+                warnings.warn(f"Failed to fetch {symbol}: {e}", stacklevel=2)
                 results[symbol] = None
 
         return results
@@ -501,7 +502,7 @@ def download_bitcoin(
 
 
 def download_crypto_basket(
-    symbols: list[str] = None,
+    symbols: list[str] | None = None,
     interval: str = '1d',
     days: int = 365,
 ) -> dict[str, pd.DataFrame]:

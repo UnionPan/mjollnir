@@ -187,7 +187,7 @@ def _fit_single_asset_single_start(returns, mask, dt, init_omega, init_alpha, in
         return (params, opt_state), loss
 
     # Run optimization
-    (final_params, _), losses = lax.scan(step, (init_params, opt_state), None, length=n_steps)
+    (final_params, _), _losses = lax.scan(step, (init_params, opt_state), None, length=n_steps)
 
     # Final loss
     final_nll = _garch_log_likelihood(final_params, returns, mask, var_init)
@@ -278,7 +278,7 @@ def fit_batch(returns, mask, dt, dtype=jnp.float32):
     returns_jax = jnp.asarray(returns, dtype=dtype)
     mask_jax = jnp.asarray(mask, dtype=dtype)
 
-    N = returns_jax.shape[0]
+    returns_jax.shape[0]
 
     # Define 4 starting points for (alpha, beta)
     # omega will be matched to sample variance via omega = s^2 * (1 - alpha - beta)

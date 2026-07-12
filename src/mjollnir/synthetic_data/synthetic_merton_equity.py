@@ -37,7 +37,7 @@ class MertonVolatilityProfile:
 
     def __post_init__(self):
         if self.sigma <= 0:
-            warnings.warn("Sigma should be positive.")
+            warnings.warn("Sigma should be positive.", stacklevel=2)
 
 
 class SyntheticMertonOptionChainGenerator:
@@ -49,7 +49,7 @@ class SyntheticMertonOptionChainGenerator:
         self,
         risk_free_rate: float = 0.03,
         dividend_yield: float = 0.01,
-        maturities_days: list[int] = None,
+        maturities_days: list[int] | None = None,
         moneyness_range: list[float] | None = None,
         moneyness_by_maturity: dict[int, list[float]] | None = None,
         atm_spread_pct: float = 0.002,
@@ -126,7 +126,7 @@ class SyntheticMertonOptionChainGenerator:
                 option_types=np.array(types),
             )
 
-            for strike, opt_type, moneyness, price_mid in zip(strikes, types, moneyness_maturity, prices_mid):
+            for strike, opt_type, moneyness, price_mid in zip(strikes, types, moneyness_maturity, prices_mid, strict=False):
                 is_call = opt_type == 'call'
 
                 if self.add_noise:

@@ -64,7 +64,7 @@ class FiniteElementPricer(Pricer):
         self,
         risk_free_rate: float = 0.0,
         dividend_yield: float = 0.0,
-        S_max: float = None,
+        S_max: float | None = None,
         N_elements: int = 100,
         N_t: int = 500,
         american: bool = False,
@@ -335,7 +335,7 @@ class FiniteElementPricer(Pricer):
         C = sparse.lil_matrix((N, N))
 
         for i in range(N - 1):
-            h = nodes[i+1] - nodes[i]
+            nodes[i+1] - nodes[i]
             S_mid = 0.5 * (nodes[i] + nodes[i+1])
 
             # Element convection matrix (2x2)
@@ -371,7 +371,7 @@ class FiniteElementPricer(Pricer):
 
         # Local coordinates
         h = nodes[i+1] - nodes[i]
-        xi = (S0 - nodes[i]) / h  # ξ ∈ [0,1]
+        (S0 - nodes[i]) / h  # ξ ∈ [0,1]
 
         # Linear interpolation: V(S) = V_i * (1-ξ) + V_{i+1} * ξ
         # Derivative: dV/dS = (V_{i+1} - V_i) / h

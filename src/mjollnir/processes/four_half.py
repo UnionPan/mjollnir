@@ -56,7 +56,7 @@ class FourHalf(MultiFactorProcess):
         rho: float,
         a: float,
         b: float,
-        v0: float = None,
+        v0: float | None = None,
         variance_scheme: str = "truncation",
         name: str = "4/2 Model"
     ):

@@ -507,7 +507,7 @@ def fit_ssvi_surface(
 # ============================================================================
 def fit_svi_from_chain(
     chain,
-    forward: float = None,
+    forward: float | None = None,
 ) -> list[SVIFitResult]:
     """
     Fit SVI to each expiry slice in an OptionChain.

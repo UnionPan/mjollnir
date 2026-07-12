@@ -10,6 +10,7 @@ author: Yunian Pan
 email: yp1170@nyu.edu
 """
 
+from typing import ClassVar
 import yfinance as yf
 import pandas as pd
 import numpy as np
@@ -36,7 +37,7 @@ class CryptoFetcher:
     """
 
     # Popular crypto tickers on Yahoo Finance
-    POPULAR_TICKERS = {
+    POPULAR_TICKERS: ClassVar[dict] = {
         'BTC-USD': 'Bitcoin',
         'ETH-USD': 'Ethereum',
         'BNB-USD': 'Binance Coin',
@@ -227,7 +228,7 @@ class CryptoFetcher:
                 )
                 results[ticker] = df
             except Exception as e:
-                warnings.warn(f"Failed to fetch {ticker}: {e}")
+                warnings.warn(f"Failed to fetch {ticker}: {e}", stacklevel=2)
                 results[ticker] = None
 
         return results
@@ -297,7 +298,7 @@ def download_bitcoin(
 
 
 def download_crypto_basket(
-    tickers: list[str] = None,
+    tickers: list[str] | None = None,
     days: int = 365,
     interval: str = '1d',
 ) -> dict[str, pd.DataFrame]:

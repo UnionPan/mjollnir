@@ -121,7 +121,7 @@ class InterestRateSwap(PathDependentDerivative):
         if rate_path.ndim == 3:
             rate_path = rate_path[:, :, 0]  # Extract single rate
 
-        n_steps, n_paths = rate_path.shape
+        n_steps, _n_paths = rate_path.shape
 
         # Payment dates (approximate based on steps)
         n_payments = int(self.maturity / self.payment_freq)
@@ -278,7 +278,7 @@ class BondOption(PathIndependentDerivative):
     """
 
     def __init__(self, strike: float, maturity: float,
-                 call_or_put: str = "call", bond_maturity: float = None):
+                 call_or_put: str = "call", bond_maturity: float | None = None):
         """
         Args:
             strike: Strike price

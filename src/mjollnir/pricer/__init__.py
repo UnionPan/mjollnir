@@ -27,30 +27,30 @@ from .merton_mgf_pricer import merton_price_vanilla, merton_price_slice
 from .bachelier_pricer import bachelier_price_vanilla, bachelier_price_slice
 
 __all__ = [
-    # Base
-    "Pricer",
-    "PricingResult",
-    # Monte Carlo
-    "MonteCarloPricer",
+    "AdaptiveFiniteDifferencePricer",
     # Analytical
     "BlackScholesPricer",
-    "HestonAnalyticalPricer",
     # Fourier
     "COSPricer",
     "CarrMadanPricer",
     # PDE
     "FiniteDifferencePricer",
-    "AdaptiveFiniteDifferencePricer",
     "FiniteElementPricer",
+    "HestonAnalyticalPricer",
     "HighOrderFiniteElementPricer",
-    # MGF
-    "heston_price_vanilla",
-    "heston_price_slice",
-    "merton_price_vanilla",
-    "merton_price_slice",
+    # Monte Carlo
+    "MonteCarloPricer",
+    # Base
+    "Pricer",
+    "PricingResult",
+    "bachelier_price_slice",
     # Bachelier
     "bachelier_price_vanilla",
-    "bachelier_price_slice",
+    "heston_price_slice",
+    # MGF
+    "heston_price_vanilla",
+    "merton_price_slice",
+    "merton_price_vanilla",
 ]
 
 # --- JAX-accelerated pricers (optional, require jax) ---

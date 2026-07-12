@@ -58,7 +58,7 @@ def load_universe(
     tickers: list[str] = []
     sectors: dict[str, str] = {}
     seen: set[str] = set()
-    for t, s in zip(raw, sector_raw):
+    for t, s in zip(raw, sector_raw, strict=False):
         if not t or t in seen:
             continue
         seen.add(t)

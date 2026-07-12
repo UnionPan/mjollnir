@@ -102,7 +102,7 @@ class RegimeSwitchingCalibrationResult:
             "=" * 70,
         ]
 
-        for regime_id, params in self.regime_params.items():
+        for _regime_id, params in self.regime_params.items():
             lines.append("")
             lines.append(str(params))
 
@@ -245,7 +245,7 @@ class RegimeSwitchingCalibrator:
         dates: np.ndarray,
         bear_threshold: float = -0.20,
         bull_threshold: float = 0.20,
-        regime_names: dict[int, str] = None,
+        regime_names: dict[int, str] | None = None,
     ) -> RegimeSwitchingCalibrationResult:
         """
         Automatic regime labeling based on drawdown/rally thresholds.
@@ -324,7 +324,7 @@ class RegimeSwitchingCalibrator:
             n_removed = (len(regime_labels) - 1) - len(returns)
             warnings.warn(
                 f"Removed {n_removed} NaN returns (possibly from zero/negative prices). "
-                "Ensure price data is strictly positive."
+                "Ensure price data is strictly positive.", stacklevel=2
             )
 
         unique_regimes = np.unique(regime_labels)
@@ -341,7 +341,7 @@ class RegimeSwitchingCalibrator:
             if len(regime_returns) < 10:
                 warnings.warn(
                     f"Regime {regime_id} has only {len(regime_returns)} observations. "
-                    "Parameters may be unreliable."
+                    "Parameters may be unreliable.", stacklevel=2
                 )
 
             # Estimate parameters
@@ -618,7 +618,7 @@ class RegimeSwitchingSimulator:
         S0: float,
         T: float,
         n_paths: int = 1000,
-        scenarios: list[str] = None,
+        scenarios: list[str] | None = None,
     ) -> dict[str, dict]:
         """
         Run multiple scenarios and return summary statistics.

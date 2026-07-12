@@ -15,6 +15,7 @@ author: Yunian Pan
 email: yp1170@nyu.edu
 """
 
+from typing import ClassVar
 import requests
 import pandas as pd
 import numpy as np
@@ -45,7 +46,7 @@ class CoinGeckoFetcher:
     BASE_URL = "https://api.coingecko.com/api/v3"
 
     # Popular cryptocurrency IDs (CoinGecko uses IDs, not tickers)
-    POPULAR_COINS = {
+    POPULAR_COINS: ClassVar[dict] = {
         'bitcoin': 'BTC',
         'ethereum': 'ETH',
         'binancecoin': 'BNB',
@@ -89,7 +90,7 @@ class CoinGeckoFetcher:
             time.sleep(self.rate_limit_delay - elapsed)
         self.last_request_time = time.time()
 
-    def _make_request(self, endpoint: str, params: dict = None) -> dict:
+    def _make_request(self, endpoint: str, params: dict | None = None) -> dict:
         """
         Make API request with error handling.
 
@@ -114,7 +115,7 @@ class CoinGeckoFetcher:
 
         except requests.exceptions.HTTPError as e:
             if response.status_code == 429:
-                warnings.warn("Rate limit exceeded. Waiting 60 seconds...")
+                warnings.warn("Rate limit exceeded. Waiting 60 seconds...", stacklevel=2)
                 time.sleep(60)
                 return self._make_request(endpoint, params)  # Retry
             else:
@@ -319,7 +320,7 @@ class CoinGeckoFetcher:
             print(f"  Date range: {df_daily['Date'].min()} to {df_daily['Date'].max()}")
             warnings.warn(
                 "Range query uses approximated OHLC (High/Low = Close). "
-                "For accurate OHLC, use days parameter instead."
+                "For accurate OHLC, use days parameter instead.", stacklevel=2
             )
 
         return df_daily
@@ -354,7 +355,7 @@ class CoinGeckoFetcher:
             return df[['Date', 'Volume']]
 
         except Exception as e:
-            warnings.warn(f"Could not fetch volume data: {e}")
+            warnings.warn(f"Could not fetch volume data: {e}", stacklevel=2)
             return None
 
     def get_multiple(
@@ -394,7 +395,7 @@ class CoinGeckoFetcher:
                 df = self.get_ohlcv(coin_id, days, start_date, end_date)
                 results[coin_id] = df
             except Exception as e:
-                warnings.warn(f"Failed to fetch {coin_id}: {e}")
+                warnings.warn(f"Failed to fetch {coin_id}: {e}", stacklevel=2)
                 results[coin_id] = None
 
         return results
@@ -537,7 +538,7 @@ def download_bitcoin(
 
 
 def download_crypto_basket(
-    coins: list[str] = None,
+    coins: list[str] | None = None,
     days: int = 365,
 ) -> dict[str, pd.DataFrame]:
     """

@@ -48,7 +48,7 @@ class Bates(MultiFactorProcess):
         lambda_j: float,
         mu_J: float,
         sigma_J: float,
-        v0: float = None,
+        v0: float | None = None,
         variance_scheme: str = "truncation",
         name: str = "Bates",
     ):

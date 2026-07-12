@@ -121,7 +121,7 @@ def _dcc_log_likelihood_jax(params, eps, qbar):
     a = sum_ab * ratio
     b = sum_ab * (jnp.asarray(1.0, dtype=eps.dtype) - ratio)
 
-    T, k = eps.shape
+    _T, k = eps.shape
 
     # Initialize Q_0 = qbar (ensure same dtype)
     Q_init = qbar
@@ -153,7 +153,7 @@ def _dcc_log_likelihood_jax(params, eps, qbar):
         R_curr = R_curr.at[jnp.diag_indices(k)].set(one)
 
         # Compute NLL term
-        sign, logdet = jnp.linalg.slogdet(R_curr)
+        _sign, logdet = jnp.linalg.slogdet(R_curr)
         # Solve R_curr @ x = eps_curr for x, then compute eps_curr^T @ x
         R_inv_eps = jnp.linalg.solve(R_curr, eps_curr)
         quad_form = jnp.dot(eps_curr, R_inv_eps)
@@ -208,7 +208,7 @@ def _fit_dcc_single_start(eps, qbar, init_a, init_b):
         return (params, opt_state), loss
 
     # Run optimization
-    (final_params, _), losses = lax.scan(step, (init_params, opt_state), None, length=n_steps)
+    (final_params, _), _losses = lax.scan(step, (init_params, opt_state), None, length=n_steps)
 
     # Extract constrained parameters
     a_raw, b_raw = final_params
@@ -269,10 +269,9 @@ def fit_dcc(factor_returns: np.ndarray) -> DCCResult:
         garch_params = garch_params[valid_mask].reset_index(drop=True)
         factor_returns = factor_returns[:, valid_factor_indices]
         garch_ll_vec = garch_results['log_likelihood'][valid_factor_indices]
-        k = factor_returns.shape[1]  # Update k to reflect valid factors only
+        factor_returns.shape[1]  # Update k to reflect valid factors only
     else:
         garch_ll_vec = garch_results['log_likelihood']
-        k = k_original
 
     # GARCH log-likelihood
     garch_ll = np.sum(garch_ll_vec[np.isfinite(garch_ll_vec)])
@@ -388,7 +387,7 @@ def dcc_corr_path(result: DCCResult, factor_returns: np.ndarray) -> np.ndarray:
     """
     k_used = len(result.garch_params)
     k_original = len(result.valid_factor_indices)
-    T, k_input = factor_returns.shape
+    _T, k_input = factor_returns.shape
 
     # Handle automatic slicing when original-width array is provided
     if k_input == k_original:

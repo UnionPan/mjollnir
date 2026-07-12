@@ -263,7 +263,7 @@ class DupireCalibrator:
             # Linear interpolation
             from scipy.interpolate import LinearNDInterpolator
             interp = LinearNDInterpolator(
-                list(zip(strikes, maturities)), prices
+                list(zip(strikes, maturities, strict=False)), prices
             )
 
             def price_surface(K: float, T: float) -> float:
@@ -277,7 +277,7 @@ class DupireCalibrator:
         else:  # cubic
             from scipy.interpolate import CloughTocher2DInterpolator
             interp = CloughTocher2DInterpolator(
-                list(zip(strikes, maturities)), prices
+                list(zip(strikes, maturities, strict=False)), prices
             )
 
             def price_surface(K: float, T: float) -> float:

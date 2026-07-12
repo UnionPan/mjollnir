@@ -14,7 +14,7 @@ import numpy as np
 def get_phi_grid(vol_scaler: float = 0.28,
                  max_phi: int = 1000,
                  is_spot_measure: bool = True,
-                 real_part: float = None,
+                 real_part: float | None = None,
                  imag_mult: float = 5.6) -> np.ndarray:
     """
     Create complex phi grid for Fourier transform.
@@ -296,7 +296,7 @@ def heston_price_slice(S: float,
     if T <= 0:
         # Handle zero maturity
         prices = np.zeros(len(strikes))
-        for i, (K, opt_type) in enumerate(zip(strikes, option_types)):
+        for i, (K, opt_type) in enumerate(zip(strikes, option_types, strict=False)):
             intrinsic = max(S - K, 0) if opt_type == 'call' else max(K - S, 0)
             prices[i] = intrinsic
         return prices
@@ -322,7 +322,7 @@ def heston_price_slice(S: float,
 
     # Price each strike
     prices = np.zeros(len(strikes))
-    for i, (K, opt_type) in enumerate(zip(strikes, option_types)):
+    for i, (K, opt_type) in enumerate(zip(strikes, option_types, strict=False)):
         is_call = (opt_type == 'call')
 
         price = vanilla_option_price_from_mgf(

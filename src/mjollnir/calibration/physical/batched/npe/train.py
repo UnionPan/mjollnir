@@ -102,9 +102,9 @@ def train_mdn(
 
     # Standardize
     s_train = (features_train - feature_mean) / feature_std
-    s_val = (features_val - feature_mean) / feature_std
+    (features_val - feature_mean) / feature_std
     z_train = (thetas_train - theta_mean) / theta_std
-    z_val = (thetas_val - theta_mean) / theta_std
+    (thetas_val - theta_mean) / theta_std
 
     # Initialize model
     model = ConditionalMDN(hidden_dims=hidden, n_components=n_components, n_outputs=6)
@@ -129,7 +129,7 @@ def train_mdn(
 
     # Training loop
     n_batches = (n_train + batch_size - 1) // batch_size
-    for epoch in range(epochs):
+    for _epoch in range(epochs):
         # Shuffle training data
         key, subkey = jax.random.split(key)
         perm = jax.random.permutation(subkey, n_train)
@@ -234,7 +234,7 @@ def sample_posterior(
 
     # Forward pass to get mixture parameters
     logits, means, log_scales = apply_fn(trained_npe.params, s)
-    K = logits.shape[1]
+    logits.shape[1]
 
     # Clip log_scales
     log_scales = jnp.clip(log_scales, -7.0, 2.0)

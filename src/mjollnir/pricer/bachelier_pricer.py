@@ -157,7 +157,7 @@ def bachelier_price_slice(S: float,
     """
     if T <= 0:
         prices = np.zeros(len(strikes))
-        for i, (K, opt_type) in enumerate(zip(strikes, option_types)):
+        for i, (K, opt_type) in enumerate(zip(strikes, option_types, strict=False)):
             intrinsic = max(S - K, 0) if opt_type == 'call' else max(K - S, 0)
             prices[i] = intrinsic
         return prices
@@ -166,7 +166,7 @@ def bachelier_price_slice(S: float,
     discfactor = np.exp(-r * T)
 
     prices = np.zeros(len(strikes))
-    for i, (K, opt_type) in enumerate(zip(strikes, option_types)):
+    for i, (K, opt_type) in enumerate(zip(strikes, option_types, strict=False)):
         is_call = (opt_type == 'call')
         if is_call:
             prices[i] = bachelier_call(forward, K, sigma_n, T, discfactor)

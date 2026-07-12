@@ -42,7 +42,7 @@ class SABR(MultiFactorProcess):
         beta: float,
         alpha: float,
         rho: float,
-        sigma0: float = None,
+        sigma0: float | None = None,
         name: str = "SABR"
     ):
         """
@@ -237,7 +237,7 @@ class SABR(MultiFactorProcess):
 
         return t_grid, paths
 
-    def implied_volatility_hagan(self, F: float, K: float, T: float, sigma_atm: float = None) -> float:
+    def implied_volatility_hagan(self, F: float, K: float, T: float, sigma_atm: float | None = None) -> float:
         """
         Hagan's approximation for SABR implied volatility
 

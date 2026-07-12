@@ -175,7 +175,7 @@ def _batch_ou(price_arrays: list[np.ndarray], dt: float) -> dict:
     # Log-prices as the level series (OU process values), centered per asset
     levels_list = [np.log(prices) for prices in price_arrays]
     centers = np.array([lv.mean() for lv in levels_list], dtype=np.float64)
-    centered = [lv - c for lv, c in zip(levels_list, centers)]
+    centered = [lv - c for lv, c in zip(levels_list, centers, strict=False)]
     levels, mask = common.pad_returns(centered)  # pad_returns works for any 1-D arrays
     out = ou.fit_batch(levels, mask, dt)
     out["theta"] = out["theta"] + centers
@@ -224,9 +224,9 @@ def _batch_heston_qmle_gk(ohlc_list: list[dict[str, np.ndarray]], dt: float) -> 
     low_list = [ohlc["low"] for ohlc in ohlc_list]
     close_list = [ohlc["close"] for ohlc in ohlc_list]
 
-    open_padded, mask_open = common.pad_returns(open_list)
-    high_padded, mask_high = common.pad_returns(high_list)
-    low_padded, mask_low = common.pad_returns(low_list)
+    open_padded, _mask_open = common.pad_returns(open_list)
+    high_padded, _mask_high = common.pad_returns(high_list)
+    low_padded, _mask_low = common.pad_returns(low_list)
     close_padded, mask_close = common.pad_returns(close_list)
 
     # All masks should be identical (same valid periods across OHLC)

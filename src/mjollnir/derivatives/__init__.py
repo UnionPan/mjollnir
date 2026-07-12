@@ -56,40 +56,40 @@ from .rates import (
 )
 
 __all__ = [
-    # Base
-    "Derivative",
-    "PathIndependentDerivative",
-    "PathDependentDerivative",
-    # Vanilla
-    "EuropeanCall",
-    "EuropeanPut",
-    "DigitalCall",
-    "DigitalPut",
-    "Straddle",
-    "Strangle",
-    "ButterflySpread",
+    "AmericanCall",
     # American
     "AmericanOption",
-    "AmericanCall",
     "AmericanPut",
-    "PerpetualAmericanOption",
-    "BermudanOption",
     # Path-dependent
     "AsianOption",
     "BarrierOption",
-    "LookbackOption",
-    "CliquetOption",
     # Multi-asset
     "BasketOption",
-    "SpreadOption",
-    "RainbowOption",
-    "ExchangeOption",
-    "QuantoOption",
+    "BermudanOption",
+    "BondOption",
+    "ButterflySpread",
     # Rates
     "Caplet",
+    "CliquetOption",
+    # Base
+    "Derivative",
+    "DigitalCall",
+    "DigitalPut",
+    # Vanilla
+    "EuropeanCall",
+    "EuropeanPut",
+    "ExchangeOption",
     "Floorlet",
     "InterestRateSwap",
+    "LookbackOption",
+    "PathDependentDerivative",
+    "PathIndependentDerivative",
+    "PerpetualAmericanOption",
+    "QuantoOption",
+    "RainbowOption",
+    "SpreadOption",
+    "Straddle",
+    "Strangle",
     "Swaption",
     "YieldCurveOption",
-    "BondOption",
 ]

@@ -107,7 +107,7 @@ class TestDifferentiablePricer:
 
     def test_gradients_finite(self):
         """No NaN cotangents through the COS machinery."""
-        for wrt, x0 in [(0, 100.0)]:
+        for _wrt, x0 in [(0, 100.0)]:
             g = jax.grad(lambda s0: fourier_price(s0, 100.0, T, R, Q, **HESTON))(x0)
             assert jnp.isfinite(g)
 
@@ -118,7 +118,7 @@ class TestDifferentiablePricer:
             HESTON["sigma_v"], HESTON["rho"],
             jnp.array([True, True, False])))
         out = f(100.0)
-        for got, want in zip(out, GOLDEN_BATCH):
+        for got, want in zip(out, GOLDEN_BATCH, strict=False):
             assert float(got) == pytest.approx(want, abs=1e-9)
 
     def test_vmap_over_spot(self):

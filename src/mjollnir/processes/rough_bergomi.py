@@ -112,7 +112,6 @@ class RoughBergomi(MultiFactorProcess):
         # Initial state
         X0_arr = np.atleast_2d(X0)
         S0 = float(X0_arr[0, 0])
-        v0 = self.xi0
 
         # Brownian increments
         dW1 = np.random.normal(0.0, np.sqrt(dt), size=(n_steps, n_paths))

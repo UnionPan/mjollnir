@@ -120,7 +120,7 @@ def detect_outliers(
         pct_outliers = 100.0 * np.sum(outliers) / len(returns)
         warnings.warn(
             f"Detected {np.sum(outliers)} outliers ({pct_outliers:.1f}%) "
-            f"using {method} method with threshold={threshold}"
+            f"using {method} method with threshold={threshold}", stacklevel=2
         )
 
     return outliers, cleaned_returns
@@ -259,14 +259,14 @@ def estimate_half_life(
     if b >= 1.0:
         warnings.warn(
             f"No mean reversion detected (AR(1) coeff = {b:.4f} >= 1). "
-            "Series may be random walk or explosive."
+            "Series may be random walk or explosive.", stacklevel=2
         )
         return np.inf
 
     if b <= 0:
         warnings.warn(
             f"Negative autocorrelation detected (AR(1) coeff = {b:.4f}). "
-            "Half-life estimation may be unreliable."
+            "Half-life estimation may be unreliable.", stacklevel=2
         )
         return np.nan
 

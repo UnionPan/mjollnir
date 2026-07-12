@@ -59,7 +59,7 @@ class RegimeVolatilityProfile:
             warnings.warn(
                 f"Regime {self.regime_id} ({self.regime_name}): "
                 f"Feller condition violated: 2κθ = {2*self.kappa*self.theta:.4f} "
-                f"< ξ² = {self.xi**2:.4f}. Variance process may hit zero."
+                f"< ξ² = {self.xi**2:.4f}. Variance process may hit zero.", stacklevel=2
             )
 
 
@@ -383,7 +383,7 @@ class SyntheticOptionChainGenerator:
             return price
 
         except Exception as e:
-            warnings.warn(f"Heston CF integration failed: {e}. Returning intrinsic.")
+            warnings.warn(f"Heston CF integration failed: {e}. Returning intrinsic.", stacklevel=2)
             intrinsic = max(S - K, 0) if is_call else max(K - S, 0)
             return max(intrinsic, self.price_floor)
 
@@ -486,7 +486,7 @@ class SyntheticOptionChainGenerator:
 
         # Try Newton-Raphson with adaptive damping
         converged = False
-        for iteration in range(50):
+        for _iteration in range(50):
             model_price, vega = self._black_scholes_price_and_vega(S, K, T, r, iv, is_call)
             price_diff = model_price - price
 
@@ -552,7 +552,7 @@ class SyntheticOptionChainGenerator:
             return vol_profile.max_iv
 
         # Bisection
-        for iteration in range(100):
+        for _iteration in range(100):
             iv_mid = 0.5 * (iv_low + iv_high)
             price_mid, _ = self._black_scholes_price_and_vega(S, K, T, r, iv_mid, is_call)
 

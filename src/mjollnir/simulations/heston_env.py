@@ -21,7 +21,7 @@ except ImportError:
     gym = None
     spaces = None
 
-from typing import Any
+from typing import ClassVar, Any
 from dataclasses import dataclass
 from datetime import date, timedelta
 
@@ -117,7 +117,7 @@ class HestonEnv(gym.Env if gym else object):
         - Total: 5 x 3 x 2 = 30 options
     """
 
-    metadata = {'render_modes': ['human', 'matplotlib'], 'render_fps': 4}
+    metadata: ClassVar[dict] = {'render_modes': ['human', 'matplotlib'], 'render_fps': 4}
 
     def __init__(
         self,
@@ -128,8 +128,8 @@ class HestonEnv(gym.Env if gym else object):
         variance_scheme: str = 'truncation',     # Variance positivity
         # Option chain settings
         include_options: bool = True,
-        option_maturities: list[int] = None,     # Fixed TTM grid (days) OR None for option_grid
-        option_moneyness: list[float] = None,    # Fixed moneyness grid OR None for option_grid
+        option_maturities: list[int] | None = None,     # Fixed TTM grid (days) OR None for option_grid
+        option_moneyness: list[float] | None = None,    # Fixed moneyness grid OR None for option_grid
         option_grid: dict[int, list[float]] | None = None,  # Buehler-style: {τ: [K/S]}
         # Task settings
         task: str = 'hedging',                   # 'trading' or 'hedging'
@@ -214,7 +214,7 @@ class HestonEnv(gym.Env if gym else object):
 
             # Count total options: sum over all (maturity, moneyness, type) combinations
             total_options = 0
-            for ttm, moneyness_list in option_grid.items():
+            for _ttm, moneyness_list in option_grid.items():
                 total_options += len(moneyness_list) * 2  # calls + puts
 
             self.n_options = total_options
@@ -264,7 +264,7 @@ class HestonEnv(gym.Env if gym else object):
 
                 # Count total options
                 total_options = 0
-                for ttm, moneyness_list in option_grid.items():
+                for _ttm, moneyness_list in option_grid.items():
                     total_options += len(moneyness_list) * 2  # calls + puts
 
                 self.n_options = total_options
@@ -511,8 +511,6 @@ class HestonEnv(gym.Env if gym else object):
 
         # Store old state
         old_positions = self.positions.copy()
-        old_portfolio_value = self.portfolio_value
-        S_old = self.S
         previous_action_mask = self.action_mask.copy()
 
         # Compute position changes
@@ -1206,8 +1204,8 @@ def make_heston_env(
     max_steps: int = 246,
     dt: float = 1/252,
     discretization: str = 'milstein',
-    option_maturities: list[int] = None,
-    option_moneyness: list[float] = None,
+    option_maturities: list[int] | None = None,
+    option_moneyness: list[float] | None = None,
     option_grid: dict[int, list[float]] | None = None,
     task: str = 'hedging',
     liability: Liability | None = None,

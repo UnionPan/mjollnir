@@ -72,7 +72,7 @@ class HestonVolatilityProfile:
         if not feller_satisfied:
             warnings.warn(
                 f"Feller condition violated: 2κθ = {2*self.kappa*self.theta:.4f} "
-                f"< ξ² = {self.xi**2:.4f}. Variance process may hit zero."
+                f"< ξ² = {self.xi**2:.4f}. Variance process may hit zero.", stacklevel=2
             )
 
 
@@ -107,8 +107,8 @@ class SyntheticEquityOptionChainGenerator:
         maturities_days: list[int] | None = None,
         # Equity-specific: adaptive strike spacing by maturity
         # Can be a single list (same for all maturities) or dict mapping maturity to moneyness
-        moneyness_range: list[float] = None,
-        moneyness_by_maturity: dict[int, list[float]] = None,
+        moneyness_range: list[float] | None = None,
+        moneyness_by_maturity: dict[int, list[float]] | None = None,
         # Tighter spreads than crypto
         atm_spread_pct: float = 0.002,
         otm_spread_pct: float = 0.01,
@@ -175,7 +175,7 @@ class SyntheticEquityOptionChainGenerator:
             if maturity not in self.moneyness_by_maturity:
                 # Fallback: use grid from closest maturity, or ATM only
                 warnings.warn(
-                    f"No moneyness grid for {maturity}d maturity. Using [1.0] (ATM only)."
+                    f"No moneyness grid for {maturity}d maturity. Using [1.0] (ATM only).", stacklevel=2
                 )
                 self.moneyness_by_maturity[maturity] = [1.0]
 
@@ -276,12 +276,12 @@ class SyntheticEquityOptionChainGenerator:
                         spot_price, strike, T, self.risk_free_rate, self.dividend_yield,
                         price, opt_type == 'call', vol_profile,
                     )
-                    for strike, opt_type, price in zip(strikes_maturity, types_maturity, prices_mid)
+                    for strike, opt_type, price in zip(strikes_maturity, types_maturity, prices_mid, strict=False)
                 ])
 
             # Process each option
             for i, (strike, opt_type, moneyness, price_mid) in enumerate(
-                zip(strikes_maturity, types_maturity, moneyness_maturity, prices_mid)
+                zip(strikes_maturity, types_maturity, moneyness_maturity, prices_mid, strict=False)
             ):
                 iv = float(ivs_batch[i])
 
@@ -379,7 +379,7 @@ class SyntheticEquityOptionChainGenerator:
 
         # Newton-Raphson
         converged = False
-        for iteration in range(50):
+        for _iteration in range(50):
             model_price, vega = self._black_scholes_price_and_vega(S, K, T, r, q, iv, is_call)
             price_diff = model_price - price
 
@@ -430,7 +430,7 @@ class SyntheticEquityOptionChainGenerator:
         if price > price_high:
             return vol_profile.max_iv
 
-        for iteration in range(100):
+        for _iteration in range(100):
             iv_mid = 0.5 * (iv_low + iv_high)
             price_mid, _ = self._black_scholes_price_and_vega(S, K, T, r, q, iv_mid, is_call)
 

@@ -61,7 +61,7 @@ class StochasticLocalVol(MultiFactorProcess):
         spot_grid: np.ndarray | None = None,
         time_grid: np.ndarray | None = None,
         leverage_surface: np.ndarray | None = None,
-        v0: float = None,
+        v0: float | None = None,
         variance_scheme: str = "truncation",
         name: str = "SLV",
     ):
@@ -350,7 +350,7 @@ def calibrate_leverage_mc(
     from .heston import Heston
     from .base import SimulationConfig
 
-    dt = T_max / n_steps
+    T_max / n_steps
     t_grid = np.linspace(0, T_max, n_steps + 1)
 
     # Simulate Heston paths

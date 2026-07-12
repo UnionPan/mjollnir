@@ -107,7 +107,7 @@ class COSPricer(Pricer):
         """
         # Truncation range [a, b] for log-price
         # Typically based on cumulants, here we use simple approximation
-        log_S0 = np.log(S0)
+        np.log(S0)
 
         # Estimate range based on variance (simplified)
         if hasattr(process, 'variance'):
@@ -294,7 +294,6 @@ class CarrMadanPricer(Pricer):
         T = derivative.maturity
         r = self.risk_free_rate
 
-        is_call = "call" in derivative.contract_type
 
         # FFT grid
         eta = 0.25  # Grid spacing in log-strike
@@ -329,7 +328,7 @@ class CarrMadanPricer(Pricer):
         fft_output = np.fft.fft(fft_input)
 
         # Extract price for strike K
-        log_K = np.log(K)
+        np.log(K)
         strikes = np.exp(k_u)
 
         # Interpolate to find price at strike K

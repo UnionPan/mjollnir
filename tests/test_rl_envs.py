@@ -44,12 +44,12 @@ def test_cached_heston_env(tmp_path):
     )
 
     env = CachedHestonEnv(str(cache_path), task="hedging")
-    obs, info = env.reset(seed=1)
+    obs, _info = env.reset(seed=1)
     assert "spot_price" in obs
     assert "option_features" in obs
 
     action = env.action_space.sample()
-    obs, reward, terminated, truncated, info = env.step(action)
+    obs, reward, _terminated, _truncated, _info = env.step(action)
     assert isinstance(reward, float)
     env.close()
 
@@ -91,7 +91,7 @@ def test_heston_env_forces_unavailable_option_positions_flat():
     )
 
     action = np.array([0.0, 1.0, -1.0], dtype=np.float32)
-    obs, reward, terminated, truncated, info = env.step(action)
+    obs, _reward, terminated, truncated, info = env.step(action)
 
     assert not terminated
     assert not truncated
@@ -144,7 +144,7 @@ def test_merton_env_forces_unavailable_option_positions_flat():
     )
 
     action = np.array([0.0, 1.0, -1.0], dtype=np.float32)
-    obs, reward, terminated, truncated, info = env.step(action)
+    obs, _reward, terminated, truncated, info = env.step(action)
 
     assert not terminated
     assert not truncated

@@ -365,7 +365,7 @@ class JointPQCalibrator:
         cal_q = HestonCalibrator()
 
         def objective(x):
-            mu_P, kappa_P, theta_P, kappa_Q, theta_Q, sigma_v, rho, v0 = x
+            mu_P, _kappa_P, _theta_P, kappa_Q, theta_Q, sigma_v, rho, v0 = x
 
             # P log-likelihood
             mean = (mu_P - 0.5 * rv[:-1]) * dt

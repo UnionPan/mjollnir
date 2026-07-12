@@ -21,7 +21,7 @@ each verified (tests + lint + docs --strict) before the next begins.
       kernel step; regressions fail CI.
 - [x] **W12. Lazy imports**: defer flax/optax (NPE) so
       `import mjollnir.calibration` stays light.
-- [ ] **W13. Lint ratchet burn-down**: re-enable one rule at a time
+- [x] **W13. Lint ratchet burn-down**: re-enable one rule at a time
       (F841 → B905 → RUF013 → B007/B028 → RUF012/RUF022/RUF059).
 - [ ] **W8. RNG migration**: all 30 global-`np.random` files move to
       per-call `np.random.Generator`; breaking change of sampled

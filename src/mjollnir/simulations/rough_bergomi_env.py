@@ -5,7 +5,7 @@ Trading environment with rough volatility spot dynamics.
 """
 
 from dataclasses import dataclass
-from typing import Any
+from typing import ClassVar, Any
 
 import numpy as np
 
@@ -43,7 +43,7 @@ class RoughBergomiEnv(gym.Env if gym else object):
         dict with spot_price, time_step, portfolio_value, position
     """
 
-    metadata = {'render_modes': ['human'], 'render_fps': 4}
+    metadata: ClassVar[dict] = {'render_modes': ['human'], 'render_fps': 4}
 
     def __init__(
         self,

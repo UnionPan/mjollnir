@@ -86,10 +86,6 @@ ignore = [
     "E741",   # ambiguous single-letter names: standard math notation (l, I) in kernels
     "B008",   # function call in default: used deliberately for frozen param defaults
     "RUF001", "RUF002", "RUF003",  # Greek letters / math glyphs in docstrings are deliberate
-    # -- ratchet: pre-existing minor findings; burn down deliberately
-    #    (each fix verified against tests), then re-enable. --
-    "F841", "B007", "B028", "B905",
-    "RUF012", "RUF013", "RUF022", "RUF059",
 ]
 
 [tool.ruff.lint.per-file-ignores]

@@ -304,7 +304,7 @@ class RegimeSwitchingHestonCalibrator:
             print(f"  High vol: IV >= {high_vol_threshold*100:.1f}%")
 
         # Extract ATM IVs
-        dates, atm_ivs = self._extract_market_features(option_chains)
+        _dates, atm_ivs = self._extract_market_features(option_chains)
 
         # Label regimes based on IV
         regime_labels = np.zeros(len(atm_ivs), dtype=int)
@@ -421,7 +421,7 @@ class RegimeSwitchingHestonCalibrator:
             regime_chains = [option_chains[i] for i in range(len(option_chains)) if regime_mask[i]]
 
             if len(regime_chains) == 0:
-                warnings.warn(f"No data for regime {regime_id}, skipping")
+                warnings.warn(f"No data for regime {regime_id}, skipping", stacklevel=2)
                 continue
 
             # Calibrate Heston for this regime
@@ -508,7 +508,7 @@ class RegimeSwitchingHestonCalibrator:
                 maxiter=500,  # Faster for regime-switching
             )
         except Exception as e:
-            warnings.warn(f"Calibration failed for {regime_name}: {e}")
+            warnings.warn(f"Calibration failed for {regime_name}: {e}", stacklevel=2)
             # Return default parameters
             return RegimeHestonParameters(
                 regime_id=regime_id,

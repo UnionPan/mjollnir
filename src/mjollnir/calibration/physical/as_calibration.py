@@ -20,7 +20,7 @@ try:
     HAS_SKLEARN = True
 except ImportError:
     HAS_SKLEARN = False
-    warnings.warn("scikit-learn not available, regime calibration will use simple threshold")
+    warnings.warn("scikit-learn not available, regime calibration will use simple threshold", stacklevel=2)
 
 
 @dataclass
@@ -310,7 +310,6 @@ class MicrostructureCalibrator:
         # Estimate spread sensitivity κ
         # Use mid-price changes and trade flow imbalance
         prices = df[price_col].values
-        mid_prices = prices  # Assume trades are at mid for simplicity
 
         # Compute realized spread (distance from mid)
         # For traded prices, estimate how far from "true" mid

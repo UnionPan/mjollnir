@@ -7,6 +7,7 @@ author: Yunian Pan
 email: yp1170@nyu.edu
 """
 
+from typing import ClassVar
 import numpy as np
 from scipy import optimize
 from dataclasses import dataclass
@@ -83,7 +84,7 @@ class HestonCalibrator:
     """
 
     # Parameter bounds: (lower, upper)
-    DEFAULT_BOUNDS = {
+    DEFAULT_BOUNDS: ClassVar[dict] = {
         'kappa': (0.1, 10.0),
         'theta': (0.001, 1.0),
         'xi': (0.01, 2.0),
@@ -306,7 +307,7 @@ class HestonCalibrator:
         r: float,
     ) -> float:
         """Compute calibration objective (weighted sum of squared errors)."""
-        kappa, theta, xi, rho, v0 = params
+        kappa, theta, xi, _rho, _v0 = params
 
         # Feller condition penalty
         feller_violation = max(0, xi**2 - 2 * kappa * theta)

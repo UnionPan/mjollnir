@@ -84,7 +84,7 @@ class MonteCarloPricer(Pricer):
             )
 
         # Simulate process
-        t_grid, paths = sim_process.simulate(X0_array, derivative.maturity, config, scheme)
+        _t_grid, paths = sim_process.simulate(X0_array, derivative.maturity, config, scheme)
 
         # Calculate payoffs
         if isinstance(derivative, PathIndependentDerivative):
@@ -219,7 +219,7 @@ class MonteCarloPricer(Pricer):
         derivative,
         process,
         X0: float | np.ndarray,
-        path_counts: list = None,
+        path_counts: list | None = None,
         scheme: str = "euler",
         n_steps: int = 252,
     ) -> dict:
@@ -292,7 +292,7 @@ class MonteCarloPricer(Pricer):
             config = SimulationConfig(n_paths=10000, n_steps=252)
 
         # Simulate process once for both derivatives
-        t_grid, paths = process.simulate(X0_array, derivative.maturity, config, scheme)
+        _t_grid, paths = process.simulate(X0_array, derivative.maturity, config, scheme)
 
         # Calculate payoffs for target derivative
         if isinstance(derivative, PathIndependentDerivative):

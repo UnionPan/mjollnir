@@ -229,7 +229,7 @@ class CFCalibrator:
 
         computation_time = time.time() - start_time
 
-        params_dict = dict(zip(self.param_names, best_params))
+        params_dict = dict(zip(self.param_names, best_params, strict=False))
 
         return CFCalibrationResult(
             model_name=self.model_name,

@@ -48,7 +48,7 @@ class FiniteDifferencePricer(Pricer):
         self,
         risk_free_rate: float = 0.0,
         dividend_yield: float = 0.0,
-        S_max: float = None,
+        S_max: float | None = None,
         N_S: int = 200,
         N_t: int = 500,
         scheme: str = 'crank-nicolson',
@@ -105,7 +105,6 @@ class FiniteDifferencePricer(Pricer):
 
         # Extract parameters
         S0 = float(X0) if np.isscalar(X0) else float(X0[0])
-        K = derivative.strike
         T = derivative.maturity
         sigma = process.sigma
 
@@ -216,7 +215,7 @@ class FiniteDifferencePricer(Pricer):
 
     def _solve_implicit(self, V, S_grid, dS, dt, sigma, is_call, derivative, return_grid, V_grid):
         """Implicit Euler scheme (unconditionally stable)"""
-        r, q = self.r, self.q
+        _r, _q = self.r, self.q
 
         # Build tridiagonal matrix
         A = self._build_implicit_matrix(S_grid, dS, dt, sigma)
@@ -247,7 +246,7 @@ class FiniteDifferencePricer(Pricer):
 
     def _solve_crank_nicolson(self, V, S_grid, dS, dt, sigma, is_call, derivative, return_grid, V_grid):
         """Crank-Nicolson scheme (2nd order accurate, unconditionally stable)"""
-        r, q = self.r, self.q
+        _r, _q = self.r, self.q
 
         # Build matrices for Crank-Nicolson (using half time step)
         A_half = self._build_cn_matrices(S_grid, dS, dt, sigma)
@@ -389,7 +388,7 @@ class AdaptiveFiniteDifferencePricer(FiniteDifferencePricer):
         self,
         risk_free_rate: float = 0.0,
         dividend_yield: float = 0.0,
-        S_max: float = None,
+        S_max: float | None = None,
         N_S: int = 200,
         N_t: int = 500,
         scheme: str = 'crank-nicolson',

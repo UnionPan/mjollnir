@@ -230,7 +230,7 @@ class GBMCalibrator:
         bic = k * np.log(n) - 2 * log_likelihood
 
         # Diagnostics
-        jb_stat, jb_pvalue = stats.jarque_bera(log_returns)
+        _jb_stat, jb_pvalue = stats.jarque_bera(log_returns)
         skewness = stats.skew(log_returns)
         kurtosis = stats.kurtosis(log_returns)  # Excess kurtosis
 
@@ -238,19 +238,19 @@ class GBMCalibrator:
         if not (jb_pvalue > 0.01):
             warnings.warn(
                 f"Returns significantly non-normal (JB test p={jb_pvalue:.4f}). "
-                "Consider jump-diffusion or stochastic volatility models."
+                "Consider jump-diffusion or stochastic volatility models.", stacklevel=2
             )
 
         if abs(skewness) > 0.5:
             warnings.warn(
                 f"Returns have significant skewness ({skewness:.2f}). "
-                "GBM assumes zero skewness."
+                "GBM assumes zero skewness.", stacklevel=2
             )
 
         if kurtosis > 2.0:
             warnings.warn(
                 f"Returns have fat tails (excess kurtosis = {kurtosis:.2f}). "
-                "Consider jump-diffusion models."
+                "Consider jump-diffusion models.", stacklevel=2
             )
 
         # Annualized statistics

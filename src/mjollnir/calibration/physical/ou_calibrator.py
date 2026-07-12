@@ -225,7 +225,7 @@ class OUCalibrator:
         if b >= 1.0:
             warnings.warn(
                 f"No mean reversion detected (AR coeff b={b:.4f} >= 1). "
-                "Series may be non-stationary."
+                "Series may be non-stationary.", stacklevel=2
             )
             kappa = 0.0
             theta = np.mean(series)
@@ -370,7 +370,7 @@ class OUCalibrator:
         )
 
         if not result.success:
-            warnings.warn(f"MLE optimization did not converge: {result.message}")
+            warnings.warn(f"MLE optimization did not converge: {result.message}", stacklevel=2)
 
         kappa, theta, sigma = result.x
 
@@ -432,7 +432,7 @@ class OUCalibrator:
 
         For production, use statsmodels.tsa.stattools.adfuller
         """
-        n = len(series)
+        len(series)
         diff = np.diff(series)
         lagged = series[:-1]
 

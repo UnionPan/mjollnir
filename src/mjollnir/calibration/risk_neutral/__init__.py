@@ -38,41 +38,36 @@ from .svi import (
 )
 
 __all__ = [
-    # Heston stochastic volatility
-    'HestonCalibrator',
+    'CFCalibrationResult',
+    # Generic CF calibrator + model-specific factories
+    'CFCalibrator',
     'CalibrationResult',
-
-    # SABR stochastic volatility
-    'SABRCalibrator',
-    'SABRCalibrationResult',
-
     # Dupire local volatility
     'DupireCalibrator',
     'DupireResult',
-
+    # Heston stochastic volatility
+    'HestonCalibrator',
+    'RegimeHestonParameters',
     # Regime-switching Heston
     'RegimeSwitchingHestonCalibrator',
-    'RegimeSwitchingHestonSimulator',
     'RegimeSwitchingHestonResult',
-    'RegimeHestonParameters',
-
-    # Generic CF calibrator + model-specific factories
-    'CFCalibrator',
-    'CFCalibrationResult',
-    'make_merton_calibrator',
-    'make_vg_calibrator',
-    'make_nig_calibrator',
-    'make_kou_calibrator',
-    'make_bates_calibrator',
-
-    # SVI / SSVI volatility surface
-    'SVIParams',
+    'RegimeSwitchingHestonSimulator',
+    'SABRCalibrationResult',
+    # SABR stochastic volatility
+    'SABRCalibrator',
+    'SSVIFitResult',
     'SSVIParams',
     'SVIFitResult',
-    'SSVIFitResult',
-    'fit_svi_slice',
-    'fit_ssvi_surface',
-    'fit_svi_from_chain',
+    # SVI / SSVI volatility surface
+    'SVIParams',
     'check_butterfly_arbitrage',
     'check_calendar_arbitrage',
+    'fit_ssvi_surface',
+    'fit_svi_from_chain',
+    'fit_svi_slice',
+    'make_bates_calibrator',
+    'make_kou_calibrator',
+    'make_merton_calibrator',
+    'make_nig_calibrator',
+    'make_vg_calibrator',
 ]

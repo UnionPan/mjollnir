@@ -112,7 +112,7 @@ class LookbackOption(PathDependentDerivative):
     """Lookback option (floating or fixed strike)"""
 
     def __init__(self, maturity: float, call_or_put: str = "call",
-                 strike: float = None, lookback_type: str = "floating"):
+                 strike: float | None = None, lookback_type: str = "floating"):
         """
         Args:
             strike: For fixed strike lookback. None for floating strike.
@@ -176,8 +176,8 @@ class CliquetOption(PathDependentDerivative):
     """
 
     def __init__(self, maturity: float, reset_dates: np.ndarray,
-                 local_floor: float = 0.0, local_cap: float = None,
-                 global_floor: float = None, global_cap: float = None):
+                 local_floor: float = 0.0, local_cap: float | None = None,
+                 global_floor: float | None = None, global_cap: float | None = None):
         """
         Args:
             reset_dates: Array of reset dates (fraction of maturity)

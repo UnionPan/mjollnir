@@ -44,7 +44,7 @@ class ThreeHalf(MultiFactorProcess):
         theta: float,
         sigma_v: float,
         rho: float,
-        v0: float = None,
+        v0: float | None = None,
         variance_scheme: str = "truncation",
         name: str = "3/2 Model"
     ):

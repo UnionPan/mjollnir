@@ -298,7 +298,7 @@ class GARCHEstimator:
         )
 
         if not result.success:
-            warnings.warn(f"GARCH optimization did not converge: {result.message}")
+            warnings.warn(f"GARCH optimization did not converge: {result.message}", stacklevel=2)
 
         omega, alpha, beta = result.x
 
@@ -422,7 +422,7 @@ def compare_volatility_methods(
         garch_est = GARCHEstimator()
         results['garch'] = garch_est.estimate(returns, annualize=annualize)
     except Exception as e:
-        warnings.warn(f"GARCH estimation failed: {e}")
+        warnings.warn(f"GARCH estimation failed: {e}", stacklevel=2)
         results['garch'] = None
 
     return results

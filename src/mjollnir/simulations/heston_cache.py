@@ -5,7 +5,7 @@ Uses Zarr to store precomputed spot/variance paths and option chains.
 """
 
 from datetime import date, timedelta
-from typing import Any
+from typing import ClassVar, Any
 
 import numpy as np
 
@@ -230,7 +230,7 @@ class CachedHestonEnv(gym.Env if gym else object):
     Heston env that reads precomputed paths + option chains from Zarr.
     """
 
-    metadata = {'render_modes': ['human'], 'render_fps': 4}
+    metadata: ClassVar[dict] = {'render_modes': ['human'], 'render_fps': 4}
 
     def __init__(
         self,

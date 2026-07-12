@@ -7,6 +7,7 @@ author: Yunian Pan
 email: yp1170@nyu.edu
 """
 
+from typing import ClassVar
 import numpy as np
 from scipy import optimize
 from dataclasses import dataclass
@@ -88,7 +89,7 @@ class SABRCalibrator:
     """
 
     # Parameter bounds
-    DEFAULT_BOUNDS = {
+    DEFAULT_BOUNDS: ClassVar[dict] = {
         'alpha': (0.001, 5.0),
         'beta': (0.0, 1.0),
         'rho': (-0.999, 0.999),

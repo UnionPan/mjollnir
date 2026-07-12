@@ -177,7 +177,7 @@ class CorrelationCalibrator:
             halflife: Halflife in periods for the decay factor.
         """
         decay = np.exp(-np.log(2) / halflife)
-        T, n = returns.shape
+        T, _n = returns.shape
 
         # Demean
         mu = returns.mean(axis=0)
@@ -278,7 +278,7 @@ class CorrelationCalibrator:
 
         # Marchenko-Pastur bounds
         lambda_plus = (1 + 1 / np.sqrt(q)) ** 2
-        lambda_minus = (1 - 1 / np.sqrt(q)) ** 2
+        (1 - 1 / np.sqrt(q)) ** 2
 
         # Eigendecomposition
         eigvals, eigvecs = np.linalg.eigh(corr_sample)
