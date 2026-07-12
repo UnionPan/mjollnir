@@ -18,6 +18,17 @@ in `docs/guide/stability.md` (golden-test breaks = dynamics break = never a patc
 - Console scripts: `mjollnir-build-universes`, `mjollnir-calibrate`,
   `mjollnir-train-npe`.
 
+### Changed
+- Batched Merton MLE: cosine-decayed Adam (4000 steps) reaches the scipy
+  optimum; `MertonJumpCalibrator` reference NLL vectorized (~3600x faster).
+- Gym env `reset(seed=...)` no longer seeds the global `np.random` stream
+  (it had no consumer — dynamics flow through the explicitly-seeded process
+  simulation); `test_env_reset_determinism` pins the contract.
+
+### Removed
+- Dead quad-based Heston pricer in `synthetic_equity` (~230 lines; the live
+  path is the JAX MGF slice pricer).
+
 ### Fixed
 - Rough-Bergomi simulation now accepts both the flat `(2,)` and the gym envs'
   `(n_paths, 2)` initial-state conventions.

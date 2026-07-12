@@ -67,9 +67,6 @@ def build_heston_cache(
     n_options = len(option_maturities) * len(option_moneyness) * 2
     feature_dim = n_options * 2
 
-    if seed is not None:
-        np.random.seed(seed)
-
     process = Heston(
         mu=params.mu,
         kappa=params.kappa,

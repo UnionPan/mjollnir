@@ -413,8 +413,6 @@ class HestonEnv(gym.Env if gym else object):
     ) -> tuple[dict[str, np.ndarray], dict[str, Any]]:
         """Reset environment and pre-simulate full episode."""
         super().reset(seed=seed)
-        if seed is not None:
-            np.random.seed(seed)
 
         # Simulate entire path using processes.Heston
         X0 = np.array([[self.params.S_0, self.params.v_0]])

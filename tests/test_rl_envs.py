@@ -156,3 +156,22 @@ def test_merton_env_forces_unavailable_option_positions_flat():
     assert np.allclose(obs["option_features"], 0.0)
 
     env.close()
+
+
+def test_env_reset_determinism():
+    """Same seed => identical episode path; different seeds => different.
+
+    This is the env-level reproducibility contract. It must survive any
+    future RNG refactor (e.g. migrating processes off the global
+    np.random stream): seeding may change *how* randomness is produced,
+    but reset(seed=k) must stay deterministic per version.
+    """
+    env = HestonEnv(include_options=False, task="trading")
+    env.reset(seed=7070)
+    p1 = env.path.copy()
+    env.reset(seed=7070)
+    p2 = env.path.copy()
+    env.reset(seed=7071)
+    p3 = env.path.copy()
+    assert (p1 == p2).all(), "same seed must reproduce the same path"
+    assert not (p1 == p3).all(), "different seeds must differ"

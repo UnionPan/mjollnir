@@ -107,8 +107,6 @@ class RoughBergomiEnv(gym.Env if gym else object):
         options: dict[str, Any] | None = None,
     ) -> tuple[dict[str, np.ndarray], dict[str, Any]]:
         super().reset(seed=seed)
-        if seed is not None:
-            np.random.seed(seed)
 
         X0 = np.array([[self.params.S_0, self.params.xi0]])
         config = SimulationConfig(
