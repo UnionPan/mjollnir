@@ -95,6 +95,8 @@ class MertonJumpCalibrator:
             (1e-6, None),      # sigma_j
         ]
 
+        k_grid = np.arange(self.k_max + 1)  # (K,)
+
         def neg_log_likelihood(params: np.ndarray) -> float:
             mu, sigma, lambda_, mu_j, sigma_j = params
             if sigma <= 0 or lambda_ <= 0 or sigma_j <= 0:
@@ -104,17 +106,20 @@ class MertonJumpCalibrator:
             base_mean = (mu - 0.5 * sigma**2 - lambda_ * kappa) * dt
             base_var = sigma**2 * dt
 
-            loglik = 0.0
-            for r in returns:
-                mix_prob = 0.0
-                for k in range(self.k_max + 1):
-                    weight = stats.poisson.pmf(k, lambda_ * dt)
-                    mean_k = base_mean + k * mu_j
-                    var_k = base_var + k * sigma_j**2
-                    mix_prob += weight * stats.norm.pdf(r, loc=mean_k, scale=np.sqrt(var_k))
-                mix_prob = max(mix_prob, 1e-300)
-                loglik += np.log(mix_prob)
-            return -loglik
+            # Vectorized Poisson-mixture likelihood over (T, K). Same math as
+            # the original per-return loop, but ~100x faster: L-BFGS-B calls
+            # this NLL thousands of times (finite-difference gradients over 5
+            # params), and scalar scipy.stats calls in a double loop dominated
+            # the entire calibration runtime.
+            weights = stats.poisson.pmf(k_grid, lambda_ * dt)          # (K,)
+            mean_k = base_mean + k_grid * mu_j                          # (K,)
+            var_k = base_var + k_grid * sigma_j**2                      # (K,)
+            comp = stats.norm.pdf(
+                returns[:, None], loc=mean_k[None, :],
+                scale=np.sqrt(var_k)[None, :],
+            )                                                           # (T, K)
+            mix_prob = np.maximum(comp @ weights, 1e-300)               # (T,)
+            return -float(np.sum(np.log(mix_prob)))
 
         result = optimize.minimize(
             neg_log_likelihood,
