@@ -677,7 +677,9 @@ def _rough_bergomi_simulate_core(
     dt = T / n_steps
     t_grid = jnp.linspace(0.0, T, n_steps + 1)
 
-    X0_arr = jnp.atleast_1d(jnp.asarray(X0, dtype=jnp.float64))
+    # Accept both the flat (2,) [S0, v0] convention and the (n_paths, 2)
+    # batch convention used by the gym envs (e.g. np.array([[S0, xi0]])).
+    X0_arr = jnp.asarray(X0, dtype=jnp.float64).reshape(-1)
     S0 = X0_arr[0]
 
     key, k1, k2 = jax.random.split(key, 3)

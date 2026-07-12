@@ -96,6 +96,8 @@ def build_heston_cache(
     )
 
     root = zarr.open_group(store_path, mode="w")
+    # zarr 3 renamed Group.create_dataset -> create_array; support both.
+    _create_array = getattr(root, "create_array", None) or root.create_dataset
     root.attrs.update({
         "model": "heston",
         "n_paths": n_paths,
@@ -105,25 +107,25 @@ def build_heston_cache(
         "option_moneyness": option_moneyness,
     })
 
-    spot_arr = root.create_dataset(
+    spot_arr = _create_array(
         "spot",
         shape=(n_paths, max_steps + 1),
         chunks=(chunk_paths, chunk_steps),
         dtype="f4",
     )
-    var_arr = root.create_dataset(
+    var_arr = _create_array(
         "variance",
         shape=(n_paths, max_steps + 1),
         chunks=(chunk_paths, chunk_steps),
         dtype="f4",
     )
-    option_prices_arr = root.create_dataset(
+    option_prices_arr = _create_array(
         "option_prices",
         shape=(n_paths, max_steps + 1, n_options),
         chunks=(chunk_paths, chunk_steps, n_options),
         dtype="f4",
     )
-    option_features_arr = root.create_dataset(
+    option_features_arr = _create_array(
         "option_features",
         shape=(n_paths, max_steps + 1, feature_dim),
         chunks=(chunk_paths, chunk_steps, feature_dim),
