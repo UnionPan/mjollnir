@@ -13,9 +13,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import cm
 from matplotlib.gridspec import GridSpec
-from mpl_toolkits.mplot3d import Axes3D
 from scipy.interpolate import griddata
-from typing import Optional, List, Dict, Any
+from typing import Any
 import warnings
 
 warnings.filterwarnings('ignore', category=UserWarning)
@@ -186,9 +185,9 @@ class HestonEnvRenderer:
         t: int,
         S: float,
         v: float,
-        positions: Optional[np.ndarray] = None,
-        portfolio_value: Optional[float] = None,
-        option_chain: Optional[Any] = None,
+        positions: np.ndarray | None = None,
+        portfolio_value: float | None = None,
+        option_chain: Any | None = None,
     ):
         """
         Update plots with new data point.

@@ -4,7 +4,6 @@ Synthetic Equity Option Chain Generator - Merton Jump-Diffusion
 
 import numpy as np
 from datetime import date, timedelta
-from typing import List, Dict, Optional
 from dataclasses import dataclass
 import warnings
 
@@ -12,7 +11,7 @@ from .data_provider import OptionChain, OptionQuote
 from mjollnir.pricer.merton_mgf_pricer import merton_price_slice
 
 
-def get_default_moneyness_by_maturity() -> Dict[int, List[float]]:
+def get_default_moneyness_by_maturity() -> dict[int, list[float]]:
     """Default adaptive moneyness grid by maturity (days)."""
     return {
         10:  [0.95, 0.975, 1.0, 1.025, 1.05],
@@ -50,9 +49,9 @@ class SyntheticMertonOptionChainGenerator:
         self,
         risk_free_rate: float = 0.03,
         dividend_yield: float = 0.01,
-        maturities_days: List[int] = None,
-        moneyness_range: Optional[List[float]] = None,
-        moneyness_by_maturity: Optional[Dict[int, List[float]]] = None,
+        maturities_days: list[int] = None,
+        moneyness_range: list[float] | None = None,
+        moneyness_by_maturity: dict[int, list[float]] | None = None,
         atm_spread_pct: float = 0.002,
         otm_spread_pct: float = 0.01,
         min_spread_pct: float = 0.001,
@@ -62,7 +61,7 @@ class SyntheticMertonOptionChainGenerator:
         noise_level: float = 0.002,
         price_floor: float = 0.0001,
         enforce_intrinsic: bool = True,
-        random_seed: Optional[int] = None,
+        random_seed: int | None = None,
     ):
         if maturities_days is None:
             maturities_days = [10, 20, 30, 60, 90, 120]

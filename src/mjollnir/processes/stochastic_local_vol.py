@@ -21,7 +21,7 @@ email: yp1170@nyu.edu
 """
 import numpy as np
 from scipy import interpolate
-from typing import Callable, Dict, Optional, Tuple
+from collections.abc import Callable
 from .base import MultiFactorProcess
 from ._structured_inputs import StructuredGridSurface
 
@@ -57,10 +57,10 @@ class StochasticLocalVol(MultiFactorProcess):
         theta: float,
         sigma_v: float,
         rho: float,
-        leverage_fn: Optional[Callable[[np.ndarray, float], np.ndarray]] = None,
-        spot_grid: Optional[np.ndarray] = None,
-        time_grid: Optional[np.ndarray] = None,
-        leverage_surface: Optional[np.ndarray] = None,
+        leverage_fn: Callable[[np.ndarray, float], np.ndarray] | None = None,
+        spot_grid: np.ndarray | None = None,
+        time_grid: np.ndarray | None = None,
+        leverage_surface: np.ndarray | None = None,
         v0: float = None,
         variance_scheme: str = "truncation",
         name: str = "SLV",
@@ -263,7 +263,7 @@ class StochasticLocalVol(MultiFactorProcess):
 
 def from_dupire_result(
     dupire_result,
-    heston_params: Dict[str, float],
+    heston_params: dict[str, float],
     mu: float = 0.0,
 ) -> StochasticLocalVol:
     """
@@ -312,7 +312,7 @@ def from_dupire_result(
 # ============================================================================
 
 def calibrate_leverage_mc(
-    heston_params: Dict[str, float],
+    heston_params: dict[str, float],
     lv_function: Callable[[float, float], float],
     S0: float,
     T_max: float = 1.0,
@@ -321,7 +321,7 @@ def calibrate_leverage_mc(
     n_strike_bins: int = 40,
     bandwidth: float = 0.05,
     mu: float = 0.0,
-) -> Tuple[StochasticLocalVol, Callable]:
+) -> tuple[StochasticLocalVol, Callable]:
     """
     Calibrate the leverage function via Monte Carlo conditional expectation.
 

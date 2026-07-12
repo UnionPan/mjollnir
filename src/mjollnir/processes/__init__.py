@@ -13,17 +13,17 @@ from .stochastic_local_vol import StochasticLocalVol
 from .short_rate import Vasicek, CIR, HullWhite
 
 __all__ = [
-    'SimulationConfig',
-    '_jax_backend',
-    'GBM',
-    'Heston',
-    'RoughBergomi',
-    'Bates',
-    'Bachelier',
-    'ThreeHalf',
-    'FourHalf',
-    'StochasticLocalVol',
-    'Vasicek',
     'CIR',
+    'GBM',
+    'Bachelier',
+    'Bates',
+    'FourHalf',
+    'Heston',
     'HullWhite',
+    'RoughBergomi',
+    'SimulationConfig',
+    'StochasticLocalVol',
+    'ThreeHalf',
+    'Vasicek',
+    '_jax_backend',
 ]

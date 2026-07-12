@@ -16,7 +16,7 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 
-from .model import ConditionalMDN, mdn_nll
+from .model import ConditionalMDN
 from .simulate import summary_features
 from .train import load_npe, sample_posterior
 

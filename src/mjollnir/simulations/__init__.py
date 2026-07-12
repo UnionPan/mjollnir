@@ -39,18 +39,18 @@ def make_heston_no_options_env(**kwargs):
     return HestonEnv(include_options=False, **kwargs)
 
 __all__ = [
+    'CachedHestonEnv',
     'HestonEnv',
+    'HestonEnvRenderer',
     'HestonParams',
     'Liability',
-    'make_heston_env',
     'MertonEnv',
     'MertonParams',
     'RoughBergomiEnv',
     'RoughBergomiParams',
-    'CachedHestonEnv',
     'build_heston_cache',
-    'make_heston_trading_env',
+    'make_heston_env',
     'make_heston_hedging_env',
     'make_heston_no_options_env',
-    'HestonEnvRenderer',
+    'make_heston_trading_env',
 ]

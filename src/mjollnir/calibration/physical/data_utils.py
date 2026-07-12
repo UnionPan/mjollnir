@@ -12,8 +12,6 @@ email: yp1170@nyu.edu
 """
 
 import numpy as np
-import pandas as pd
-from typing import Tuple, Optional, Dict
 from scipy import stats
 import warnings
 
@@ -64,7 +62,7 @@ def detect_outliers(
     returns: np.ndarray,
     method: str = 'iqr',
     threshold: float = 3.0,
-) -> Tuple[np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray]:
     """
     Detect outliers in return series.
 
@@ -132,7 +130,7 @@ def test_stationarity(
     series: np.ndarray,
     method: str = 'adf',
     alpha: float = 0.05,
-) -> Dict:
+) -> dict:
     """
     Test for stationarity (constant mean and variance).
 
@@ -331,7 +329,7 @@ def clean_price_series(
     return prices
 
 
-def compute_summary_statistics(returns: np.ndarray, annualize: bool = True) -> Dict:
+def compute_summary_statistics(returns: np.ndarray, annualize: bool = True) -> dict:
     """
     Compute summary statistics for returns.
 
@@ -380,7 +378,7 @@ def compute_summary_statistics(returns: np.ndarray, annualize: bool = True) -> D
 def split_train_test(
     series: np.ndarray,
     train_fraction: float = 0.8,
-) -> Tuple[np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray]:
     """
     Split time series into train/test sets.
 

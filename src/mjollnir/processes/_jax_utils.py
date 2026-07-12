@@ -8,7 +8,6 @@ author: Yunian Pan
 email: yp1170@nyu.edu
 """
 
-from typing import Optional, Tuple
 
 import jax
 import jax.numpy as jnp
@@ -33,8 +32,8 @@ def generate_brownian_increments(
     n_paths: int,
     dim: int,
     sqrt_dt: float,
-    cholesky: Optional[jax.Array] = None,
-) -> Tuple[jax.Array, jax.Array]:
+    cholesky: jax.Array | None = None,
+) -> tuple[jax.Array, jax.Array]:
     """
     Generate correlated Brownian increments.
 
@@ -62,7 +61,7 @@ def generate_compound_poisson_jumps(
     lambda_dt: float,
     jump_size_fn,
     max_jumps: int = 10,
-) -> Tuple[jax.Array, jax.Array]:
+) -> tuple[jax.Array, jax.Array]:
     """
     Fixed-size compound Poisson jump generation for use inside lax.scan.
 

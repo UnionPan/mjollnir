@@ -22,7 +22,7 @@ class RegimeSwitchingProcess(StochasticProcess):
     def set_regime_params(self, param_name: str, values: list):
         """Set regime-dependent parameters (e.g., mu, sigma for each regime)"""
         self.regime_params[param_name] = np.array(values)
-        
+
     @abstractmethod
     def drift_regime(self, X: np.ndarray, t: float, regime: int) -> np.ndarray:
         """

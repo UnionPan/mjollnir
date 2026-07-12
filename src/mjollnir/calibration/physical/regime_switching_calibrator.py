@@ -20,12 +20,10 @@ email: yp1170@nyu.edu
 """
 
 import numpy as np
-import pandas as pd
 from scipy import stats
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Tuple, Callable
+from collections.abc import Callable
 import warnings
-from datetime import date
 
 from .gbm_calibrator import GBMCalibrator
 from .data_utils import compute_returns
@@ -71,7 +69,7 @@ class RegimeSwitchingCalibrationResult:
     """Result of regime-switching model calibration."""
 
     # Regime parameters
-    regime_params: Dict[int, RegimeParameters]
+    regime_params: dict[int, RegimeParameters]
 
     # Transition matrix
     transition_matrix: np.ndarray  # P[i,j] = prob(regime i → regime j)
@@ -82,7 +80,7 @@ class RegimeSwitchingCalibrationResult:
 
     # Metadata
     n_regimes: int
-    regime_names: Dict[int, str]
+    regime_names: dict[int, str]
 
     # Diagnostics
     method: str                    # 'manual', 'hmm', 'threshold'
@@ -208,7 +206,7 @@ class RegimeSwitchingCalibrator:
         prices: np.ndarray,
         dates: np.ndarray,
         regime_labeler: Callable,
-        regime_names: Dict[int, str],
+        regime_names: dict[int, str],
     ) -> RegimeSwitchingCalibrationResult:
         """
         Calibrate with manual regime labels.
@@ -247,7 +245,7 @@ class RegimeSwitchingCalibrator:
         dates: np.ndarray,
         bear_threshold: float = -0.20,
         bull_threshold: float = 0.20,
-        regime_names: Dict[int, str] = None,
+        regime_names: dict[int, str] = None,
     ) -> RegimeSwitchingCalibrationResult:
         """
         Automatic regime labeling based on drawdown/rally thresholds.
@@ -308,7 +306,7 @@ class RegimeSwitchingCalibrator:
         prices: np.ndarray,
         dates: np.ndarray,
         regime_labels: np.ndarray,
-        regime_names: Dict[int, str],
+        regime_names: dict[int, str],
         method: str,
     ) -> RegimeSwitchingCalibrationResult:
         """
@@ -397,7 +395,7 @@ class RegimeSwitchingCalibrator:
         self,
         regime_labels: np.ndarray,
         regime_id: int,
-    ) -> Dict:
+    ) -> dict:
         """
         Analyze how long the asset stays in this regime.
         """
@@ -512,10 +510,10 @@ class RegimeSwitchingSimulator:
         T: float,
         n_paths: int,
         scenario: str = 'baseline',
-        initial_regime: Optional[int] = None,
+        initial_regime: int | None = None,
         vol_multiplier: float = 1.0,
-        seed: Optional[int] = None,
-    ) -> Tuple[np.ndarray, np.ndarray]:
+        seed: int | None = None,
+    ) -> tuple[np.ndarray, np.ndarray]:
         """
         Simulate price paths with regime switching.
 
@@ -620,8 +618,8 @@ class RegimeSwitchingSimulator:
         S0: float,
         T: float,
         n_paths: int = 1000,
-        scenarios: List[str] = None,
-    ) -> Dict[str, Dict]:
+        scenarios: list[str] = None,
+    ) -> dict[str, dict]:
         """
         Run multiple scenarios and return summary statistics.
 

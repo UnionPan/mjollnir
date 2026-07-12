@@ -4,9 +4,8 @@ Heston cache builder and cached RL environment.
 Uses Zarr to store precomputed spot/variance paths and option chains.
 """
 
-from dataclasses import dataclass
 from datetime import date, timedelta
-from typing import Dict, Any, Optional, Tuple, List
+from typing import Any
 
 import numpy as np
 
@@ -37,10 +36,10 @@ def build_heston_cache(
     n_paths: int,
     max_steps: int,
     dt: float,
-    params: Optional[HestonParams] = None,
-    option_maturities: Optional[List[int]] = None,
-    option_moneyness: Optional[List[float]] = None,
-    seed: Optional[int] = None,
+    params: HestonParams | None = None,
+    option_maturities: list[int] | None = None,
+    option_moneyness: list[float] | None = None,
+    seed: int | None = None,
     chunk_paths: int = 32,
     chunk_steps: int = 4,
 ) -> None:
@@ -164,7 +163,7 @@ def build_heston_cache(
             option_features_arr[p, t, :] = option_features.astype(np.float32)
 
 
-def _extract_grid_prices(option_chain: Any, S: float, option_grid: Dict[int, List[float]]) -> np.ndarray:
+def _extract_grid_prices(option_chain: Any, S: float, option_grid: dict[int, list[float]]) -> np.ndarray:
     if option_chain is None:
         return np.zeros(sum(len(v) for v in option_grid.values()) * 2, dtype=np.float32)
 
@@ -192,7 +191,7 @@ def _extract_grid_prices(option_chain: Any, S: float, option_grid: Dict[int, Lis
     return np.array(prices, dtype=np.float32)
 
 
-def _vectorize_option_chain(option_chain: Any, S: float, option_grid: Dict[int, List[float]]) -> np.ndarray:
+def _vectorize_option_chain(option_chain: Any, S: float, option_grid: dict[int, list[float]]) -> np.ndarray:
     if option_chain is None:
         feature_dim = sum(len(v) for v in option_grid.values()) * 4
         return np.zeros(feature_dim, dtype=np.float32)
@@ -240,13 +239,13 @@ class CachedHestonEnv(gym.Env if gym else object):
         self,
         store_path: str,
         task: str = "hedging",
-        liability: Optional[Liability] = None,
+        liability: Liability | None = None,
         initial_cash: float = 10.0,
         transaction_cost_pct: float = 0.001,
         position_limits: float = 100.0,
         hedge_error_penalty: float = 1.0,
-        render_mode: Optional[str] = None,
-        random_seed: Optional[int] = None,
+        render_mode: str | None = None,
+        random_seed: int | None = None,
     ):
         if zarr is None:
             raise ImportError("zarr is required. Install with: pip install zarr")
@@ -321,9 +320,9 @@ class CachedHestonEnv(gym.Env if gym else object):
 
     def reset(
         self,
-        seed: Optional[int] = None,
-        options: Optional[Dict[str, Any]] = None,
-    ) -> Tuple[Dict[str, np.ndarray], Dict[str, Any]]:
+        seed: int | None = None,
+        options: dict[str, Any] | None = None,
+    ) -> tuple[dict[str, np.ndarray], dict[str, Any]]:
         super().reset(seed=seed)
         if seed is not None:
             self._rng.seed(seed)
@@ -352,7 +351,7 @@ class CachedHestonEnv(gym.Env if gym else object):
     def step(
         self,
         action: np.ndarray,
-    ) -> Tuple[Dict[str, np.ndarray], float, bool, bool, Dict[str, Any]]:
+    ) -> tuple[dict[str, np.ndarray], float, bool, bool, dict[str, Any]]:
         action = np.array(action, dtype=np.float32).flatten()
         if action.shape[0] != self.n_instruments:
             raise ValueError(f"Action must have shape ({self.n_instruments},), got {action.shape}")
@@ -385,7 +384,7 @@ class CachedHestonEnv(gym.Env if gym else object):
 
         return self._get_observation(), reward, terminated, truncated, self._get_info()
 
-    def _get_observation(self) -> Dict[str, np.ndarray]:
+    def _get_observation(self) -> dict[str, np.ndarray]:
         option_features = self.option_features_arr[self.path_index, self.t]
         portfolio_weights = self.positions / (self.position_limits + 1e-8)
         return {
@@ -395,7 +394,7 @@ class CachedHestonEnv(gym.Env if gym else object):
             'portfolio_weights': portfolio_weights.astype(np.float32),
         }
 
-    def _get_info(self) -> Dict[str, Any]:
+    def _get_info(self) -> dict[str, Any]:
         return {
             'S': self.S,
             'v': self.v,
@@ -458,8 +457,8 @@ class CachedHestonEnv(gym.Env if gym else object):
 def _option_grid_index(
     maturity: int,
     moneyness: float,
-    maturities: List[int],
-    moneyness_list: List[float],
+    maturities: list[int],
+    moneyness_list: list[float],
     option_type: str,
 ) -> int:
     idx = 0

@@ -24,7 +24,8 @@ from __future__ import annotations
 
 import functools
 import os
-from typing import Callable, TypeVar
+from typing import TypeVar
+from collections.abc import Callable
 
 import jax
 

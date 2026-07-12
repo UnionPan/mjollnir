@@ -17,7 +17,7 @@ pip install -e ".[metal]"   # Apple silicon
 pip install -e ".[dev]"     # + pytest, ruff, mypy
 ```
 
-Requires Python >= 3.10.
+Requires Python >= 3.11 (floor set by jax 0.9 and flax).
 
 ## Two consumption modes
 

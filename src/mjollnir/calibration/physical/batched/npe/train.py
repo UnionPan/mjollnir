@@ -11,7 +11,6 @@ os.environ["JAX_PLATFORMS"] = "cpu"
 
 import pickle
 from dataclasses import dataclass
-from typing import Optional, Tuple
 
 import jax
 import jax.numpy as jnp
@@ -191,7 +190,7 @@ def load_npe(path: str) -> TrainedNPE:
 
 def sample_posterior(
     trained_npe: TrainedNPE,
-    apply_fn_or_none: Optional[callable],
+    apply_fn_or_none: callable | None,
     s_raw,
     key,
     n_samples=4096,

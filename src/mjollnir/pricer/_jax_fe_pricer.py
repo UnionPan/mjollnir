@@ -20,7 +20,6 @@ import jax.numpy as jnp
 import jax.lax as lax
 import numpy as np
 
-from ..processes._jax_utils import to_numpy
 from ._jax_fd_pricer import _thomas_solve, _tridiag_matvec
 
 

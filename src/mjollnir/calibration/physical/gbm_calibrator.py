@@ -24,7 +24,6 @@ email: yp1170@nyu.edu
 import numpy as np
 from scipy import stats
 from dataclasses import dataclass
-from typing import Optional, Dict
 import warnings
 
 
@@ -320,7 +319,7 @@ class GBMCalibrator:
         prices: np.ndarray,
         window: int = 252,
         dt: float = 1.0 / 252.0,
-    ) -> Dict[str, np.ndarray]:
+    ) -> dict[str, np.ndarray]:
         """
         Perform rolling window calibration.
 

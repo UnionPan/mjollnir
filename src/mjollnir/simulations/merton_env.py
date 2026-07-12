@@ -6,7 +6,7 @@ Trading environment with jump-diffusion spot dynamics.
 
 from dataclasses import dataclass
 from datetime import date, timedelta
-from typing import Dict, Any, Optional, Tuple, List
+from typing import Any
 
 import numpy as np
 
@@ -64,19 +64,19 @@ class MertonEnv(gym.Env if gym else object):
 
     def __init__(
         self,
-        params: Optional[MertonParams] = None,
+        params: MertonParams | None = None,
         max_steps: int = 252,
         dt: float = 1 / 252,
         discretization: str = "euler",
         include_options: bool = True,
-        option_maturities: Optional[List[int]] = None,
-        option_moneyness: Optional[List[float]] = None,
+        option_maturities: list[int] | None = None,
+        option_moneyness: list[float] | None = None,
         task: str = "trading",
-        liability: Optional[Liability] = None,
+        liability: Liability | None = None,
         initial_cash: float = 10_000.0,
         transaction_cost_pct: float = 0.001,
         position_limits: float = 100.0,
-        render_mode: Optional[str] = None,
+        render_mode: str | None = None,
     ):
         super().__init__()
 
@@ -185,9 +185,9 @@ class MertonEnv(gym.Env if gym else object):
 
     def reset(
         self,
-        seed: Optional[int] = None,
-        options: Optional[Dict[str, Any]] = None,
-    ) -> Tuple[Dict[str, np.ndarray], Dict[str, Any]]:
+        seed: int | None = None,
+        options: dict[str, Any] | None = None,
+    ) -> tuple[dict[str, np.ndarray], dict[str, Any]]:
         super().reset(seed=seed)
         if seed is not None:
             np.random.seed(seed)
@@ -231,7 +231,7 @@ class MertonEnv(gym.Env if gym else object):
     def step(
         self,
         action: np.ndarray,
-    ) -> Tuple[Dict[str, np.ndarray], float, bool, bool, Dict[str, Any]]:
+    ) -> tuple[dict[str, np.ndarray], float, bool, bool, dict[str, Any]]:
         action = np.array(action, dtype=np.float32).flatten()
         if action.shape[0] != self.n_instruments:
             raise ValueError(f"Action must have shape ({self.n_instruments},), got {action.shape}")
@@ -275,7 +275,7 @@ class MertonEnv(gym.Env if gym else object):
 
         return self._get_observation(), float(reward), terminated, truncated, self._get_info()
 
-    def _get_observation(self) -> Dict[str, np.ndarray]:
+    def _get_observation(self) -> dict[str, np.ndarray]:
         if self.include_options:
             option_features = self._vectorize_option_chain()
             portfolio_weights = self.positions / (self.position_limits + 1e-8)
@@ -295,7 +295,7 @@ class MertonEnv(gym.Env if gym else object):
             'action_mask': self.action_mask.copy(),
         }
 
-    def _get_info(self) -> Dict[str, Any]:
+    def _get_info(self) -> dict[str, Any]:
         return {
             'S': self.S,
             't': self.t,

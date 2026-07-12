@@ -240,7 +240,7 @@ class YieldCurveOption(PathIndependentDerivative):
         self.notional = float(notional)
 
         if self.call_or_put not in ["call", "put"]:
-            raise ValueError(f"call_or_put must be 'call' or 'put'")
+            raise ValueError("call_or_put must be 'call' or 'put'")
 
     def payoff(self, rates_T: np.ndarray) -> np.ndarray:
         """
@@ -292,7 +292,7 @@ class BondOption(PathIndependentDerivative):
         self.bond_maturity = float(bond_maturity) if bond_maturity else maturity
 
         if self.call_or_put not in ["call", "put"]:
-            raise ValueError(f"call_or_put must be 'call' or 'put'")
+            raise ValueError("call_or_put must be 'call' or 'put'")
 
     def payoff(self, bond_price_T: np.ndarray) -> np.ndarray:
         """

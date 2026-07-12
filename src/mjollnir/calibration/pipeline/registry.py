@@ -11,8 +11,8 @@ names; the per-asset ``fit`` path here is the scipy reference route.
 
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass, field, is_dataclass
-from typing import Callable
+from dataclasses import asdict, dataclass, is_dataclass
+from collections.abc import Callable
 
 import numpy as np
 
@@ -264,7 +264,7 @@ def _batch_heston_npe(price_arrays: list[np.ndarray], dt: float) -> dict:
         returns_list = [np.diff(np.log(prices)) for prices in price_arrays]
         returns, mask = common.pad_returns(returns_list)
         return estimator.fit_batch(returns, mask, dt)
-    except FileNotFoundError as e:
+    except FileNotFoundError:
         # Re-raise with same message to surface in runner error handling
         raise
 

@@ -62,10 +62,13 @@ try:
         bs_price_grid_jax,
     )
     __all__ += [
-        "heston_price_grid_jax", "heston_price_slice_fast",
-        "merton_price_grid_jax", "merton_price_slice_fast",
-        "bates_price_grid_jax", "bates_price_slice_fast",
+        "bates_price_grid_jax",
+        "bates_price_slice_fast",
         "bs_price_grid_jax",
+        "heston_price_grid_jax",
+        "heston_price_slice_fast",
+        "merton_price_grid_jax",
+        "merton_price_slice_fast",
     ]
 except ImportError:
     pass
@@ -86,15 +89,23 @@ try:
         jax_carr_madan_price_merton,
     )
     __all__ += [
-        "jax_cos_price_gbm", "jax_cos_price_heston", "jax_cos_price_merton",
-        "jax_cos_price_bates", "jax_cos_price_kou", "jax_cos_price_vg",
-        "jax_cos_price_nig",
-        "jax_cos_price_gbm_multi", "jax_cos_price_heston_multi",
-        "jax_cos_price_merton_multi", "jax_cos_price_bates_multi",
-        "jax_cos_price_kou_multi", "jax_cos_price_vg_multi",
-        "jax_cos_price_nig_multi",
-        "jax_carr_madan_price_gbm", "jax_carr_madan_price_heston",
+        "jax_carr_madan_price_gbm",
+        "jax_carr_madan_price_heston",
         "jax_carr_madan_price_merton",
+        "jax_cos_price_bates",
+        "jax_cos_price_bates_multi",
+        "jax_cos_price_gbm",
+        "jax_cos_price_gbm_multi",
+        "jax_cos_price_heston",
+        "jax_cos_price_heston_multi",
+        "jax_cos_price_kou",
+        "jax_cos_price_kou_multi",
+        "jax_cos_price_merton",
+        "jax_cos_price_merton_multi",
+        "jax_cos_price_nig",
+        "jax_cos_price_nig_multi",
+        "jax_cos_price_vg",
+        "jax_cos_price_vg_multi",
     ]
 except ImportError:
     pass

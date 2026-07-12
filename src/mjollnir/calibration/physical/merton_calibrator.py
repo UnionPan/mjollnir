@@ -18,7 +18,6 @@ email: yp1170@nyu.edu
 """
 
 from dataclasses import dataclass
-from typing import Tuple
 import numpy as np
 from scipy import optimize, stats
 

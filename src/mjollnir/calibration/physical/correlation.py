@@ -10,9 +10,7 @@ email: yp1170@nyu.edu
 """
 
 import numpy as np
-from scipy import linalg
-from dataclasses import dataclass, field
-from typing import Dict, List, Optional
+from dataclasses import dataclass
 import time
 import logging
 
@@ -26,7 +24,7 @@ class CorrelationResult:
     correlation: np.ndarray      # (n, n) correlation matrix
     covariance: np.ndarray       # (n, n) covariance matrix
     volatilities: np.ndarray     # (n,) annualized vols
-    asset_names: List[str]
+    asset_names: list[str]
 
     method: str
     n_observations: int
@@ -93,7 +91,7 @@ class CorrelationCalibrator:
     def fit(
         self,
         returns: np.ndarray,
-        asset_names: Optional[List[str]] = None,
+        asset_names: list[str] | None = None,
         method: str = 'shrinkage',
         **kwargs,
     ) -> CorrelationResult:
@@ -248,7 +246,7 @@ class CorrelationCalibrator:
         return corr, cov_shrunk
 
     def _random_matrix_cleaning(
-        self, returns: np.ndarray, q_ratio: Optional[float] = None, **kwargs
+        self, returns: np.ndarray, q_ratio: float | None = None, **kwargs
     ) -> tuple:
         """
         Marchenko-Pastur random-matrix cleaning.
@@ -426,8 +424,8 @@ def rolling_correlation(
 
 def correlation_stability(
     returns: np.ndarray,
-    windows: Optional[List[int]] = None,
-) -> Dict[str, float]:
+    windows: list[int] | None = None,
+) -> dict[str, float]:
     """
     Assess correlation stability across different estimation windows.
 

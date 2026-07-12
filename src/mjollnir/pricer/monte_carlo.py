@@ -7,7 +7,6 @@ email: yp1170@nyu.edu
 import copy
 import numpy as np
 import time
-from typing import Optional, Union
 
 from .base import Pricer, PricingResult
 from mjollnir.derivatives.base import PathIndependentDerivative, PathDependentDerivative
@@ -41,8 +40,8 @@ class MonteCarloPricer(Pricer):
         self,
         derivative,
         process,
-        X0: Union[float, np.ndarray],
-        config: Optional[object] = None,
+        X0: float | np.ndarray,
+        config: object | None = None,
         scheme: str = "euler",
         compute_greeks: bool = False,
         greek_bump: float = 0.01,
@@ -219,7 +218,7 @@ class MonteCarloPricer(Pricer):
         self,
         derivative,
         process,
-        X0: Union[float, np.ndarray],
+        X0: float | np.ndarray,
         path_counts: list = None,
         scheme: str = "euler",
         n_steps: int = 252,
@@ -263,10 +262,10 @@ class MonteCarloPricer(Pricer):
         self,
         derivative,
         process,
-        X0: Union[float, np.ndarray],
+        X0: float | np.ndarray,
         control_derivative,
         control_price: float,
-        config: Optional[object] = None,
+        config: object | None = None,
         scheme: str = "euler",
     ) -> PricingResult:
         """

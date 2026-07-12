@@ -10,7 +10,6 @@ author: Yunian Pan
 email: yp1170@nyu.edu
 """
 
-from typing import Tuple
 import numpy as np
 import warnings
 
@@ -69,7 +68,7 @@ class RoughBergomi(MultiFactorProcess):
         T: float,
         config: SimulationConfig,
         scheme: str = "euler",
-    ) -> Tuple[np.ndarray, np.ndarray]:
+    ) -> tuple[np.ndarray, np.ndarray]:
         """
         Simulate rBergomi paths using a kernel-based RL-fBm approximation.
 

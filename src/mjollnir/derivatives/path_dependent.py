@@ -21,7 +21,7 @@ class AsianOption(PathDependentDerivative):
         if self.call_or_put not in ["call", "put"]:
             raise ValueError(f"call_or_put must be 'call' or 'put', got {call_or_put}")
         if self.average_type not in ["arithmetic", "geometric"]:
-            raise ValueError(f"average_type must be 'arithmetic' or 'geometric'")
+            raise ValueError("average_type must be 'arithmetic' or 'geometric'")
 
     def payoff(self, path: np.ndarray) -> np.ndarray:
         """
@@ -124,7 +124,7 @@ class LookbackOption(PathDependentDerivative):
         self.lookback_type = lookback_type.lower()
 
         if self.lookback_type not in ["floating", "fixed"]:
-            raise ValueError(f"lookback_type must be 'floating' or 'fixed'")
+            raise ValueError("lookback_type must be 'floating' or 'fixed'")
 
     def payoff(self, path: np.ndarray) -> np.ndarray:
         if path.ndim == 3:

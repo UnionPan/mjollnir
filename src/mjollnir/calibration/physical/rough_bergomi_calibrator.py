@@ -14,7 +14,6 @@ email: yp1170@nyu.edu
 """
 
 from dataclasses import dataclass
-from typing import Optional, Dict
 import numpy as np
 
 
@@ -33,7 +32,7 @@ class RoughBergomiCalibrationResult:
     window: int
     max_lag: int
 
-    diagnostics: Dict[str, float]
+    diagnostics: dict[str, float]
 
     def summary(self) -> str:
         lines = [

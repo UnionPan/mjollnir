@@ -10,7 +10,6 @@ email: yp1170@nyu.edu
 import numpy as np
 from scipy import optimize
 from dataclasses import dataclass
-from typing import Optional, Tuple, Dict, List, Callable
 import time
 
 from ..data.data_provider import OptionChain
@@ -22,30 +21,30 @@ from ...derivatives import EuropeanCall, EuropeanPut
 @dataclass
 class CalibrationResult:
     """Result of model calibration."""
-    
+
     # Calibrated parameters
     kappa: float      # Mean reversion speed
     theta: float      # Long-term variance
     xi: float         # Vol of vol
     rho: float        # Correlation
     v0: float         # Initial variance
-    
+
     # Fit quality
     rmse: float                    # Root mean squared error
-    rmse_iv: Optional[float]       # RMSE in IV terms
+    rmse_iv: float | None       # RMSE in IV terms
     max_error: float               # Maximum absolute error
-    
+
     # Optimization info
     n_iterations: int
     computation_time: float
     success: bool
     message: str
-    
+
     # Additional diagnostics
     feller_satisfied: bool         # 2*kappa*theta > xi^2
-    
+
     @property
-    def params(self) -> Dict[str, float]:
+    def params(self) -> dict[str, float]:
         """Return parameters as dictionary."""
         return {
             'kappa': self.kappa,
@@ -54,7 +53,7 @@ class CalibrationResult:
             'rho': self.rho,
             'v0': self.v0,
         }
-    
+
     def __repr__(self) -> str:
         lines = [
             "HestonCalibrationResult:",
@@ -63,7 +62,7 @@ class CalibrationResult:
             f"  ξ (xi)    = {self.xi:.4f}  (vol of vol)",
             f"  ρ (rho)   = {self.rho:.4f}  (correlation)",
             f"  v₀        = {self.v0:.4f}  (initial var, σ₀ ≈ {np.sqrt(self.v0)*100:.1f}%)",
-            f"",
+            "",
             f"  Feller: {'✓' if self.feller_satisfied else '✗'} (2κθ {'>' if self.feller_satisfied else '<'} ξ²)",
             f"  RMSE: {self.rmse:.6f}",
             f"  Time: {self.computation_time:.2f}s",
@@ -82,7 +81,7 @@ class HestonCalibrator:
         result = calibrator.calibrate(option_chain, spot, rate)
         print(result)
     """
-    
+
     # Parameter bounds: (lower, upper)
     DEFAULT_BOUNDS = {
         'kappa': (0.1, 10.0),
@@ -91,7 +90,7 @@ class HestonCalibrator:
         'rho': (-0.99, 0.99),
         'v0': (0.001, 1.0),
     }
-    
+
     def __init__(
         self,
         pricer=None,
@@ -120,14 +119,14 @@ class HestonCalibrator:
             self.pricer = pricer
         self.weighting = weighting
         self.feller_penalty = feller_penalty
-    
+
     def calibrate(
         self,
         chain: OptionChain,
-        spot: Optional[float] = None,
-        rate: Optional[float] = None,
-        initial_guess: Optional[Dict[str, float]] = None,
-        bounds: Optional[Dict[str, Tuple[float, float]]] = None,
+        spot: float | None = None,
+        rate: float | None = None,
+        initial_guess: dict[str, float] | None = None,
+        bounds: dict[str, tuple[float, float]] | None = None,
         method: str = 'differential_evolution',
         maxiter: int = 1000,
         tol: float = 1e-6,
@@ -149,17 +148,17 @@ class HestonCalibrator:
             CalibrationResult with calibrated parameters
         """
         start_time = time.time()
-        
+
         # Extract market data
         S0 = spot or chain.spot_price
         r = rate or chain.risk_free_rate
-        
+
         # Prepare calibration targets
         targets = self._prepare_targets(chain, S0)
-        
+
         if len(targets['strikes']) == 0:
             raise ValueError("No valid options for calibration")
-        
+
         # Set up bounds
         param_bounds = bounds or self.DEFAULT_BOUNDS
         bounds_array = [
@@ -169,13 +168,13 @@ class HestonCalibrator:
             param_bounds['rho'],
             param_bounds['v0'],
         ]
-        
+
         # Initial guess
         if initial_guess is None:
             # Use ATM vol to estimate v0 and theta
             atm_idx = np.argmin(np.abs(targets['moneyness'] - 1.0))
             atm_iv = targets['ivs'][atm_idx] if targets['ivs'][atm_idx] else 0.2
-            
+
             initial_guess = {
                 'kappa': 2.0,
                 'theta': atm_iv**2,
@@ -183,7 +182,7 @@ class HestonCalibrator:
                 'rho': -0.7,
                 'v0': atm_iv**2,
             }
-        
+
         x0 = [
             initial_guess['kappa'],
             initial_guess['theta'],
@@ -191,11 +190,11 @@ class HestonCalibrator:
             initial_guess['rho'],
             initial_guess['v0'],
         ]
-        
+
         # Define objective function
         def objective(params):
             return self._objective(params, targets, S0, r)
-        
+
         # Optimize
         if method == 'differential_evolution':
             result = optimize.differential_evolution(
@@ -214,21 +213,21 @@ class HestonCalibrator:
                 bounds=bounds_array,
                 options={'maxiter': maxiter, 'ftol': tol},
             )
-        
+
         # Extract results
         kappa, theta, xi, rho, v0 = result.x
-        
+
         # Calculate fit metrics
         model_prices = self._compute_prices(result.x, targets, S0, r)
         errors = model_prices - targets['prices']
         rmse = np.sqrt(np.mean(errors**2))
         max_error = np.max(np.abs(errors))
-        
+
         # RMSE in IV terms (approximate)
         rmse_iv = None  # TODO: implement proper IV conversion
-        
+
         computation_time = time.time() - start_time
-        
+
         return CalibrationResult(
             kappa=kappa,
             theta=theta,
@@ -244,12 +243,12 @@ class HestonCalibrator:
             message=result.message if hasattr(result, 'message') else "",
             feller_satisfied=(2 * kappa * theta > xi**2),
         )
-    
+
     def _prepare_targets(
         self,
         chain: OptionChain,
         S0: float,
-    ) -> Dict:
+    ) -> dict:
         """Extract calibration targets from option chain."""
         strikes = []
         maturities = []
@@ -257,22 +256,22 @@ class HestonCalibrator:
         ivs = []
         is_calls = []
         weights = []
-        
+
         for opt in chain.options:
             # Use mid price as target
             if opt.mid <= 0:
                 continue
-                
+
             T = (opt.expiry - chain.reference_date).days / 365.0
             if T <= 0:
                 continue
-            
+
             strikes.append(opt.strike)
             maturities.append(T)
             prices.append(opt.mid)
             ivs.append(opt.implied_volatility)
             is_calls.append(opt.is_call)
-            
+
             # Compute weight
             if self.weighting == 'uniform':
                 w = 1.0
@@ -284,11 +283,11 @@ class HestonCalibrator:
             else:
                 w = 1.0
             weights.append(w)
-        
+
         # Normalize weights
         weights = np.array(weights)
         weights = weights / np.sum(weights)
-        
+
         return {
             'strikes': np.array(strikes),
             'maturities': np.array(maturities),
@@ -298,34 +297,34 @@ class HestonCalibrator:
             'weights': weights,
             'moneyness': np.array(strikes) / S0,
         }
-    
+
     def _objective(
         self,
         params: np.ndarray,
-        targets: Dict,
+        targets: dict,
         S0: float,
         r: float,
     ) -> float:
         """Compute calibration objective (weighted sum of squared errors)."""
         kappa, theta, xi, rho, v0 = params
-        
+
         # Feller condition penalty
         feller_violation = max(0, xi**2 - 2 * kappa * theta)
         penalty = self.feller_penalty * feller_violation
-        
+
         # Compute model prices
         model_prices = self._compute_prices(params, targets, S0, r)
-        
+
         # Weighted squared errors
         errors = (model_prices - targets['prices'])**2
         weighted_errors = np.sum(targets['weights'] * errors)
-        
+
         return weighted_errors + penalty
-    
+
     def _compute_prices(
         self,
         params: np.ndarray,
-        targets: Dict,
+        targets: dict,
         S0: float,
         r: float,
     ) -> np.ndarray:
@@ -369,7 +368,7 @@ class HestonCalibrator:
                 try:
                     result = self.pricer.price(option, heston, X0=np.array([S0, v0]))
                     prices[i] = max(result.price, 0.0)
-                except Exception as e:
+                except Exception:
                     # Fallback to intrinsic value if pricing fails
                     if is_call:
                         prices[i] = max(S0 - K * np.exp(-r * T), 0)
@@ -386,7 +385,7 @@ class HestonCalibrator:
                 prices[i] = price
 
         return prices
-    
+
     def _heston_price_simpson(
         self,
         S0: float,
@@ -408,25 +407,25 @@ class HestonCalibrator:
         # Integration bounds
         N = 64
         u_max = 50
-        
+
         # Simpson's rule integration
         du = u_max / N
-        
+
         # P1 and P2 integrands
         integral1 = 0.0
         integral2 = 0.0
-        
+
         for j in range(1, N + 1):
             u = j * du
-            
+
             # Characteristic function
             phi1 = self._heston_cf(u - 1j, S0, K, T, r, kappa, theta, xi, rho, v0)
             phi2 = self._heston_cf(u, S0, K, T, r, kappa, theta, xi, rho, v0)
-            
+
             # Integrands
             integrand1 = np.real(np.exp(-1j * u * np.log(K)) * phi1 / (1j * u * S0 * np.exp(r * T)))
             integrand2 = np.real(np.exp(-1j * u * np.log(K)) * phi2 / (1j * u))
-            
+
             # Simpson weights
             if j == 1 or j == N:
                 w = 1
@@ -434,26 +433,26 @@ class HestonCalibrator:
                 w = 4
             else:
                 w = 2
-                
+
             integral1 += w * integrand1
             integral2 += w * integrand2
-        
+
         integral1 *= du / 3
         integral2 *= du / 3
-        
+
         # Probabilities
         P1 = 0.5 + integral1 / np.pi
         P2 = 0.5 + integral2 / np.pi
-        
+
         # Call price
         call_price = S0 * P1 - K * np.exp(-r * T) * P2
-        
+
         if is_call:
             return max(call_price, 0)
         else:
             # Put via put-call parity
             return max(call_price - S0 + K * np.exp(-r * T), 0)
-    
+
     def _heston_cf(
         self,
         u: complex,
@@ -470,17 +469,17 @@ class HestonCalibrator:
         """Heston characteristic function."""
         # Log-Heston CF
         x0 = np.log(S0)
-        
+
         d = np.sqrt((rho * xi * 1j * u - kappa)**2 + xi**2 * (1j * u + u**2))
         g = (kappa - rho * xi * 1j * u - d) / (kappa - rho * xi * 1j * u + d)
-        
+
         C = r * 1j * u * T + (kappa * theta / xi**2) * (
-            (kappa - rho * xi * 1j * u - d) * T 
+            (kappa - rho * xi * 1j * u - d) * T
             - 2 * np.log((1 - g * np.exp(-d * T)) / (1 - g))
         )
-        
+
         D = ((kappa - rho * xi * 1j * u - d) / xi**2) * (
             (1 - np.exp(-d * T)) / (1 - g * np.exp(-d * T))
         )
-        
+
         return np.exp(C + D * v0 + 1j * u * x0)

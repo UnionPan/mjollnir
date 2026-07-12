@@ -173,7 +173,7 @@ class ExchangeOption(PathIndependentDerivative):
         self.exchange_direction = exchange_direction.lower()
 
         if self.exchange_direction not in ["1_for_2", "2_for_1"]:
-            raise ValueError(f"exchange_direction must be '1_for_2' or '2_for_1'")
+            raise ValueError("exchange_direction must be '1_for_2' or '2_for_1'")
 
     def payoff(self, S_T: np.ndarray) -> np.ndarray:
         """
@@ -221,7 +221,7 @@ class QuantoOption(PathIndependentDerivative):
         self.quanto_rate = float(quanto_rate)
 
         if self.call_or_put not in ["call", "put"]:
-            raise ValueError(f"call_or_put must be 'call' or 'put'")
+            raise ValueError("call_or_put must be 'call' or 'put'")
 
     def payoff(self, S_T: np.ndarray) -> np.ndarray:
         """

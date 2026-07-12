@@ -28,10 +28,9 @@ Email: yp1170@nyu.edu
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Optional
 
 import numpy as np
-from scipy import optimize, stats
+from scipy import stats
 
 
 @dataclass
@@ -108,7 +107,7 @@ class HestonQMLECalibrator:
 
     def __init__(
         self,
-        variance_estimator: Optional[np.ndarray] = None,
+        variance_estimator: np.ndarray | None = None,
         smooth_window: int = 10,
     ) -> None:
         """

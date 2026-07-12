@@ -15,9 +15,7 @@ Email: yp1170@nyu.edu
 """
 
 import numpy as np
-import pandas as pd
 from datetime import date, timedelta
-from typing import List, Dict, Optional
 from dataclasses import dataclass
 from scipy.stats import norm
 from scipy.integrate import quad
@@ -28,10 +26,10 @@ try:
     from mjollnir.pricer._jax_mgf_pricer import heston_price_slice_fast as heston_price_slice
     from mjollnir.pricer.heston_mgf_pricer import heston_price_vanilla
 except ImportError:
-    from mjollnir.pricer.heston_mgf_pricer import heston_price_vanilla, heston_price_slice
+    from mjollnir.pricer.heston_mgf_pricer import heston_price_slice
 
 
-def get_default_moneyness_by_maturity() -> Dict[int, List[float]]:
+def get_default_moneyness_by_maturity() -> dict[int, list[float]]:
     """
     Default adaptive moneyness grid: tighter for short maturities, wider for long.
 
@@ -108,11 +106,11 @@ class SyntheticEquityOptionChainGenerator:
         risk_free_rate: float = 0.03,
         dividend_yield: float = 0.01,
         # Equity-specific: standard expiries (10-120 days)
-        maturities_days: List[int] = [10, 20, 30, 60, 90, 120],
+        maturities_days: list[int] = [10, 20, 30, 60, 90, 120],
         # Equity-specific: adaptive strike spacing by maturity
         # Can be a single list (same for all maturities) or dict mapping maturity to moneyness
-        moneyness_range: List[float] = None,
-        moneyness_by_maturity: Dict[int, List[float]] = None,
+        moneyness_range: list[float] = None,
+        moneyness_by_maturity: dict[int, list[float]] = None,
         # Tighter spreads than crypto
         atm_spread_pct: float = 0.002,
         otm_spread_pct: float = 0.01,
@@ -123,7 +121,7 @@ class SyntheticEquityOptionChainGenerator:
         noise_level: float = 0.002,
         price_floor: float = 0.0001,  # Very low floor to not interfere with smile
         enforce_intrinsic: bool = True,
-        random_seed: Optional[int] = None,
+        random_seed: int | None = None,
         days_per_year: float = 365.0,
     ):
         """

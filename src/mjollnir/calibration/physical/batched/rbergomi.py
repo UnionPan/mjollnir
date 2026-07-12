@@ -7,7 +7,6 @@ Estimates Hurst parameter H and vol-of-vol eta from log-variance variogram.
 import jax
 import jax.numpy as jnp
 import numpy as np
-from .common import masked_mean
 
 
 def _rolling_mean_masked(x, mask, window):

@@ -17,13 +17,12 @@ email: yp1170@nyu.edu
 """
 
 import numpy as np
-import pandas as pd
-from dataclasses import dataclass, field
-from typing import Optional, Dict, List, Callable, Tuple
-from datetime import datetime, date
+from dataclasses import dataclass
+from collections.abc import Callable
+from datetime import datetime
 import warnings
 
-from .heston_calibrator import HestonCalibrator, CalibrationResult
+from .heston_calibrator import HestonCalibrator
 
 
 @dataclass
@@ -74,8 +73,8 @@ class RegimeSwitchingHestonResult:
 
     # Regime information
     n_regimes: int
-    regime_names: Dict[int, str]
-    regime_params: Dict[int, RegimeHestonParameters]
+    regime_names: dict[int, str]
+    regime_params: dict[int, RegimeHestonParameters]
 
     # Transition matrix
     transition_matrix: np.ndarray
@@ -234,11 +233,11 @@ class RegimeSwitchingHestonCalibrator:
 
     def fit_manual(
         self,
-        option_chains: List,  # List of OptionChain objects
+        option_chains: list,  # List of OptionChain objects
         regime_labeler: Callable,
-        regime_names: Dict[int, str],
-        spot_prices: Optional[np.ndarray] = None,
-        risk_free_rates: Optional[np.ndarray] = None,
+        regime_names: dict[int, str],
+        spot_prices: np.ndarray | None = None,
+        risk_free_rates: np.ndarray | None = None,
     ) -> RegimeSwitchingHestonResult:
         """
         Calibrate with manual regime labels.
@@ -254,7 +253,7 @@ class RegimeSwitchingHestonCalibrator:
             RegimeSwitchingHestonResult
         """
         if self.verbose:
-            print(f"Calibrating regime-switching Heston model (manual labels)...")
+            print("Calibrating regime-switching Heston model (manual labels)...")
 
         # Extract dates and ATM IVs for regime labeling
         dates, atm_ivs = self._extract_market_features(option_chains)
@@ -274,11 +273,11 @@ class RegimeSwitchingHestonCalibrator:
 
     def fit_iv_threshold(
         self,
-        option_chains: List,
+        option_chains: list,
         low_vol_threshold: float = 0.15,
         high_vol_threshold: float = 0.30,
-        spot_prices: Optional[np.ndarray] = None,
-        risk_free_rates: Optional[np.ndarray] = None,
+        spot_prices: np.ndarray | None = None,
+        risk_free_rates: np.ndarray | None = None,
     ) -> RegimeSwitchingHestonResult:
         """
         Automatic regime detection based on ATM IV thresholds.
@@ -299,7 +298,7 @@ class RegimeSwitchingHestonCalibrator:
             RegimeSwitchingHestonResult
         """
         if self.verbose:
-            print(f"Detecting regimes based on ATM IV thresholds...")
+            print("Detecting regimes based on ATM IV thresholds...")
             print(f"  Low vol:  IV < {low_vol_threshold*100:.1f}%")
             print(f"  Normal:   {low_vol_threshold*100:.1f}% <= IV < {high_vol_threshold*100:.1f}%")
             print(f"  High vol: IV >= {high_vol_threshold*100:.1f}%")
@@ -330,8 +329,8 @@ class RegimeSwitchingHestonCalibrator:
 
     def _extract_market_features(
         self,
-        option_chains: List,
-    ) -> Tuple[np.ndarray, np.ndarray]:
+        option_chains: list,
+    ) -> tuple[np.ndarray, np.ndarray]:
         """
         Extract market features for regime detection.
 
@@ -371,12 +370,12 @@ class RegimeSwitchingHestonCalibrator:
 
     def _fit_from_labels(
         self,
-        option_chains: List,
+        option_chains: list,
         regime_labels: np.ndarray,
-        regime_names: Dict[int, str],
+        regime_names: dict[int, str],
         method: str,
-        spot_prices: Optional[np.ndarray] = None,
-        risk_free_rates: Optional[np.ndarray] = None,
+        spot_prices: np.ndarray | None = None,
+        risk_free_rates: np.ndarray | None = None,
     ) -> RegimeSwitchingHestonResult:
         """
         Core calibration logic given regime labels.
@@ -463,11 +462,11 @@ class RegimeSwitchingHestonCalibrator:
 
     def _calibrate_regime(
         self,
-        regime_chains: List,
+        regime_chains: list,
         regime_id: int,
         regime_name: str,
-        spot_prices: Optional[np.ndarray],
-        risk_free_rates: Optional[np.ndarray],
+        spot_prices: np.ndarray | None,
+        risk_free_rates: np.ndarray | None,
     ) -> RegimeHestonParameters:
         """
         Calibrate Heston parameters for a single regime.
@@ -564,7 +563,7 @@ class RegimeSwitchingHestonCalibrator:
     def _estimate_transition_matrix(
         self,
         regime_labels: np.ndarray,
-        regime_names: Dict[int, str],
+        regime_names: dict[int, str],
     ) -> np.ndarray:
         """
         Estimate transition probability matrix from regime sequence.
@@ -635,9 +634,9 @@ class RegimeSwitchingHestonSimulator:
         T: float,
         n_paths: int = 1000,
         scenario: str = 'baseline',
-        initial_regime: Optional[int] = None,
+        initial_regime: int | None = None,
         r: float = 0.0,
-    ) -> Tuple[np.ndarray, np.ndarray]:
+    ) -> tuple[np.ndarray, np.ndarray]:
         """
         Simulate price and variance paths with regime switching.
 
@@ -731,9 +730,9 @@ class RegimeSwitchingHestonSimulator:
         v0: float,
         T: float,
         n_paths: int,
-        scenarios: List[str],
+        scenarios: list[str],
         r: float = 0.0,
-    ) -> Dict:
+    ) -> dict:
         """
         Run multiple scenarios and compute statistics.
 

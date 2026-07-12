@@ -10,7 +10,6 @@ email: yp1170@nyu.edu
 import numpy as np
 from scipy import optimize
 from dataclasses import dataclass
-from typing import Optional, Tuple, Dict, List
 import time
 
 from ..data.data_provider import OptionChain
@@ -38,7 +37,7 @@ class SABRCalibrationResult:
     message: str
 
     @property
-    def params(self) -> Dict[str, float]:
+    def params(self) -> dict[str, float]:
         """Return parameters as dictionary."""
         return {
             'alpha': self.alpha,
@@ -54,7 +53,7 @@ class SABRCalibrationResult:
             f"  β (beta)  = {self.beta:.4f}  (CEV exponent)",
             f"  ρ (rho)   = {self.rho:.4f}  (correlation)",
             f"  ν (nu)    = {self.nu:.4f}  (ATM vol)",
-            f"",
+            "",
             f"  RMSE (IV): {self.rmse_iv:.6f}",
             f"  Max Error: {self.max_error_iv:.6f}",
             f"  Time: {self.computation_time:.2f}s",
@@ -98,7 +97,7 @@ class SABRCalibrator:
 
     def __init__(
         self,
-        beta: Optional[float] = None,
+        beta: float | None = None,
         weighting: str = 'vega',
     ):
         """
@@ -114,10 +113,10 @@ class SABRCalibrator:
     def calibrate(
         self,
         chain: OptionChain,
-        forward: Optional[float] = None,
-        maturity: Optional[float] = None,
-        initial_guess: Optional[Dict[str, float]] = None,
-        bounds: Optional[Dict[str, Tuple[float, float]]] = None,
+        forward: float | None = None,
+        maturity: float | None = None,
+        initial_guess: dict[str, float] | None = None,
+        bounds: dict[str, tuple[float, float]] | None = None,
         method: str = 'L-BFGS-B',
     ) -> SABRCalibrationResult:
         """
@@ -267,7 +266,7 @@ class SABRCalibrator:
         chain: OptionChain,
         forward: float,
         target_maturity: float,
-    ) -> Dict:
+    ) -> dict:
         """Extract calibration targets from option chain."""
         strikes = []
         ivs = []
@@ -317,7 +316,7 @@ class SABRCalibrator:
         beta: float,
         rho: float,
         nu: float,
-        targets: Dict,
+        targets: dict,
         forward: float,
         maturity: float,
     ) -> float:
@@ -337,7 +336,7 @@ class SABRCalibrator:
         beta: float,
         rho: float,
         nu: float,
-        targets: Dict,
+        targets: dict,
         forward: float,
         maturity: float,
     ) -> np.ndarray:

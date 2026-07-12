@@ -290,7 +290,7 @@ class BermudanOption(PathDependentDerivative):
         self.call_or_put = call_or_put.lower()
 
         if self.call_or_put not in ["call", "put"]:
-            raise ValueError(f"call_or_put must be 'call' or 'put'")
+            raise ValueError("call_or_put must be 'call' or 'put'")
 
         # Validate exercise dates
         if np.any(self.exercise_dates < 0) or np.any(self.exercise_dates > 1):

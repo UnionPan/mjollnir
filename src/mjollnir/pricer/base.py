@@ -6,8 +6,7 @@ email: yp1170@nyu.edu
 """
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Optional, Dict, Any
-import numpy as np
+from typing import Any
 
 
 @dataclass
@@ -25,12 +24,12 @@ class PricingResult:
         metadata: Additional pricing information
     """
     price: float
-    std_error: Optional[float] = None
-    confidence_interval: Optional[tuple] = None
-    n_paths: Optional[int] = None
-    computation_time: Optional[float] = None
-    greeks: Optional[Dict[str, float]] = None
-    metadata: Optional[Dict[str, Any]] = None
+    std_error: float | None = None
+    confidence_interval: tuple | None = None
+    n_paths: int | None = None
+    computation_time: float | None = None
+    greeks: dict[str, float] | None = None
+    metadata: dict[str, Any] | None = None
 
     def __repr__(self) -> str:
         lines = [

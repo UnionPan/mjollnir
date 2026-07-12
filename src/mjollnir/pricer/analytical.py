@@ -7,7 +7,6 @@ email: yp1170@nyu.edu
 import numpy as np
 from scipy import stats
 import time
-from typing import Union
 
 from .base import Pricer, PricingResult
 
@@ -43,7 +42,7 @@ class BlackScholesPricer(Pricer):
         self,
         derivative,
         process,
-        X0: Union[float, np.ndarray],
+        X0: float | np.ndarray,
         compute_greeks: bool = True,
         **kwargs
     ) -> PricingResult:
@@ -272,7 +271,7 @@ class HestonAnalyticalPricer(Pricer):
         super().__init__(name="HestonAnalytical")
         self.risk_free_rate = risk_free_rate
 
-    def price(self, derivative, process, X0: Union[float, np.ndarray], **kwargs) -> PricingResult:
+    def price(self, derivative, process, X0: float | np.ndarray, **kwargs) -> PricingResult:
         """
         Price European option under Heston model
 

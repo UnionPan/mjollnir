@@ -11,7 +11,6 @@ email: yp1170@nyu.edu
 """
 
 from dataclasses import dataclass
-from typing import Optional, Dict
 import numpy as np
 
 
@@ -23,7 +22,7 @@ class HestonParticleFilterResult:
     log_likelihood: float
     effective_sample_size: np.ndarray
 
-    params: Dict[str, float]
+    params: dict[str, float]
     n_particles: int
     dt: float
 
@@ -51,8 +50,8 @@ class HestonParticleFilter:
         kappa: float,
         theta: float,
         xi: float,
-        v0: Optional[float] = None,
-        random_seed: Optional[int] = None,
+        v0: float | None = None,
+        random_seed: int | None = None,
     ) -> HestonParticleFilterResult:
         prices = np.asarray(prices).flatten()
         if len(prices) < 2:

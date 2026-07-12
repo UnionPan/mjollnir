@@ -16,7 +16,6 @@ email: yp1170@nyu.edu
 
 import jax
 import jax.numpy as jnp
-import numpy as np
 from typing import NamedTuple
 
 from ..processes._jax_utils import to_numpy

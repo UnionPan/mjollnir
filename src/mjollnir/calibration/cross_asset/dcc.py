@@ -19,7 +19,6 @@ import optax
 from dataclasses import dataclass
 
 from mjollnir.calibration.physical.batched import garch
-from mjollnir.calibration.physical.batched.common import pad_returns
 
 
 @dataclass

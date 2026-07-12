@@ -5,7 +5,7 @@ Trading environment with rough volatility spot dynamics.
 """
 
 from dataclasses import dataclass
-from typing import Dict, Any, Optional, Tuple
+from typing import Any
 
 import numpy as np
 
@@ -47,13 +47,13 @@ class RoughBergomiEnv(gym.Env if gym else object):
 
     def __init__(
         self,
-        params: Optional[RoughBergomiParams] = None,
+        params: RoughBergomiParams | None = None,
         max_steps: int = 252,
         dt: float = 1 / 252,
         initial_cash: float = 10_000.0,
         transaction_cost_pct: float = 0.001,
         position_limits: float = 100.0,
-        render_mode: Optional[str] = None,
+        render_mode: str | None = None,
     ):
         super().__init__()
 
@@ -103,9 +103,9 @@ class RoughBergomiEnv(gym.Env if gym else object):
 
     def reset(
         self,
-        seed: Optional[int] = None,
-        options: Optional[Dict[str, Any]] = None,
-    ) -> Tuple[Dict[str, np.ndarray], Dict[str, Any]]:
+        seed: int | None = None,
+        options: dict[str, Any] | None = None,
+    ) -> tuple[dict[str, np.ndarray], dict[str, Any]]:
         super().reset(seed=seed)
         if seed is not None:
             np.random.seed(seed)
@@ -136,7 +136,7 @@ class RoughBergomiEnv(gym.Env if gym else object):
     def step(
         self,
         action: np.ndarray,
-    ) -> Tuple[Dict[str, np.ndarray], float, bool, bool, Dict[str, Any]]:
+    ) -> tuple[dict[str, np.ndarray], float, bool, bool, dict[str, Any]]:
         action = np.array(action, dtype=np.float32).flatten()
         if action.shape[0] != 1:
             raise ValueError(f"Action must have shape (1,), got {action.shape}")
@@ -162,7 +162,7 @@ class RoughBergomiEnv(gym.Env if gym else object):
 
         return self._get_observation(), float(reward), terminated, truncated, self._get_info()
 
-    def _get_observation(self) -> Dict[str, np.ndarray]:
+    def _get_observation(self) -> dict[str, np.ndarray]:
         return {
             'spot_price': np.array([self.S], dtype=np.float32),
             'time_step': np.array([self.t], dtype=np.float32),
@@ -170,7 +170,7 @@ class RoughBergomiEnv(gym.Env if gym else object):
             'position': np.array([self.position], dtype=np.float32),
         }
 
-    def _get_info(self) -> Dict[str, Any]:
+    def _get_info(self) -> dict[str, Any]:
         return {
             'S': self.S,
             'v': self.v,

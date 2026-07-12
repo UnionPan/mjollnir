@@ -13,7 +13,7 @@ email: yp1170@nyu.edu
 """
 
 import numpy as np
-from typing import Optional, Callable
+from collections.abc import Callable
 from .base import DriftDiffusionProcess
 from ._structured_inputs import StructuredTimeCurve
 
@@ -300,10 +300,10 @@ class HullWhite(DriftDiffusionProcess):
         self,
         a: float,
         sigma: float,
-        theta_fn: Optional[Callable[[float], float]] = None,
+        theta_fn: Callable[[float], float] | None = None,
         theta_const: float = 0.05,
-        theta_times: Optional[np.ndarray] = None,
-        theta_values: Optional[np.ndarray] = None,
+        theta_times: np.ndarray | None = None,
+        theta_values: np.ndarray | None = None,
         name: str = "HullWhite",
     ):
         """

@@ -10,7 +10,7 @@ On-disk layout for calibration runs:
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 from pathlib import Path
 
 import pandas as pd
@@ -18,7 +18,7 @@ import pandas as pd
 
 def new_run_dir(out_root: str | Path, run_id: str | None = None) -> Path:
     if run_id is None:
-        run_id = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+        run_id = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
     d = Path(out_root) / run_id
     d.mkdir(parents=True, exist_ok=True)
     return d
@@ -44,7 +44,7 @@ def _model_paths(run_dir: Path, model: str) -> tuple[Path, Path]:
 def save_model_results(run_dir: Path, model: str, df: pd.DataFrame) -> Path:
     pq, done = _model_paths(run_dir, model)
     df.to_parquet(pq, index=False)
-    done.write_text(datetime.now(timezone.utc).isoformat())
+    done.write_text(datetime.now(UTC).isoformat())
     return pq
 
 

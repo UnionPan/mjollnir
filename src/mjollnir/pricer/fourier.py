@@ -6,7 +6,6 @@ email: yp1170@nyu.edu
 """
 import numpy as np
 import time
-from typing import Union
 
 from .base import Pricer, PricingResult
 
@@ -49,7 +48,7 @@ class COSPricer(Pricer):
         self,
         derivative,
         process,
-        X0: Union[float, np.ndarray],
+        X0: float | np.ndarray,
         **kwargs
     ) -> PricingResult:
         """
@@ -117,7 +116,7 @@ class COSPricer(Pricer):
                 var_val = var[0] if isinstance(var, np.ndarray) else var
                 c1 = np.log(S0) + (r - 0.5 * var_val / T) * T
                 c2 = var_val
-            except:
+            except Exception:
                 # Fallback
                 c1 = np.log(S0) + r * T
                 c2 = 0.25 * T  # Assume 50% annual vol
@@ -149,7 +148,7 @@ class COSPricer(Pricer):
         for i, u_val in enumerate(u):
             try:
                 char_vals[i] = process.characteristic_function(u_val, X0, T)
-            except:
+            except Exception:
                 # Some processes may not support complex characteristic functions
                 char_vals[i] = 0.0 + 0.0j
 
@@ -270,7 +269,7 @@ class CarrMadanPricer(Pricer):
         self,
         derivative,
         process,
-        X0: Union[float, np.ndarray],
+        X0: float | np.ndarray,
         **kwargs
     ) -> PricingResult:
         """
@@ -311,7 +310,7 @@ class CarrMadanPricer(Pricer):
             u = v_i - (self.alpha + 1) * 1j
             try:
                 char_vals[i] = process.characteristic_function(u, X0, T)
-            except:
+            except Exception:
                 char_vals[i] = 0.0 + 0.0j
 
         # Modified characteristic function

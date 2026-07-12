@@ -32,7 +32,6 @@ email: yp1170@nyu.edu
 import numpy as np
 import pandas as pd
 from scipy import optimize
-from typing import Optional, Tuple, Dict, Union
 from dataclasses import dataclass
 import warnings
 
@@ -49,7 +48,7 @@ class VolatilityEstimate:
     annualization_factor: float
 
     # Parameters (method-dependent)
-    params: Optional[Dict] = None
+    params: dict | None = None
 
     @property
     def current_vol(self) -> float:
@@ -393,7 +392,7 @@ def compare_volatility_methods(
     window: int = 252,
     lambda_: float = 0.94,
     annualize: bool = True,
-) -> Dict[str, VolatilityEstimate]:
+) -> dict[str, VolatilityEstimate]:
     """
     Compare different volatility estimation methods.
 
@@ -732,11 +731,11 @@ def yang_zhang_volatility(
 
 
 def compare_ohlc_estimators(
-    ohlc_data: Union[pd.DataFrame, Dict[str, np.ndarray]],
+    ohlc_data: pd.DataFrame | dict[str, np.ndarray],
     window: int = 30,
     annualize: bool = True,
     periods_per_year: int = 252,
-) -> Dict[str, np.ndarray]:
+) -> dict[str, np.ndarray]:
     """
     Compare all OHLC-based volatility estimators.
 

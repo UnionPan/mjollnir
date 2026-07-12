@@ -10,7 +10,7 @@ email: yp1170@nyu.edu
 from abc import ABC, abstractmethod
 import numpy as np
 import warnings
-from typing import Optional, Tuple, Callable, Dict, Any
+from typing import Any
 from dataclasses import dataclass
 
 from ._jax_backend import should_fallback_to_numpy
@@ -26,11 +26,11 @@ class SimulationConfig:
     """configs for Monte-Carlo"""
     n_paths: int = 10000
     n_steps: int = 252
-    random_seed: Optional[int] = None
+    random_seed: int | None = None
     antithetic: bool = False
     use_sobol: bool = False
     return_full_paths: bool = True
-    batch_size: Optional[int] = None 
+    batch_size: int | None = None
 
 
 def validate_simulation_config(config: SimulationConfig) -> None:
@@ -141,7 +141,7 @@ class StochasticProcess(ABC):
             # Matrix-valued: vectorized sigma[i] @ dW[i]
             return np.einsum('ijk,ik->ij', sigma, dW)
 
-    def _build_jax_spec(self) -> Optional[Dict[str, Any]]:
+    def _build_jax_spec(self) -> dict[str, Any] | None:
         """
         Return JAX functional specification for this process, or None.
 
@@ -164,7 +164,7 @@ class StochasticProcess(ABC):
         T: float,
         config: SimulationConfig,
         scheme: str = "euler"
-    ) -> Tuple[np.ndarray, np.ndarray]:
+    ) -> tuple[np.ndarray, np.ndarray]:
         """
         X0: initial value
         T: Time horizon
@@ -231,29 +231,29 @@ class StochasticProcess(ABC):
             return self._exact_simulation(X0, T, dt, t_grid, config)
         else:
             raise ValueError(f"unknown scheme: {scheme}")
-        
 
-    
+
+
     def _euler_maruyama(
-        self, 
-        X0: np.ndarray, 
+        self,
+        X0: np.ndarray,
         T: float,
         dt: float,
         t_grid: np.ndarray,
         config: SimulationConfig,
-    ) -> Tuple[np.ndarray, np.ndarray]:
+    ) -> tuple[np.ndarray, np.ndarray]:
         """
         Euler-Maruyama discretization scheme.
             X_{t+dt} = X_t + mu(X_t,t)dt + sigma(X_t,t)√dt * Z_t + J_t
-        """ 
+        """
         n_paths = config.n_paths
         if config.antithetic:
             n_paths = n_paths // 2
-        
+
         paths = np.zeros((len(t_grid), n_paths, self.dim))
         paths[0] = X0
         sqrt_dt = np.sqrt(dt)
-        
+
         for i, t in enumerate(t_grid[:-1]):
             X_current = paths[i]
 
@@ -271,7 +271,7 @@ class StochasticProcess(ABC):
             jump_term = self.jump_component(X_current, t, dt)
 
             paths[i+1] = X_current + drift_term + diffusion_term + jump_term
-            
+
 
         if config.antithetic:
             paths_anti = np.zeros((len(t_grid), n_paths, self.dim))
@@ -303,16 +303,16 @@ class StochasticProcess(ABC):
             paths = np.concatenate([paths, paths_anti], axis=1)
 
         return t_grid, paths
-    
+
 
     def _milstein(
         self,
-        X0: np.ndarray, 
+        X0: np.ndarray,
         T: float,
         dt: float,
         t_grid: np.ndarray,
         config: SimulationConfig
-    ) -> Tuple[np.ndarray, np.ndarray]:
+    ) -> tuple[np.ndarray, np.ndarray]:
         """
         Milstein discretization scheme (higher order correction).
        
@@ -321,13 +321,13 @@ class StochasticProcess(ABC):
         if not hasattr(self, 'diffusion_derivative'):
             # Fall back to Euler if not available
             return self._euler_maruyama(X0, T, dt, t_grid, config)
-        
+
         n_paths = config.n_paths
         paths = np.zeros((len(t_grid), n_paths, self.dim))
         paths[0] = X0
-        
+
         sqrt_dt = np.sqrt(dt)
-        
+
         for i, t in enumerate(t_grid[:-1]):
             X_current = paths[i]
 
@@ -401,7 +401,7 @@ class StochasticProcess(ABC):
         dt: float,
         t_grid: np.ndarray,
         config: SimulationConfig
-    ) -> Tuple[np.ndarray, np.ndarray]:
+    ) -> tuple[np.ndarray, np.ndarray]:
         """
         Exact simulation method
         Override in subclasses

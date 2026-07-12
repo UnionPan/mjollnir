@@ -11,7 +11,7 @@ import numpy as np
 from scipy import interpolate
 from scipy.ndimage import gaussian_filter
 from dataclasses import dataclass
-from typing import Optional, Dict, Tuple, Callable
+from collections.abc import Callable
 import time
 
 from ..data.data_provider import OptionChain
@@ -98,8 +98,8 @@ class DupireCalibrator:
     def calibrate(
         self,
         chain: OptionChain,
-        spot: Optional[float] = None,
-        rate: Optional[float] = None,
+        spot: float | None = None,
+        rate: float | None = None,
         dividend_yield: float = 0.0,
         n_strikes: int = 50,
         n_maturities: int = 20,
@@ -192,7 +192,7 @@ class DupireCalibrator:
         S0: float,
         r: float,
         q: float,
-    ) -> Dict:
+    ) -> dict:
         """Extract call option prices from chain."""
         strikes = []
         maturities = []
@@ -233,7 +233,7 @@ class DupireCalibrator:
 
     def _build_price_surface(
         self,
-        call_data: Dict,
+        call_data: dict,
         S0: float,
         r: float,
         q: float,

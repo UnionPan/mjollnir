@@ -21,7 +21,7 @@ except ImportError:
     gym = None
     spaces = None
 
-from typing import Optional, Tuple, Dict, Any, List
+from typing import Any
 from dataclasses import dataclass
 from datetime import date, timedelta
 
@@ -121,25 +121,25 @@ class HestonEnv(gym.Env if gym else object):
 
     def __init__(
         self,
-        params: Optional[HestonParams] = None,
+        params: HestonParams | None = None,
         max_steps: int = 246,                    # ~ 1 trading year (NOT capped by liability)
         dt: float = 1/252,                       # 1 day
         discretization: str = 'milstein',        # Milstein for accuracy
         variance_scheme: str = 'truncation',     # Variance positivity
         # Option chain settings
         include_options: bool = True,
-        option_maturities: List[int] = None,     # Fixed TTM grid (days) OR None for option_grid
-        option_moneyness: List[float] = None,    # Fixed moneyness grid OR None for option_grid
-        option_grid: Optional[Dict[int, List[float]]] = None,  # Buehler-style: {τ: [K/S]}
+        option_maturities: list[int] = None,     # Fixed TTM grid (days) OR None for option_grid
+        option_moneyness: list[float] = None,    # Fixed moneyness grid OR None for option_grid
+        option_grid: dict[int, list[float]] | None = None,  # Buehler-style: {τ: [K/S]}
         # Task settings
         task: str = 'hedging',                   # 'trading' or 'hedging'
-        liability: Optional[Liability] = None,   # Liability to hedge (for hedging task)
+        liability: Liability | None = None,   # Liability to hedge (for hedging task)
         initial_cash: float = 10.0,              # Starting cash
         transaction_cost_pct: float = 0.001,     # 10 bps transaction cost
         position_limits: float = 100.0,          # Max absolute position per instrument
         hedge_error_penalty: float = 1.0,        # Penalty weight for hedge error
         # Rendering
-        render_mode: Optional[str] = None,
+        render_mode: str | None = None,
     ):
         """
         Initialize Heston environment with hedging or trading task.
@@ -408,9 +408,9 @@ class HestonEnv(gym.Env if gym else object):
 
     def reset(
         self,
-        seed: Optional[int] = None,
-        options: Optional[Dict[str, Any]] = None,
-    ) -> Tuple[Dict[str, np.ndarray], Dict[str, Any]]:
+        seed: int | None = None,
+        options: dict[str, Any] | None = None,
+    ) -> tuple[dict[str, np.ndarray], dict[str, Any]]:
         """Reset environment and pre-simulate full episode."""
         super().reset(seed=seed)
         if seed is not None:
@@ -490,7 +490,7 @@ class HestonEnv(gym.Env if gym else object):
     def step(
         self,
         action: np.ndarray
-    ) -> Tuple[Dict[str, np.ndarray], float, bool, bool, Dict[str, Any]]:
+    ) -> tuple[dict[str, np.ndarray], float, bool, bool, dict[str, Any]]:
         """
         Execute one time step with multi-dimensional trading.
 
@@ -829,7 +829,7 @@ class HestonEnv(gym.Env if gym else object):
 
         return False
 
-    def _get_observation(self) -> Dict[str, np.ndarray]:
+    def _get_observation(self) -> dict[str, np.ndarray]:
         """Get observation (agent's view)."""
         if not self.include_options:
             return np.array([self.S, self.t], dtype=np.float32)
@@ -929,7 +929,7 @@ class HestonEnv(gym.Env if gym else object):
         self.history['reward'].append(reward)
         self.history['transaction_costs'].append(cost)
 
-    def _get_info(self) -> Dict[str, Any]:
+    def _get_info(self) -> dict[str, Any]:
         """Get info dict (includes hidden state for analysis)."""
         info = {
             'S': self.S,
@@ -1161,7 +1161,7 @@ class HestonEnv(gym.Env if gym else object):
             print(f"  v_t = {self.v:.4f} (sigma = {np.sqrt(self.v):.2%})")
             print(f"  Cash = ${self.cash:.2f}")
             print(f"  Portfolio Value = ${self.portfolio_value:.2f}")
-            print(f"  Positions:")
+            print("  Positions:")
             print(f"    Underlying: {self.positions[0]:.2f}")
             if self.include_options:
                 option_pos = self.positions[1:]
@@ -1192,7 +1192,7 @@ class HestonEnv(gym.Env if gym else object):
                     option_chain=self.current_option_chain if self.include_options else None
                 )
 
-    def get_history(self) -> Dict[str, list]:
+    def get_history(self) -> dict[str, list]:
         """Get episode history."""
         return self.history
 
@@ -1208,20 +1208,20 @@ def make_heston_env(
     max_steps: int = 246,
     dt: float = 1/252,
     discretization: str = 'milstein',
-    option_maturities: List[int] = None,
-    option_moneyness: List[float] = None,
-    option_grid: Optional[Dict[int, List[float]]] = None,
+    option_maturities: list[int] = None,
+    option_moneyness: list[float] = None,
+    option_grid: dict[int, list[float]] | None = None,
     task: str = 'hedging',
-    liability: Optional[Liability] = None,
+    liability: Liability | None = None,
     # Heston parameters (can be passed individually or as params object)
-    S_0: Optional[float] = None,
-    v_0: Optional[float] = None,
-    mu: Optional[float] = None,
-    kappa: Optional[float] = None,
-    theta: Optional[float] = None,
-    xi: Optional[float] = None,
-    volvol: Optional[float] = None,  # Alias for xi
-    rho: Optional[float] = None,
+    S_0: float | None = None,
+    v_0: float | None = None,
+    mu: float | None = None,
+    kappa: float | None = None,
+    theta: float | None = None,
+    xi: float | None = None,
+    volvol: float | None = None,  # Alias for xi
+    rho: float | None = None,
     **kwargs
 ) -> HestonEnv:
     """

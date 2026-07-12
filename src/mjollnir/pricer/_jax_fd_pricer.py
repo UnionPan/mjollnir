@@ -19,7 +19,6 @@ import jax.numpy as jnp
 import jax.lax as lax
 import numpy as np
 
-from ..processes._jax_utils import to_numpy
 
 
 # ============================================================================

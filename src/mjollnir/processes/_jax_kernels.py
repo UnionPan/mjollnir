@@ -11,7 +11,8 @@ author: Yunian Pan
 email: yp1170@nyu.edu
 """
 
-from typing import Callable, Optional, Tuple, NamedTuple
+from typing import NamedTuple
+from collections.abc import Callable
 
 import jax
 import jax.numpy as jnp
@@ -47,10 +48,10 @@ def euler_maruyama(
     X0: jnp.ndarray,
     config: SimKernelConfig,
     key: jax.Array,
-    cholesky: Optional[jnp.ndarray] = None,
-    jump_fn: Optional[JumpFn] = None,
-    post_step_fn: Optional[PostStepFn] = None,
-) -> Tuple[jnp.ndarray, jnp.ndarray]:
+    cholesky: jnp.ndarray | None = None,
+    jump_fn: JumpFn | None = None,
+    post_step_fn: PostStepFn | None = None,
+) -> tuple[jnp.ndarray, jnp.ndarray]:
     """
     Euler-Maruyama simulation via jax.lax.scan.
 
@@ -145,15 +146,15 @@ def euler_maruyama(
 def milstein(
     drift_fn: DriftFn,
     diffusion_fn: DiffusionFn,
-    diffusion_deriv_fn: Optional[Callable],
+    diffusion_deriv_fn: Callable | None,
     params,
     X0: jnp.ndarray,
     config: SimKernelConfig,
     key: jax.Array,
-    cholesky: Optional[jnp.ndarray] = None,
-    jump_fn: Optional[JumpFn] = None,
-    post_step_fn: Optional[PostStepFn] = None,
-) -> Tuple[jnp.ndarray, jnp.ndarray]:
+    cholesky: jnp.ndarray | None = None,
+    jump_fn: JumpFn | None = None,
+    post_step_fn: PostStepFn | None = None,
+) -> tuple[jnp.ndarray, jnp.ndarray]:
     """
     Milstein simulation via jax.lax.scan.
 
@@ -235,10 +236,10 @@ def batched_euler_maruyama(
     X0: jnp.ndarray,
     config: SimKernelConfig,
     key: jax.Array,
-    cholesky: Optional[jnp.ndarray] = None,
-    jump_fn: Optional[JumpFn] = None,
-    post_step_fn: Optional[PostStepFn] = None,
-) -> Tuple[jnp.ndarray, jnp.ndarray]:
+    cholesky: jnp.ndarray | None = None,
+    jump_fn: JumpFn | None = None,
+    post_step_fn: PostStepFn | None = None,
+) -> tuple[jnp.ndarray, jnp.ndarray]:
     """
     Run Euler-Maruyama over a batch of parameter sets via vmap.
 
@@ -278,7 +279,7 @@ def simulate(
     jump_fn=None,
     post_step_fn=None,
     diffusion_deriv_fn=None,
-) -> Tuple:
+) -> tuple:
     """
     High-level simulation entry point. Returns numpy arrays.
 

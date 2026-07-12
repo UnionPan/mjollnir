@@ -23,10 +23,9 @@ from __future__ import annotations
 import json
 import logging
 import warnings
-from dataclasses import dataclass, field, asdict
-from datetime import date, datetime, timezone
+from dataclasses import dataclass, asdict
+from datetime import datetime, UTC
 from pathlib import Path
-from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -72,7 +71,7 @@ class AssetCalibration:
     error: str = ""
 
     @classmethod
-    def from_qmle_result(cls, ticker: str, r: HestonQMLEResult, cal_date: str) -> "AssetCalibration":
+    def from_qmle_result(cls, ticker: str, r: HestonQMLEResult, cal_date: str) -> AssetCalibration:
         return cls(
             ticker=ticker, kappa=r.kappa, theta=r.theta, sigma_v=r.sigma_v,
             rho=r.rho, mu=r.mu, v0=r.v0,
@@ -82,7 +81,7 @@ class AssetCalibration:
         )
 
     @classmethod
-    def failed(cls, ticker: str, msg: str, cal_date: str) -> "AssetCalibration":
+    def failed(cls, ticker: str, msg: str, cal_date: str) -> AssetCalibration:
         return cls(
             ticker=ticker, kappa=float("nan"), theta=float("nan"),
             sigma_v=float("nan"), rho=float("nan"), mu=float("nan"),
@@ -157,7 +156,7 @@ def calibrate_universe(
         pd.DataFrame with one row per ticker, columns as in
         :class:`AssetCalibration`.
     """
-    cal_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    cal_date = datetime.now(UTC).strftime("%Y-%m-%d")
     if prefetched_prices is None:
         logger.info("Downloading %d tickers (period=%s) via yfinance...",
                     len(tickers), period)
@@ -199,8 +198,8 @@ def calibration_report(df: pd.DataFrame) -> dict:
     failed = df[~df["converged"]][["ticker", "error"]].to_dict(orient="records")
 
     report: dict = {
-        "n_total": int(len(df)),
-        "n_converged": int(len(converged)),
+        "n_total": len(df),
+        "n_converged": len(converged),
         "convergence_rate": float(len(converged) / max(len(df), 1)),
         "failed": failed,
         "param_distribution": {},
@@ -232,7 +231,7 @@ def calibration_report(df: pd.DataFrame) -> dict:
 def save_calibration(
     df: pd.DataFrame,
     out_dir: str | Path,
-    report: Optional[dict] = None,
+    report: dict | None = None,
 ) -> tuple[Path, Path]:
     """Persist calibration to parquet + report to json under out_dir."""
     out_dir = Path(out_dir)

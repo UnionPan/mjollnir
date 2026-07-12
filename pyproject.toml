@@ -7,7 +7,7 @@ name = "mjollnir"
 version = "0.1.0"
 description = "A stable, reproducible, differentiable market-simulation & calibration substrate for RL research and backtesting"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"  # floor set by jax 0.9 / flax (both >=3.11)
 license = {file = "LICENSE"}
 authors = [
     {name = "Yunian Pan", email = "yp1170@nyu.edu"}
@@ -21,9 +21,9 @@ classifiers = [
     "Intended Audience :: Financial and Insurance Industry",
     "Intended Audience :: Science/Research",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
 ]
 
 # Measured against the extracted tree (supersedes the goal's partial list).
@@ -64,6 +64,40 @@ metal = ["jax-metal>=0.1.0"]
 mjollnir-build-universes = "mjollnir.calibration.cli.build_universes:main"
 mjollnir-calibrate = "mjollnir.calibration.cli.calibrate:main"
 mjollnir-train-npe = "mjollnir.calibration.cli.train_npe:main"
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "B", "UP", "RUF"]
+ignore = [
+    "E501",   # long lines: scientific formulas read better unwrapped
+    "E741",   # ambiguous single-letter names: standard math notation (l, I) in kernels
+    "B008",   # function call in default: used deliberately for frozen param defaults
+    "RUF001", "RUF002", "RUF003",  # Greek letters / math glyphs in docstrings are deliberate
+    # -- ratchet: pre-existing findings inherited from the monorepo; burn down
+    #    deliberately (each fix verified against tests), then re-enable. --
+    "F841", "B007", "B028", "B905",
+    "RUF012", "RUF013", "RUF022", "RUF059",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"**/__init__.py" = ["F401"]        # re-export surfaces
+"src/mjollnir/pricer/__init__.py" = ["F403", "F405"]
+
+[tool.mypy]
+python_version = "3.11"
+ignore_missing_imports = true
+check_untyped_defs = false
+follow_imports = "silent"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+filterwarnings = [
+    "error::DeprecationWarning:mjollnir.*",  # our own deprecations are bugs
+]
 
 [tool.setuptools.packages.find]
 where = ["src"]

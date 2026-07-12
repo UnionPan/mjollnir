@@ -55,7 +55,6 @@ def _detect_gpu_backend() -> str:
     noisy "Failed to create Metal device" stderr from the GPU backend.
     """
     import platform
-    import contextlib, io, sys
 
     # CUDA first (full float64 support) — skip on macOS
     if platform.system() != "Darwin":

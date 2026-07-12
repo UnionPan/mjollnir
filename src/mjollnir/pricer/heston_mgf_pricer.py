@@ -9,7 +9,6 @@ particularly important for short-dated options.
 """
 
 import numpy as np
-from typing import Tuple
 
 
 def get_phi_grid(vol_scaler: float = 0.28,

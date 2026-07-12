@@ -22,8 +22,7 @@ email: yp1170@nyu.edu
 
 import numpy as np
 from scipy import optimize
-from dataclasses import dataclass, field
-from typing import Optional, List, Dict, Tuple
+from dataclasses import dataclass
 
 
 # ============================================================================
@@ -154,7 +153,7 @@ class SSVIParams:
 # ============================================================================
 # Arbitrage checks
 # ============================================================================
-def check_butterfly_arbitrage(svi: SVIParams, k_grid: np.ndarray = None) -> Dict:
+def check_butterfly_arbitrage(svi: SVIParams, k_grid: np.ndarray = None) -> dict:
     """
     Check for butterfly (static) arbitrage in an SVI slice.
 
@@ -204,9 +203,9 @@ def check_butterfly_arbitrage(svi: SVIParams, k_grid: np.ndarray = None) -> Dict
 
 
 def check_calendar_arbitrage(
-    svi_slices: List[SVIParams],
+    svi_slices: list[SVIParams],
     k_grid: np.ndarray = None,
-) -> Dict:
+) -> dict:
     """
     Check for calendar spread arbitrage across expiry slices.
 
@@ -252,7 +251,7 @@ class SVIFitResult:
     rmse_iv: float
     max_error_iv: float
     n_points: int
-    arbitrage_check: Dict
+    arbitrage_check: dict
     success: bool
 
     def __repr__(self) -> str:
@@ -354,8 +353,8 @@ class SSVIFitResult:
     max_error_iv: float
     n_slices: int
     n_points: int
-    butterfly_check: Dict
-    calendar_check: Dict
+    butterfly_check: dict
+    calendar_check: dict
     success: bool
 
     def __repr__(self) -> str:
@@ -371,7 +370,7 @@ class SSVIFitResult:
 
 
 def fit_ssvi_surface(
-    slices: List[Dict],
+    slices: list[dict],
     initial_guess: np.ndarray = None,
 ) -> SSVIFitResult:
     """
@@ -509,7 +508,7 @@ def fit_ssvi_surface(
 def fit_svi_from_chain(
     chain,
     forward: float = None,
-) -> List[SVIFitResult]:
+) -> list[SVIFitResult]:
     """
     Fit SVI to each expiry slice in an OptionChain.
 

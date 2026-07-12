@@ -9,7 +9,7 @@ import json
 import logging
 import os
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 from pathlib import Path
 
 import numpy as np
@@ -59,7 +59,7 @@ def _calibrate_one(model_name: str, ticker: str,
         out = spec.fit(np.asarray(prices, dtype=np.float64), dt)
         out.setdefault("converged", True)
         return {"ticker": ticker, "error": "", **out}
-    except Exception as e:                                  # noqa: BLE001
+    except Exception as e:
         return {"ticker": ticker, "converged": False,
                 "error": f"{type(e).__name__}: {e}"}
 
@@ -209,7 +209,7 @@ def _calibrate_batch(
         ticker_to_row = {r["ticker"]: r for r in valid_rows + invalid_rows}
         return [ticker_to_row[t] for t in tickers]
 
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         # Batch calibration failed -> fall back to per-asset path
         logger.warning(
             "Batch calibration for model %s raised %s: %s; "
@@ -253,7 +253,7 @@ def _calibrate_batch_ohlc(
             invalid_rows.append({
                 "ticker": ticker,
                 "converged": False,
-                "error": "insufficient data (0 < {} obs)".format(spec.min_obs),
+                "error": f"insufficient data (0 < {spec.min_obs} obs)",
             })
             continue
 
@@ -312,7 +312,7 @@ def _calibrate_batch_ohlc(
         ticker_to_row = {r["ticker"]: r for r in valid_rows + invalid_rows}
         return [ticker_to_row[t] for t in tickers]
 
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         # Batch calibration failed -> NO fallback for OHLC models
         logger.error(
             "Batch calibration for OHLC model %s raised %s: %s; "
@@ -330,7 +330,7 @@ def _is_stage_done(run_dir: Path, stage: str) -> bool:
 
 def _mark_stage_done(run_dir: Path, stage: str) -> None:
     """Mark a cross-asset stage as completed."""
-    (run_dir / f"{stage}.done").write_text(datetime.now(timezone.utc).isoformat())
+    (run_dir / f"{stage}.done").write_text(datetime.now(UTC).isoformat())
 
 
 def _run_cross_asset_stage(
@@ -417,7 +417,7 @@ def _run_cross_asset_stage(
                 write_manifest(run_dir, {"cross_asset": ca_manifest})
                 logger.info("Factor model: k=%d, mp_edge=%.4f", fm.k, fm.mp_edge)
 
-            except Exception as e:  # noqa: BLE001
+            except Exception as e:
                 err_msg = f"{type(e).__name__}: {e}"
                 logger.error("Stage 'factor' failed: %s", err_msg)
                 ca_manifest["errors"]["factor"] = err_msg
@@ -465,7 +465,7 @@ def _run_cross_asset_stage(
                 logger.info("DCC: a=%.4f, b=%.4f, converged=%s",
                             dcc_result.a, dcc_result.b, dcc_result.converged)
 
-            except Exception as e:  # noqa: BLE001
+            except Exception as e:
                 err_msg = f"{type(e).__name__}: {e}"
                 logger.error("Stage 'dcc' failed: %s", err_msg)
                 ca_manifest["errors"]["dcc"] = err_msg
@@ -522,7 +522,7 @@ def _run_cross_asset_stage(
                 logger.info("Pooling complete: %d parameters, output=%s",
                             len(params), pooled_path.name)
 
-            except Exception as e:  # noqa: BLE001
+            except Exception as e:
                 err_msg = f"{type(e).__name__}: {e}"
                 logger.error("Stage 'pooling' failed: %s", err_msg)
                 ca_manifest["errors"]["pooling"] = err_msg
@@ -543,7 +543,7 @@ def run_calibration(
         universe = load_universe(cfg.universe)
 
     end = (pd.Timestamp(cfg.end) if cfg.end
-           else pd.Timestamp(datetime.now(timezone.utc).date()))
+           else pd.Timestamp(datetime.now(UTC).date()))
     start = end - pd.Timedelta(days=round(cfg.years * 365.25))
     run_dir = new_run_dir(cfg.out_root, cfg.run_id)
     logger.info("run %s: universe=%s (%d names), window %s..%s, models=%s",
@@ -563,7 +563,7 @@ def run_calibration(
         "ensure": {"fetched": len(rep.fetched), "cached": len(rep.cached),
                    "failed": rep.failed},
         "created_at": read_manifest(run_dir).get(
-            "created_at", datetime.now(timezone.utc).isoformat()),
+            "created_at", datetime.now(UTC).isoformat()),
         "status": "running",
     })
 
@@ -576,7 +576,7 @@ def run_calibration(
         s = df.loc[(df.index >= start) & (df.index <= end), "adj_close"].dropna()
         prices_by_ticker[t] = s.to_numpy(dtype=np.float64) if len(s) else None
 
-    cal_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    cal_date = datetime.now(UTC).strftime("%Y-%m-%d")
     model_stats = read_manifest(run_dir).get("models", {})
     models_errors = read_manifest(run_dir).get("models_errors", {})
 
@@ -637,7 +637,7 @@ def run_calibration(
         df["calibration_date"] = cal_date
         save_model_results(run_dir, model, df)
         n_conv = int(df["converged"].sum())
-        model_stats[model] = {"n": int(len(df)), "n_converged": n_conv}
+        model_stats[model] = {"n": len(df), "n_converged": n_conv}
         write_manifest(run_dir, {"models": model_stats})
         logger.info("model %s: %d/%d converged", model, n_conv, len(df))
 
@@ -645,5 +645,5 @@ def run_calibration(
     _run_cross_asset_stage(cfg, store, universe, start, end, run_dir)
 
     write_manifest(run_dir, {"models": model_stats, "status": "complete",
-                             "finished_at": datetime.now(timezone.utc).isoformat()})
+                             "finished_at": datetime.now(UTC).isoformat()})
     return run_dir

@@ -25,7 +25,6 @@ import numpy as np
 from scipy import sparse
 from scipy.sparse import linalg as sp_linalg
 import time
-from typing import Union, Tuple
 
 from .base import Pricer, PricingResult
 
@@ -99,7 +98,7 @@ class FiniteElementPricer(Pricer):
         self,
         derivative,
         process,
-        X0: Union[float, np.ndarray],
+        X0: float | np.ndarray,
         compute_greeks: bool = True,
         **kwargs
     ) -> PricingResult:

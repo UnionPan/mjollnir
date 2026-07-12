@@ -17,11 +17,9 @@ email: yp1170@nyu.edu
 """
 
 import numpy as np
-from typing import Tuple
 
 from .heston_mgf_pricer import (
     get_phi_grid,
-    compute_simpson_weights,
     compute_heston_mgf_grid,
     vanilla_option_price_from_mgf,
 )

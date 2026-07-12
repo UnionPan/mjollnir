@@ -12,7 +12,6 @@ os.environ["JAX_PLATFORMS"] = "cpu"
 import jax
 import jax.numpy as jnp
 from flax import linen as nn
-from typing import Tuple
 
 
 class ConditionalMDN(nn.Module):
@@ -29,7 +28,7 @@ class ConditionalMDN(nn.Module):
         n_components: number of mixture components (default: 8)
         n_outputs: output dimension (default: 6 for Heston parameters)
     """
-    hidden_dims: Tuple[int, ...] = (128, 128)
+    hidden_dims: tuple[int, ...] = (128, 128)
     n_components: int = 8
     n_outputs: int = 6
 

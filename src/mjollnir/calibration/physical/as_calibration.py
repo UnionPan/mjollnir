@@ -11,7 +11,6 @@ Email: yp1170@nyu.edu
 
 import numpy as np
 import pandas as pd
-from typing import Optional, Dict, Tuple
 from dataclasses import dataclass, asdict
 import warnings
 from pathlib import Path
@@ -74,11 +73,11 @@ class ASCalibrationResult:
     calibration_period: str
     n_observations: int
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> dict:
         """Convert to dictionary."""
         return asdict(self)
 
-    def to_env_config(self) -> Dict:
+    def to_env_config(self) -> dict:
         """
         Export parameters for make_market_making_env().
 
@@ -109,29 +108,29 @@ class ASCalibrationResult:
 
         s += "REGIME PARAMETERS\n"
         s += "-" * 80 + "\n"
-        s += f"Stable Regime:\n"
+        s += "Stable Regime:\n"
         s += f"  Volatility (σ₀):  {self.sigma_stable:7.2%} annualized\n"
         s += f"  Drift (μ₀):       {self.mu_stable:+7.2%} annualized\n"
-        s += f"\nVolatile Regime:\n"
+        s += "\nVolatile Regime:\n"
         s += f"  Volatility (σ₁):  {self.sigma_volatile:7.2%} annualized\n"
         s += f"  Drift (μ₁):       {self.mu_volatile:+7.2%} annualized\n"
-        s += f"\nRegime Switching:\n"
+        s += "\nRegime Switching:\n"
         s += f"  Base rate:        {self.base_transition_rate:.3f} per day\n"
         s += f"  Avg holding time: {1/self.base_transition_rate:.1f} days\n"
 
-        s += f"\nPREDATOR PARAMETERS\n"
+        s += "\nPREDATOR PARAMETERS\n"
         s += "-" * 80 + "\n"
         s += f"  ξ (cost coeff):   {self.xi_estimate:.4f}\n"
         s += f"  Max drift bound:  {self.max_drift_bound:+.6f}\n"
 
-        s += f"\nMICROSTRUCTURE PARAMETERS\n"
+        s += "\nMICROSTRUCTURE PARAMETERS\n"
         s += "-" * 80 + "\n"
         s += f"  λ₀ (base arrival): {self.lambda_0:,.0f} per year\n"
         s += f"  κ (sensitivity):   {self.kappa:.3f}\n"
         s += f"  Avg trade size:    {self.avg_trade_size:.4f} BTC\n"
         s += f"  Trades per day:    {self.trades_per_day:,.0f}\n"
 
-        s += f"\nMETADATA\n"
+        s += "\nMETADATA\n"
         s += "-" * 80 + "\n"
         s += f"  Data source:       {self.data_source}\n"
         s += f"  Period:            {self.calibration_period}\n"
@@ -170,7 +169,7 @@ class RegimeCalibrator:
         self,
         df: pd.DataFrame,
         price_col: str = 'Close',
-    ) -> Dict:
+    ) -> dict:
         """
         Calibrate regime parameters from OHLCV data.
 
@@ -269,8 +268,8 @@ class MicrostructureCalibrator:
         timestamp_col: str = 'timestamp',
         price_col: str = 'price',
         amount_col: str = 'amount',
-        type_col: Optional[str] = 'type',
-    ) -> Dict:
+        type_col: str | None = 'type',
+    ) -> dict:
         """
         Calibrate microstructure parameters from tick data.
 

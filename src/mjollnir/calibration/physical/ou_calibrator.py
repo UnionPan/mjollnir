@@ -24,7 +24,6 @@ email: yp1170@nyu.edu
 import numpy as np
 from scipy import stats, optimize
 from dataclasses import dataclass
-from typing import Optional, Dict, Tuple
 import warnings
 
 
@@ -381,7 +380,7 @@ class OUCalibrator:
             # Finite difference Hessian
             hess = optimize.approx_fprime(result.x, neg_log_likelihood, epsilon=1e-5)
             stderr = np.sqrt(np.abs(hess))
-        except:
+        except Exception:
             # Fallback to discretization estimates
             stderr = [quick_result.kappa_stderr, quick_result.theta_stderr, quick_result.sigma_stderr]
 

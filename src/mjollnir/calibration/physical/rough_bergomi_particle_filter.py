@@ -12,7 +12,6 @@ email: yp1170@nyu.edu
 """
 
 from dataclasses import dataclass
-from typing import Optional, Dict
 import numpy as np
 
 
@@ -24,7 +23,7 @@ class RoughBergomiParticleFilterResult:
     log_likelihood: float
     effective_sample_size: np.ndarray
 
-    params: Dict[str, float]
+    params: dict[str, float]
     n_particles: int
     dt: float
 
@@ -53,7 +52,7 @@ class RoughBergomiParticleFilter:
         eta: float,
         H: float,
         rho: float = 0.0,
-        random_seed: Optional[int] = None,
+        random_seed: int | None = None,
     ) -> RoughBergomiParticleFilterResult:
         prices = np.asarray(prices).flatten()
         if len(prices) < 2:

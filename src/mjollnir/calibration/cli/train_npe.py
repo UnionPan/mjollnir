@@ -148,7 +148,7 @@ def main():
     print("=" * 80)
     print("Training Heston NPE")
     print("=" * 80)
-    print(f"Configuration:")
+    print("Configuration:")
     print(f"  n_sims:      {args.n_sims}")
     print(f"  T:           {args.T}")
     print(f"  epochs:      {args.epochs}")

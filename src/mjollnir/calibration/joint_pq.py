@@ -25,7 +25,6 @@ email: yp1170@nyu.edu
 import numpy as np
 from scipy import optimize
 from dataclasses import dataclass
-from typing import Dict, Optional, Tuple
 import time
 import logging
 
@@ -37,16 +36,16 @@ class JointPQResult:
     """Result of joint P/Q calibration."""
 
     # P-measure params (from time series)
-    p_params: Dict[str, float]
+    p_params: dict[str, float]
 
     # Q-measure params (from option prices)
-    q_params: Dict[str, float]
+    q_params: dict[str, float]
 
     # Market price of risk (connects P and Q)
-    market_price_of_risk: Dict[str, float]
+    market_price_of_risk: dict[str, float]
 
     # Shared params that must be consistent across measures
-    shared_params: Dict[str, float]
+    shared_params: dict[str, float]
 
     # Fit quality
     p_log_likelihood: float
@@ -81,10 +80,10 @@ class JointPQResult:
 
 
 def extract_market_price_of_risk(
-    p_params: Dict[str, float],
-    q_params: Dict[str, float],
+    p_params: dict[str, float],
+    q_params: dict[str, float],
     rate: float = 0.05,
-) -> Dict[str, float]:
+) -> dict[str, float]:
     """
     Extract market prices of risk from P and Q parameters.
 
@@ -161,7 +160,7 @@ class JointPQCalibrator:
         self,
         prices: np.ndarray,
         option_chain,
-        spot: Optional[float] = None,
+        spot: float | None = None,
         rate: float = 0.05,
         dividend_yield: float = 0.0,
         dt: float = 1 / 252,
@@ -252,7 +251,7 @@ class JointPQCalibrator:
         S0: float,
         rate: float,
         q: float,
-    ) -> Tuple[Dict[str, float], float]:
+    ) -> tuple[dict[str, float], float]:
         """Calibrate Q-params using HestonCalibrator."""
         from .risk_neutral.heston_calibrator import HestonCalibrator
 
@@ -279,7 +278,7 @@ class JointPQCalibrator:
         sigma_v: float,
         rho: float,
         v0: float,
-    ) -> Tuple[Dict[str, float], float]:
+    ) -> tuple[dict[str, float], float]:
         """
         Calibrate P-params via quasi-MLE on log-returns.
 
@@ -344,7 +343,7 @@ class JointPQCalibrator:
         prices, chain, S0, rate, q, dt,
         q_init, p_init, shared_init,
         p_weight, q_weight,
-    ) -> Tuple[Dict, Dict, Dict, float, float, float]:
+    ) -> tuple[dict, dict, dict, float, float, float]:
         """
         Joint optimisation with shared sigma_v, rho, v0.
 

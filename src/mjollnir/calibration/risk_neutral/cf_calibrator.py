@@ -14,7 +14,7 @@ email: yp1170@nyu.edu
 import numpy as np
 from scipy import optimize
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Tuple, Callable
+from collections.abc import Callable
 import time
 
 from ..data.data_provider import OptionChain
@@ -26,7 +26,7 @@ from ...derivatives.vanilla import EuropeanCall, EuropeanPut
 class CFCalibrationResult:
     """Result of characteristic-function-based calibration."""
     model_name: str
-    params: Dict[str, float]
+    params: dict[str, float]
     rmse_price: float
     rmse_iv: float
     max_error_iv: float
@@ -78,8 +78,8 @@ class CFCalibrator:
         self,
         model_name: str,
         build_process_fn: Callable,
-        param_names: List[str],
-        param_bounds: List[Tuple[float, float]],
+        param_names: list[str],
+        param_bounds: list[tuple[float, float]],
         cos_N: int = 256,
         cos_L: float = 12.0,
     ):
@@ -102,9 +102,9 @@ class CFCalibrator:
     def calibrate(
         self,
         chain: OptionChain,
-        spot: Optional[float] = None,
-        rate: Optional[float] = None,
-        initial_guess: Optional[np.ndarray] = None,
+        spot: float | None = None,
+        rate: float | None = None,
+        initial_guess: np.ndarray | None = None,
         method: str = 'differential_evolution',
         maxiter: int = 500,
     ) -> CFCalibrationResult:

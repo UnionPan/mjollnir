@@ -13,11 +13,11 @@ from mjollnir.calibration.cross_asset.dcc import (
 )
 
 __all__ = [
+    "DCCResult",
     "FactorCov",
     "FactorModel",
+    "dcc_corr_path",
+    "fit_dcc",
     "fit_factor_model",
     "pool_parameters",
-    "DCCResult",
-    "fit_dcc",
-    "dcc_corr_path",
 ]
