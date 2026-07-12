@@ -19,7 +19,7 @@ each verified (tests + lint + docs --strict) before the next begins.
       arbitrage-free synthetic chains, QE variance positivity.
 - [ ] **W11. Benchmark suite** (pytest-benchmark): pin chain-gen, Merton fit,
       kernel step; regressions fail CI.
-- [ ] **W12. Lazy imports**: defer flax/optax (NPE) so
+- [x] **W12. Lazy imports**: defer flax/optax (NPE) so
       `import mjollnir.calibration` stays light.
 - [ ] **W13. Lint ratchet burn-down**: re-enable one rule at a time
       (F841 → B905 → RUF013 → B007/B028 → RUF012/RUF022/RUF059).

@@ -7,97 +7,64 @@ Organized by measure type:
 - physical: P-measure calibrators (historical data → real-world dynamics)
 - risk_neutral: Q-measure calibrators (option prices → risk-neutral dynamics)
 
+All public names are resolved lazily (PEP 562): ``import mjollnir.calibration``
+stays cheap, and heavy dependency chains (JAX pricers via the synthetic-data
+layer, flax/optax via the NPE) load only when the objects that need them are
+first touched.
+
 author: Yunian Pan
 email: yp1170@nyu.edu
 """
 
-# Data providers
-from .marketdata.yfinance_fetcher import YFinanceFetcher
-from .marketdata.data_provider import MarketData, OptionChain
+import importlib
 
-# P-measure (physical) calibrators
-from . import physical
-
-# Q-measure (risk-neutral) calibrators
-from . import risk_neutral
-
-# Joint P/Q calibration
-from .joint_pq import JointPQCalibrator, JointPQResult
-
-# Legacy imports for backwards compatibility
-try:
-    from .historical import (
-        GBMCalibrator,
-        GBMCalibrationResult,
-        OUCalibrator,
-        OUCalibrationResult,
-    )
-except ImportError:
-    # Use new location
-    from .physical import (
-        GBMCalibrator,
-        GBMCalibrationResult,
-        OUCalibrator,
-        OUCalibrationResult,
-    )
-
-try:
-    from .models import (
-        HestonCalibrator,
-        CalibrationResult,
-        RegimeSwitchingCalibrator,
-        RegimeSwitchingSimulator,
-        RegimeSwitchingCalibrationResult,
-        RegimeParameters,
-        RegimeSwitchingHestonCalibrator,
-        RegimeSwitchingHestonSimulator,
-        RegimeSwitchingHestonResult,
-        RegimeHestonParameters,
-    )
-except ImportError:
-    # Use new locations
-    from .physical import (
-        RegimeSwitchingCalibrator,
-        RegimeSwitchingSimulator,
-        RegimeSwitchingCalibrationResult,
-        RegimeParameters,
-    )
-    from .risk_neutral import (
-        HestonCalibrator,
-        CalibrationResult,
-        RegimeSwitchingHestonCalibrator,
-        RegimeSwitchingHestonSimulator,
-        RegimeSwitchingHestonResult,
-        RegimeHestonParameters,
-    )
-
-__all__ = [
+# name -> submodule that provides it (relative to this package)
+_LAZY_ATTRS = {
     # Data providers
-    'YFinanceFetcher',
-    'MarketData',
-    'OptionChain',
-
-    # Module namespaces
-    'physical',  # P-measure calibrators
-    'risk_neutral',  # Q-measure calibrators
-
-    # Legacy exports (for backwards compatibility)
-    'GBMCalibrator',
-    'GBMCalibrationResult',
-    'OUCalibrator',
-    'OUCalibrationResult',
-    'HestonCalibrator',
-    'CalibrationResult',
-    'RegimeSwitchingCalibrator',
-    'RegimeSwitchingSimulator',
-    'RegimeSwitchingCalibrationResult',
-    'RegimeParameters',
-    'RegimeSwitchingHestonCalibrator',
-    'RegimeSwitchingHestonSimulator',
-    'RegimeSwitchingHestonResult',
-    'RegimeHestonParameters',
-
+    "YFinanceFetcher": ".marketdata.yfinance_fetcher",
+    "MarketData": ".marketdata.data_provider",
+    "OptionChain": ".marketdata.data_provider",
+    # P-measure calibrators
+    "HestonParticleFilter": ".physical.heston_particle_filter",
+    "GBMCalibrator": ".physical",
+    "GBMCalibrationResult": ".physical",
+    "OUCalibrator": ".physical",
+    "OUCalibrationResult": ".physical",
+    "RegimeSwitchingCalibrator": ".physical",
+    "RegimeSwitchingSimulator": ".physical",
+    "RegimeSwitchingCalibrationResult": ".physical",
+    "RegimeParameters": ".physical",
+    # Q-measure calibrators
+    "HestonCalibrator": ".risk_neutral",
+    "CalibrationResult": ".risk_neutral",
+    "RegimeSwitchingHestonCalibrator": ".risk_neutral",
+    "RegimeSwitchingHestonSimulator": ".risk_neutral",
+    "RegimeSwitchingHestonResult": ".risk_neutral",
+    "RegimeHestonParameters": ".risk_neutral",
     # Joint P/Q calibration
-    'JointPQCalibrator',
-    'JointPQResult',
-]
+    "JointPQCalibrator": ".joint_pq",
+    "JointPQResult": ".joint_pq",
+}
+
+_LAZY_SUBMODULES = {
+    "physical", "risk_neutral", "marketdata", "cli", "cross_asset", "pipeline",
+}
+
+__all__ = [*_LAZY_ATTRS, *sorted(_LAZY_SUBMODULES)]
+
+
+def __getattr__(name: str):
+    if name in _LAZY_ATTRS:
+        module = importlib.import_module(_LAZY_ATTRS[name], __name__)
+        value = getattr(module, name)
+        globals()[name] = value  # cache: resolve once
+        return value
+    if name in _LAZY_SUBMODULES:
+        module = importlib.import_module(f".{name}", __name__)
+        globals()[name] = module
+        return module
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+
+def __dir__():
+    return sorted({*globals(), *__all__})
