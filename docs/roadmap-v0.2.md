@@ -15,7 +15,7 @@ each verified (tests + lint + docs --strict) before the next begins.
       minimal deep-hedging loop page; executed as tests so they can't rot.
 
 ## Phase 2 — reproducibility & correctness hardening
-- [ ] **W9. Property-based tests** (hypothesis): put–call parity, monotonicity,
+- [x] **W9. Property-based tests** (hypothesis): put–call parity, monotonicity,
       arbitrage-free synthetic chains, QE variance positivity.
 - [ ] **W11. Benchmark suite** (pytest-benchmark): pin chain-gen, Merton fit,
       kernel step; regressions fail CI.

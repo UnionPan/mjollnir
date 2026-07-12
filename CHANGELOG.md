@@ -19,6 +19,11 @@ in `docs/guide/stability.md` (golden-test breaks = dynamics break = never a patc
   `mjollnir-train-npe`.
 
 ### Changed
+- `fourier_price`/`fourier_price_batch` truncation grid: sized from the
+  mean-reversion-aware effective variance (was `v0` alone — broke put-call
+  parity for low-`v0`/high-`theta`/long-`T`), and always expanded to cover
+  every strike (a strike beyond the window returned unbounded junk). Both
+  found by the new property-based suite; ATM golden values unchanged.
 - Batched Merton MLE: cosine-decayed Adam (4000 steps) reaches the scipy
   optimum; `MertonJumpCalibrator` reference NLL vectorized (~3600x faster).
 - Gym env `reset(seed=...)` no longer seeds the global `np.random` stream
