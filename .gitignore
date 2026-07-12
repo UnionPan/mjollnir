@@ -9,3 +9,5 @@ htmlcov/
 data/
 runs/
 site/
+.lychee-results.json
+.lint-relative-paths-results.txt

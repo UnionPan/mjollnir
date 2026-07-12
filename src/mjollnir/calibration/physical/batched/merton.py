@@ -102,13 +102,20 @@ def _make_fit_single_start_fn(k_max):
     """
     Factory to create a JIT-compiled single-start fit function.
 
-    Uses ``lax.scan`` over 1500 Adam steps with the vectorized (broadcast)
+    Uses ``lax.scan`` over ``_N_STEPS`` cosine-decayed Adam steps with the vectorized (broadcast)
     NLL.  Because the NLL avoids nested ``jax.vmap``, the XLA program is
     compact and compiles in < 1 s (vs 10+ minutes with the original nested-
     vmap formulation under JAX >= 0.9).
     """
     nll_fn = _make_merton_nll_fn(k_max)
-    optimizer = optax.adam(learning_rate=5e-3)
+    # Cosine-decayed Adam: the constant-LR schedule left ~0.5-1 nat of
+    # likelihood on the table vs scipy's L-BFGS-B polish (gradient noise at
+    # lr=5e-3 stalls convergence near the optimum). Decaying to ~0 lets the
+    # final iterations settle into the basin. Wall-clock cost is negligible:
+    # the whole scan is a single compiled XLA program.
+    _N_STEPS = 4000
+    schedule = optax.cosine_decay_schedule(init_value=5e-3, decay_steps=_N_STEPS)
+    optimizer = optax.adam(learning_rate=schedule)
 
     @jax.jit
     def _fit_single_start(returns, mask, dt, init_mu, init_sigma, init_lam,
@@ -128,7 +135,7 @@ def _make_fit_single_start_fn(k_max):
         )
 
         opt_state = optimizer.init(init_params)
-        n_steps = 1500
+        n_steps = _N_STEPS
 
         def step(carry, _):
             params, opt_state = carry
