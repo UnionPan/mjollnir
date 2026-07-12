@@ -24,19 +24,46 @@ are re-exported for consumers that compose their own pricing graphs.
 # --- runtime / device configuration --------------------------------------------
 from mjollnir.processes._jax_backend import configure_jax_runtime as configure_runtime
 
-# --- Heston variance-step kernel -----------------------------------------------
-from mjollnir.processes._jax_qe import qe_heston_step
+# --- stochastic-volatility step kernels (Andersen QE family) --------------------
+from mjollnir.processes._jax_qe import (
+    qe_heston_step,
+    qe_bates_step,        # Heston + Merton jumps
+    qe_three_half_step,   # 3/2 model
+    qe_four_half_step,    # 4/2 model (Grasselli 2017)
+)
 
 # --- differentiable Fourier/COS pricer -----------------------------------------
 # Headline pricers: fully traced (grad/jit/vmap-safe wrt all market inputs).
 from mjollnir.jax._pricing import fourier_price, fourier_price_batch
 
 from mjollnir.pricer._jax_fourier_pricer import (
+    # characteristic-function parameter containers
     HestonCFParams,
+    MertonCFParams,
+    BatesCFParams,
+    KouCFParams,
+    VGCFParams,
+    NIGCFParams,
+    # characteristic functions (fully traced/differentiable)
     jax_heston_cf,
+    jax_merton_cf,
+    jax_bates_cf,
+    jax_kou_cf,
+    jax_vg_cf,
+    jax_nig_cf,
     # numpy-orchestrated scalar conveniences (NOT differentiable; kept for parity)
     jax_cos_price_heston,
     jax_cos_price_heston_multi,
+    jax_cos_price_merton,
+    jax_cos_price_merton_multi,
+    jax_cos_price_bates,
+    jax_cos_price_bates_multi,
+    jax_cos_price_kou,
+    jax_cos_price_kou_multi,
+    jax_cos_price_vg,
+    jax_cos_price_vg_multi,
+    jax_cos_price_nig,
+    jax_cos_price_nig_multi,
     # promote former private internals to stable public aliases:
     _jax_cos_price_multi as cos_price_multi,
     _jax_cos_price_single as cos_price_single,
@@ -55,11 +82,37 @@ __all__ = [
     "fourier_price",
     "fourier_price_batch",
     "heston_cf",
-    # concrete Heston building blocks
+    # QE step-kernel family
+    "qe_bates_step",
+    "qe_three_half_step",
+    "qe_four_half_step",
+    # CF parameter containers
     "HestonCFParams",
+    "MertonCFParams",
+    "BatesCFParams",
+    "KouCFParams",
+    "VGCFParams",
+    "NIGCFParams",
+    # characteristic functions
     "jax_heston_cf",
+    "jax_merton_cf",
+    "jax_bates_cf",
+    "jax_kou_cf",
+    "jax_vg_cf",
+    "jax_nig_cf",
+    # COS pricers (scalar + strike-vector, per model)
     "jax_cos_price_heston",
     "jax_cos_price_heston_multi",
+    "jax_cos_price_merton",
+    "jax_cos_price_merton_multi",
+    "jax_cos_price_bates",
+    "jax_cos_price_bates_multi",
+    "jax_cos_price_kou",
+    "jax_cos_price_kou_multi",
+    "jax_cos_price_vg",
+    "jax_cos_price_vg_multi",
+    "jax_cos_price_nig",
+    "jax_cos_price_nig_multi",
     # composable COS internals (now public)
     "cos_price_multi",
     "cos_price_single",

@@ -38,6 +38,13 @@ guaranteed non-negative. The returned key is the split successor — thread it
 into the next step. For per-path independent noise, `jax.vmap` over a batch
 of keys.
 
+The full QE family is exported alongside it: `qe_bates_step` (Heston +
+Merton jumps), `qe_three_half_step` (3/2 model), `qe_four_half_step`
+(4/2, Grasselli 2017) — same signature shape, same key-threading contract,
+all golden-tested in `tests/test_kernel_family_golden.py`. COS pricers for
+Merton, Bates, Kou, VG and NIG are exported as `jax_cos_price_<model>` /
+`jax_cos_price_<model>_multi`.
+
 ## Differentiable pricing
 
 ```python
