@@ -79,7 +79,7 @@ mjollnir-train-npe         # train the neural posterior estimator
 | `mjollnir.processes`  | SDE model layer: GBM, Heston, SABR, 3/2, 4/2, Merton, Kou, rough Bergomi, VG, NIG, SLV, regime-switching, Vasicek/CIR/HW |
 | `mjollnir.pricer`     | COS/Fourier + MGF pricing kernels |
 | `mjollnir.derivatives`| Vanilla contract definitions |
-| `mjollnir.synthetic`  | Shared low-level layer: `OptionChain`/`OptionQuote` value types + synthetic option-chain generators (used by *both* simulations and calibration) |
+| `mjollnir.synthetic_data`  | Shared low-level layer: `OptionChain`/`OptionQuote` value types + synthetic option-chain generators (used by *both* simulations and calibration) |
 | `mjollnir.calibration`| Physical (QMLE, particle filters, GARCH, OHLC vol, NPE) and risk-neutral (Heston-COS, SABR, Dupire, SVI/SSVI) calibration, data fetchers, CLIs |
 | `mjollnir.simulations`| Gym-style Heston / Merton / rough-Bergomi hedging environments |
 

@@ -1,13 +1,13 @@
 """Re-export shim.
 
 The canonical home for the shared option-chain value types and the DataProvider
-interface is now ``mjollnir.synthetic.data_provider`` (a low-level layer both
+interface is now ``mjollnir.synthetic_data.data_provider`` (a low-level layer both
 calibration and simulations sit on top of). This module preserves the historical
 ``mjollnir.calibration.marketdata.data_provider`` import path used throughout the
 calibration package and its fetchers.
 """
 
-from mjollnir.synthetic.data_provider import (
+from mjollnir.synthetic_data.data_provider import (
     DataProvider,
     MarketData,
     OptionChain,

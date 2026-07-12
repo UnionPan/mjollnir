@@ -56,7 +56,7 @@ nav:
       - Reproducibility contract: guide/stability.md
   - API reference:
       - mjollnir.jax: reference/jax.md
-      - mjollnir.synthetic: reference/synthetic.md
+      - mjollnir.synthetic_data: reference/synthetic_data.md
       - mjollnir.simulations: reference/simulations.md
       - mjollnir.processes: reference/processes.md
       - mjollnir.calibration: reference/calibration.md

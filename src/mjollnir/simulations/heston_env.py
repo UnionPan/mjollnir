@@ -30,7 +30,7 @@ from mjollnir.processes import Heston
 from mjollnir.processes.base import SimulationConfig
 
 # Import equity option chain generator
-from mjollnir.synthetic.synthetic_equity import (
+from mjollnir.synthetic_data.synthetic_equity import (
     SyntheticEquityOptionChainGenerator,
     HestonVolatilityProfile,
 )
@@ -232,7 +232,7 @@ class HestonEnv(gym.Env if gym else object):
             if option_moneyness is None:
                 # Use adaptive grid by default for better coverage
                 # Import here to avoid circular dependency
-                from mjollnir.synthetic.synthetic_equity import get_default_moneyness_by_maturity
+                from mjollnir.synthetic_data.synthetic_equity import get_default_moneyness_by_maturity
 
                 # Get default adaptive grid
                 default_adaptive = get_default_moneyness_by_maturity()
@@ -1279,7 +1279,7 @@ def make_heston_env(
         # If no moneyness specified, use adaptive grid by default
         if option_moneyness is None:
             # Import here to avoid circular dependency
-            from mjollnir.synthetic.synthetic_equity import get_default_moneyness_by_maturity
+            from mjollnir.synthetic_data.synthetic_equity import get_default_moneyness_by_maturity
 
             # Get default adaptive grid
             default_adaptive = get_default_moneyness_by_maturity()

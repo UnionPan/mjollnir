@@ -20,7 +20,7 @@ except ImportError:
 
 from mjollnir.processes.merton import MertonJD
 from mjollnir.processes.base import SimulationConfig
-from mjollnir.synthetic.synthetic_merton_equity import (
+from mjollnir.synthetic_data.synthetic_merton_equity import (
     SyntheticMertonOptionChainGenerator,
     MertonVolatilityProfile,
 )

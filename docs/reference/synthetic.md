@@ -1,3 +1,0 @@
-# mjollnir.synthetic
-
-::: mjollnir.synthetic

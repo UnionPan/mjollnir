@@ -25,7 +25,7 @@ except ImportError:  # pragma: no cover
 from mjollnir.simulations.heston_env import HestonParams, Liability
 from mjollnir.processes import Heston
 from mjollnir.processes.base import SimulationConfig
-from mjollnir.synthetic.synthetic_equity import (
+from mjollnir.synthetic_data.synthetic_equity import (
     SyntheticEquityOptionChainGenerator,
     HestonVolatilityProfile,
 )

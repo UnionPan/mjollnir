@@ -1,5 +1,5 @@
 """
-mjollnir.synthetic — shared low-level substrate for option-chain data.
+mjollnir.synthetic_data — shared low-level substrate for option-chain data.
 
 Top-level in the namespace, low in the dependency DAG: depends only on
 ``mjollnir.pricer``, and is imported by *both* ``mjollnir.simulations`` (to build

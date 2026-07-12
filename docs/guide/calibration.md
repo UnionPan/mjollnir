@@ -28,11 +28,11 @@ mjollnir-train-npe         # train the neural posterior estimator
 
 ## Synthetic option chains
 
-`mjollnir.synthetic` generates realistic option chains (IV smile/skew from a
+`mjollnir.synthetic_data` generates realistic option chains (IV smile/skew from a
 Heston or Merton pricer) for evaluation and for the hedging environments:
 
 ```python
-from mjollnir.synthetic import SyntheticEquityOptionChainGenerator, HestonVolatilityProfile
+from mjollnir.synthetic_data import SyntheticEquityOptionChainGenerator, HestonVolatilityProfile
 ```
 
 Because these generators feed the RL environments' observations, they live

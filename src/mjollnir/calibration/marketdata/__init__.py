@@ -12,8 +12,8 @@ from .synthetic_crypto import (
     quick_generate_option_chains,
 )
 # synthetic_equity / synthetic_merton_equity now live in the low-level
-# mjollnir.synthetic layer; re-exported here for the historical import path.
-from mjollnir.synthetic import (
+# mjollnir.synthetic_data layer; re-exported here for the historical import path.
+from mjollnir.synthetic_data import (
     SyntheticEquityOptionChainGenerator,
     HestonVolatilityProfile,
     get_default_moneyness_by_maturity,
