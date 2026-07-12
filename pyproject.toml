@@ -1,0 +1,72 @@
+[build-system]
+requires = ["setuptools>=65.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mjollnir"
+version = "0.1.0"
+description = "A stable, reproducible, differentiable market-simulation & calibration substrate for RL research and backtesting"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {file = "LICENSE"}
+authors = [
+    {name = "Yunian Pan", email = "yp1170@nyu.edu"}
+]
+keywords = [
+    "options", "derivatives", "quantitative-finance", "stochastic-processes",
+    "market-simulation", "calibration", "jax", "reinforcement-learning", "deep-hedging",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Financial and Insurance Industry",
+    "Intended Audience :: Science/Research",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+
+# Measured against the extracted tree (supersedes the goal's partial list).
+# flax/optax are core (calibration's NPE), not RL-only. gymnasium is required by
+# simulations. torch is intentionally absent (stays with deep_hedging in the monorepo).
+dependencies = [
+    "numpy>=1.24.0",
+    "scipy>=1.10.0",
+    "pandas>=2.0.0",
+    "jax>=0.9.0,<0.10",
+    "jaxlib>=0.9.0,<0.10",
+    "flax>=0.8.0",
+    "optax>=0.2.0",
+    "gymnasium>=0.29.0",
+    "scikit-learn>=1.3.0",
+    "joblib>=1.3.0",
+    "zarr>=2.16.0",
+    "matplotlib>=3.7.0",
+    # market-data fetchers (candidate to split into a [data] extra with lazy imports)
+    "yfinance>=0.2.28",
+    "pandas-datareader>=0.10.0",
+    "requests>=2.31.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0",
+    "black>=23.0.0",
+    "ruff>=0.1.0",
+    "mypy>=1.4.0",
+]
+# JAX device backends (install exactly one to match your hardware).
+cuda = ["jax[cuda12]>=0.9.0,<0.10"]
+metal = ["jax-metal>=0.1.0"]
+
+[project.scripts]
+mjollnir-build-universes = "mjollnir.calibration.cli.build_universes:main"
+mjollnir-calibrate = "mjollnir.calibration.cli.calibrate:main"
+mjollnir-train-npe = "mjollnir.calibration.cli.train_npe:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+mjollnir = ["**/*.json", "**/*.yaml", "**/*.yml"]
