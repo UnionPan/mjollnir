@@ -77,7 +77,7 @@ mjollnir-train-npe = "mjollnir.calibration.cli.train_npe:main"
 [tool.ruff]
 target-version = "py311"
 line-length = 100
-src = ["src", "tests"]
+src = ["src", "tests", "examples", "benchmarks"]
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "B", "UP", "RUF"]
@@ -90,6 +90,7 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 "**/__init__.py" = ["F401"]        # re-export surfaces
+"examples/*.py" = ["E402"]         # narrative imports at the step that uses them
 "src/mjollnir/pricer/__init__.py" = ["F403", "F405"]
 
 [tool.mypy]

@@ -54,6 +54,7 @@ nav:
       - RL substrate (Mode 1): guide/rl-substrate.md
       - Calibration & backtesting (Mode 2): guide/calibration.md
       - Reproducibility contract: guide/stability.md
+  - Examples: examples.md
   - API reference:
       - mjollnir.jax: reference/jax.md
       - mjollnir.synthetic_data: reference/synthetic_data.md
