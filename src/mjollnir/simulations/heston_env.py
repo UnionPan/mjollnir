@@ -1246,7 +1246,7 @@ def make_heston_env(
         xi: Vol-of-vol (default: 1.0)
         volvol: Alias for xi (use either xi or volvol)
         rho: Correlation spot-vol (default: -0.8)
-        **kwargs: Additional HestonEnv arguments (hedge_error_penalty, etc.)
+        **kwargs (Any): Additional HestonEnv arguments (hedge_error_penalty, etc.)
 
     Returns:
         Configured Heston environment

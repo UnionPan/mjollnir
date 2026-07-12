@@ -11,7 +11,7 @@ class Derivative(ABC):
     def payoff(self, *args, **kwargs) -> np.ndarray:
         """
           Compute payoff at maturity
-          
+
           Returns:
               Array of payoffs, shape (n_paths,)
         """

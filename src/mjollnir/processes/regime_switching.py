@@ -2,11 +2,13 @@
 """
 Regime switching process class
 
-author: Yunian Pan 
+author: Yunian Pan
 email: yp1170@nyu.edu
 """
 import numpy as np
-from .base import *
+from abc import abstractmethod
+
+from .base import StochasticProcess
 
 class RegimeSwitchingProcess(StochasticProcess):
     def __init__(self, n_regimes: int, dim: int = 1, name: str = "RegimeSwitching"):

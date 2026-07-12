@@ -306,8 +306,8 @@ class HestonEnvRenderer:
         lines_pos = self.position_lines
         labels_pos = [l.get_label() for l in lines_pos]
         if self.wealth_line is not None:
-            lines_pos = lines_pos + [self.wealth_line]
-            labels_pos = labels_pos + [self.wealth_line.get_label()]
+            lines_pos = [*lines_pos, self.wealth_line]
+            labels_pos = [*labels_pos, self.wealth_line.get_label()]
 
         self.ax_positions.legend(lines_pos, labels_pos, loc='upper left', framealpha=0.9, fontsize=9)
 

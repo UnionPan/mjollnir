@@ -3,7 +3,7 @@ Base classes for stochastic processes in financial modeling
 
 This module provides abstract base classes for implmenting various SDEs include mode jump processes
 
-author: Yunian Pan 
+author: Yunian Pan
 email: yp1170@nyu.edu
 """
 
@@ -315,7 +315,7 @@ class StochasticProcess(ABC):
     ) -> tuple[np.ndarray, np.ndarray]:
         """
         Milstein discretization scheme (higher order correction).
-       
+
         Requires diffusion_derivative method to be implemented.
         """
         if not hasattr(self, 'diffusion_derivative'):

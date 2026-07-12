@@ -173,7 +173,7 @@ class JointPQCalibrator:
 
         Args:
             prices: Historical prices array, shape (T,).
-            option_chain: OptionChain for Q-calibration.
+            option_chain (OptionChain): Option chain for Q-calibration.
             spot: Current spot (defaults to last price).
             rate: Risk-free rate.
             dividend_yield: Continuous dividend yield.

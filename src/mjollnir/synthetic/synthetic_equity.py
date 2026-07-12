@@ -24,7 +24,6 @@ import warnings
 from .data_provider import OptionChain, OptionQuote
 try:
     from mjollnir.pricer._jax_mgf_pricer import heston_price_slice_fast as heston_price_slice
-    from mjollnir.pricer.heston_mgf_pricer import heston_price_vanilla
 except ImportError:
     from mjollnir.pricer.heston_mgf_pricer import heston_price_slice
 
@@ -106,7 +105,7 @@ class SyntheticEquityOptionChainGenerator:
         risk_free_rate: float = 0.03,
         dividend_yield: float = 0.01,
         # Equity-specific: standard expiries (10-120 days)
-        maturities_days: list[int] = [10, 20, 30, 60, 90, 120],
+        maturities_days: list[int] | None = None,
         # Equity-specific: adaptive strike spacing by maturity
         # Can be a single list (same for all maturities) or dict mapping maturity to moneyness
         moneyness_range: list[float] = None,
@@ -133,7 +132,11 @@ class SyntheticEquityOptionChainGenerator:
             maturities_days: Option maturities in days
             moneyness_range: Single list of strike/spot ratios (same for all maturities)
             moneyness_by_maturity: Dict mapping maturity (days) to moneyness list (adaptive)
-            *_spread_pct: Spread model parameters
+            atm_spread_pct: Bid-ask spread at the money (fraction of mid)
+            otm_spread_pct: Bid-ask spread far out of the money
+            min_spread_pct: Lower bound on relative spread
+            max_spread_pct: Upper bound on relative spread
+            absolute_min_spread: Absolute floor on spread
             add_noise: Add small symmetric noise to mid prices
             noise_level: Noise std as fraction of price
             price_floor: Absolute minimum price
@@ -144,6 +147,9 @@ class SyntheticEquityOptionChainGenerator:
         """
         self.risk_free_rate = risk_free_rate
         self.dividend_yield = dividend_yield
+        if maturities_days is None:
+            # Equity-standard expiry ladder (10-120 days)
+            maturities_days = [10, 20, 30, 60, 90, 120]
         self.maturities_days = sorted(maturities_days)
 
         # Setup moneyness grid (adaptive by maturity or uniform)
@@ -483,8 +489,13 @@ class SyntheticEquityOptionChainGenerator:
 
             return price
 
-        except Exception as e:
-            warnings.warn(f"Heston CF integration failed: {e}. Returning intrinsic.")
+        except (ArithmeticError, ValueError, RuntimeError) as e:
+            # Complex CF math can overflow / quad can fail for extreme params;
+            # fall back to intrinsic value rather than aborting chain generation.
+            warnings.warn(
+                f"Heston CF integration failed: {e}. Returning intrinsic.",
+                stacklevel=2,
+            )
             intrinsic = max(S * np.exp(-q * T) - K * np.exp(-r * T), 0) if is_call else max(K * np.exp(-r * T) - S * np.exp(-q * T), 0)
             return max(intrinsic, self.price_floor)
 

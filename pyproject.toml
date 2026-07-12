@@ -58,7 +58,14 @@ dev = [
 ]
 # JAX device backends (install exactly one to match your hardware).
 cuda = ["jax[cuda12]>=0.9.0,<0.10"]
+docs = ["mkdocs-material>=9.5", "mkdocstrings[python]>=0.24"]
 metal = ["jax-metal>=0.1.0"]
+
+[project.urls]
+Homepage = "https://github.com/unionpan/mjollnir"
+Documentation = "https://unionpan.github.io/mjollnir/"
+Repository = "https://github.com/unionpan/mjollnir"
+Changelog = "https://github.com/unionpan/mjollnir/blob/main/CHANGELOG.md"
 
 [project.scripts]
 mjollnir-build-universes = "mjollnir.calibration.cli.build_universes:main"
@@ -103,4 +110,4 @@ filterwarnings = [
 where = ["src"]
 
 [tool.setuptools.package-data]
-mjollnir = ["**/*.json", "**/*.yaml", "**/*.yml"]
+mjollnir = ["py.typed", "**/*.json", "**/*.yaml", "**/*.yml"]

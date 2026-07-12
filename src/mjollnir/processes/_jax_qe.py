@@ -195,7 +195,9 @@ def qe_heston_step(
         variance: current variance
         dt: time step
         mu: risk-neutral drift (r − q)
-        kappa, theta, sigma_v: CIR variance parameters
+        kappa: CIR mean-reversion speed
+        theta: CIR long-run variance
+        sigma_v: CIR vol-of-vol
         rho: spot–variance correlation
         key: JAX PRNG key
         psi_crit: QE switching threshold (default 1.5)

@@ -223,7 +223,7 @@ class RegimeSwitchingHestonCalibrator:
         Initialize calibrator.
 
         Args:
-            pricer: Pricer for Heston model (optional)
+            pricer (COSPricer, optional): Pricer for Heston model
             weighting: Weighting scheme ('vega', 'uniform', 'oi')
             verbose: Print progress messages
         """

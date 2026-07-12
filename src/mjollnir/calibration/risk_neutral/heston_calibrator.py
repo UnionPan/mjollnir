@@ -73,9 +73,9 @@ class CalibrationResult:
 class HestonCalibrator:
     """
     Calibrate Heston model to option prices.
-    
+
     Uses characteristic function-based pricing (COS method) for speed.
-    
+
     Example:
         calibrator = HestonCalibrator(pricer)
         result = calibrator.calibrate(option_chain, spot, rate)
@@ -102,7 +102,7 @@ class HestonCalibrator:
         Initialize calibrator.
 
         Args:
-            pricer: Pricer object with price() method (e.g., COSPricer)
+            pricer (COSPricer, optional): Pricer object with price() method
                    If None, creates default COSPricer (fast) or uses Simpson integration
             weighting: Weighting scheme for errors:
                       'uniform' - equal weights
@@ -133,7 +133,7 @@ class HestonCalibrator:
     ) -> 'CalibrationResult':
         """
         Calibrate Heston model to option chain.
-        
+
         Args:
             chain: OptionChain with market data
             spot: Spot price (defaults to chain.spot_price)
@@ -143,7 +143,7 @@ class HestonCalibrator:
             method: Optimization method ('differential_evolution', 'L-BFGS-B', 'SLSQP')
             maxiter: Maximum iterations
             tol: Convergence tolerance
-            
+
         Returns:
             CalibrationResult with calibrated parameters
         """
