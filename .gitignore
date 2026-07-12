@@ -19,3 +19,4 @@ htmlcov/
 # local tooling output
 .lychee-results.json
 .lint-relative-paths-results.txt
+.benchmarks/
