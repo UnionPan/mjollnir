@@ -3,7 +3,7 @@ JAX backend policy for process simulation.
 
 Backend resolution order:
   1. ``JAX_PLATFORMS`` if the user set one explicitly
-  2. ``OPTIONS_DESK_JAX_BACKEND`` project-level override
+  2. ``MJOLLNIR_JAX_BACKEND`` project-level override
   3. CPU
 
 Precision modes:
@@ -12,7 +12,7 @@ Precision modes:
     validated for typical equity Heston parameters
 
 The precision mode is auto-detected from the active backend but can be
-overridden via ``OPTIONS_DESK_JAX_PRECISION=high|metal_safe``.
+overridden via ``MJOLLNIR_JAX_PRECISION=high|metal_safe``.
 """
 
 from __future__ import annotations
@@ -24,9 +24,9 @@ import jax
 import jax.numpy as jnp
 
 
-_PROJECT_BACKEND_ENV = "OPTIONS_DESK_JAX_BACKEND"
-_STRICT_BACKEND_ENV = "OPTIONS_DESK_JAX_STRICT_BACKEND"
-_PRECISION_ENV = "OPTIONS_DESK_JAX_PRECISION"
+_PROJECT_BACKEND_ENV = "MJOLLNIR_JAX_BACKEND"
+_STRICT_BACKEND_ENV = "MJOLLNIR_JAX_STRICT_BACKEND"
+_PRECISION_ENV = "MJOLLNIR_JAX_PRECISION"
 _CONFIGURED = False
 
 PrecisionMode = Literal["high", "metal_safe"]
@@ -90,7 +90,7 @@ def get_backend_preference() -> str:
 
     Precedence:
       1. JAX_PLATFORMS if already set by the caller
-      2. OPTIONS_DESK_JAX_BACKEND
+      2. MJOLLNIR_JAX_BACKEND
       3. CPU
 
     We intentionally do not auto-probe GPU/MPS here. On Apple Silicon, merely
@@ -127,7 +127,7 @@ def get_precision_mode() -> PrecisionMode:
     """Resolve the precision mode for Fourier/COS pricers.
 
     Precedence:
-      1. ``OPTIONS_DESK_JAX_PRECISION`` env var (explicit override)
+      1. ``MJOLLNIR_JAX_PRECISION`` env var (explicit override)
       2. Auto-detect from backend: MPS → ``metal_safe``, else ``high``
     """
     explicit = os.getenv(_PRECISION_ENV, "").strip().lower()

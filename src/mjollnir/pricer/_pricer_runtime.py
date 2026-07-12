@@ -79,8 +79,8 @@ def guard_pricer(fn: F) -> F:
 
 
 # Allow opting out of the guard in tests that intentionally exercise the
-# unsafe path. Set OPTIONS_DESK_DISABLE_PRICER_GUARD=1 to bypass.
-if os.environ.get("OPTIONS_DESK_DISABLE_PRICER_GUARD") == "1":
+# unsafe path. Set MJOLLNIR_DISABLE_PRICER_GUARD=1 to bypass.
+if os.environ.get("MJOLLNIR_DISABLE_PRICER_GUARD") == "1":
     def guard_pricer(fn: F) -> F:  # type: ignore[no-redef]
         return fn
 

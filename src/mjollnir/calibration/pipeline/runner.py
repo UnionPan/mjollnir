@@ -589,21 +589,21 @@ def run_calibration(
 
         # Decide whether to use batch path or per-asset path.
         # For needs_ohlc models the batch path is MANDATORY: there is no
-        # per-asset scipy fallback, so OPTIONS_DESK_NO_BATCH is ignored.
+        # per-asset scipy fallback, so MJOLLNIR_NO_BATCH is ignored.
         spec = get_model(model)
         use_batch = (
             spec.fit_batch is not None
             and (spec.needs_ohlc
-                 or os.environ.get("OPTIONS_DESK_NO_BATCH") != "1")
+                 or os.environ.get("MJOLLNIR_NO_BATCH") != "1")
         )
 
         if use_batch:
             logger.info("Using batch calibration path for model %s", model)
 
             if spec.needs_ohlc:
-                if os.environ.get("OPTIONS_DESK_NO_BATCH") == "1":
+                if os.environ.get("MJOLLNIR_NO_BATCH") == "1":
                     logger.info(
-                        "OPTIONS_DESK_NO_BATCH=1 ignored for OHLC model %s: "
+                        "MJOLLNIR_NO_BATCH=1 ignored for OHLC model %s: "
                         "batch path is mandatory (no per-asset fallback)",
                         model,
                     )

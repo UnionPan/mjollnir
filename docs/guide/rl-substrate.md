@@ -14,8 +14,7 @@ configure_runtime()   # returns the active backend, e.g. "cpu"
 ```
 
 Device and precision are controlled by environment variables
-(`OPTIONS_DESK_JAX_BACKEND`, `OPTIONS_DESK_JAX_PRECISION` — names retained
-from the original monorepo for compatibility with existing run scripts).
+(`MJOLLNIR_JAX_BACKEND`, `MJOLLNIR_JAX_PRECISION`, `MJOLLNIR_JAX_STRICT_BACKEND`).
 
 ## Heston QE stepping
 

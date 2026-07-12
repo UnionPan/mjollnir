@@ -4,10 +4,10 @@ Approved 2026-07-12. Ordered by dependency, committed one workstream at a time,
 each verified (tests + lint + docs --strict) before the next begins.
 
 ## Phase 1 — quick wins
-- [ ] **W1. Widen the frozen `mjollnir.jax` API**: export `qe_bates_step`,
+- [x] **W1. Widen the frozen `mjollnir.jax` API**: export `qe_bates_step`,
       `qe_three_half_step`, `qe_four_half_step` and the Merton/Bates/Kou/VG/NIG
       COS pricers; add golden-key tests for each new export.
-- [ ] **W3. Env vars**: `OPTIONS_DESK_JAX_*` → `MJOLLNIR_JAX_*`, no fallback;
+- [x] **W3. Env vars**: `OPTIONS_DESK_JAX_*` → `MJOLLNIR_JAX_*`, no fallback;
       audit and update every consumer (incl. monorepo mirror note).
 - [ ] **W10. Precision policy**: explicit `dtype` parameter on batched
       calibrators (float32 default documented); stability-guide section.
