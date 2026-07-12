@@ -10,7 +10,7 @@ Two consumption modes:
 * ``mjollnir.calibration``  — calibration objects and CLIs that source model parameters
                               from market data (physical- and risk-neutral-measure).
 
-Extracted from the ``option_pricer_DLC`` monorepo (``src/options_desk``).
+Extracted from an internal research monorepo.
 """
 
 __version__ = "0.1.0"

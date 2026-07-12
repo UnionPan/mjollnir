@@ -451,7 +451,7 @@ def quick_calibrate_from_yfinance(
     Returns:
         ASCalibrationResult (with default microstructure params)
     """
-    from mjollnir.calibration.data.yfinance_fetcher import YFinanceFetcher
+    from mjollnir.calibration.marketdata.yfinance_fetcher import YFinanceFetcher
 
     # Fetch data
     fetcher = YFinanceFetcher()

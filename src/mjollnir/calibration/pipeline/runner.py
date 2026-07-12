@@ -17,8 +17,8 @@ import pandas as pd
 from joblib import Parallel, delayed
 
 from ..cross_asset import fit_dcc, fit_factor_model, pool_parameters
-from ..data.price_store import PriceStore
-from ..data.universe import Universe, load_universe
+from ..marketdata.price_store import PriceStore
+from ..marketdata.universe import Universe, load_universe
 from .registry import get_model
 from .results_store import (
     is_model_done,

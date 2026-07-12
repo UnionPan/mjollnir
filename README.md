@@ -3,7 +3,7 @@
 A stable, reproducible, differentiable market-simulation and calibration substrate
 for RL research (deep hedging / POMARL) and backtesting.
 
-Extracted from the `option_pricer_DLC` monorepo (`src/options_desk`); this library is
+Extracted from an internal research monorepo; this library is
 the foundation the actual research sits on, not the end product. Research-grade and
 usable at some scale — explicitly **not** exchange connectivity, tick data, or
 latency-guaranteed infrastructure.

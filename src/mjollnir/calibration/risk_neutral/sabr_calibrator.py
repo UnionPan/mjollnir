@@ -12,7 +12,7 @@ from scipy import optimize
 from dataclasses import dataclass
 import time
 
-from ..data.data_provider import OptionChain
+from ..marketdata.data_provider import OptionChain
 
 
 @dataclass

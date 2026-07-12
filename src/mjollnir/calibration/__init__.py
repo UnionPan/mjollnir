@@ -12,8 +12,8 @@ email: yp1170@nyu.edu
 """
 
 # Data providers
-from .data.yfinance_fetcher import YFinanceFetcher
-from .data.data_provider import MarketData, OptionChain
+from .marketdata.yfinance_fetcher import YFinanceFetcher
+from .marketdata.data_provider import MarketData, OptionChain
 
 # P-measure (physical) calibrators
 from . import physical

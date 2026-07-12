@@ -22,8 +22,8 @@ from __future__ import annotations
 import argparse
 import logging
 
-from mjollnir.calibration.data.price_store import PriceStore, fetch_yfinance
-from mjollnir.calibration.data.universe import (
+from mjollnir.calibration.marketdata.price_store import PriceStore, fetch_yfinance
+from mjollnir.calibration.marketdata.universe import (
     Universe, available_universes, load_universe,
 )
 from mjollnir.calibration.physical import DEFAULT_BASKET_50

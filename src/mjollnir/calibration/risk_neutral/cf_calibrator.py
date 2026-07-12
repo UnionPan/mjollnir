@@ -17,7 +17,7 @@ from dataclasses import dataclass
 from collections.abc import Callable
 import time
 
-from ..data.data_provider import OptionChain
+from ..marketdata.data_provider import OptionChain
 from ...pricer.fourier import COSPricer
 from ...derivatives.vanilla import EuropeanCall, EuropeanPut
 

@@ -1,13 +1,21 @@
+# caches / bytecode (any depth)
 __pycache__/
 *.pyc
 *.egg-info/
-build/
-dist/
 .pytest_cache/
 .coverage
 htmlcov/
-data/
-runs/
-site/
+
+# build & docs output (repo root only — anchored so common names like
+# "data" never swallow source packages, e.g. src/mjollnir/calibration/data/)
+/build/
+/dist/
+/site/
+
+# runtime artifacts (repo root only)
+/data/
+/runs/
+
+# local tooling output
 .lychee-results.json
 .lint-relative-paths-results.txt

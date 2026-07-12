@@ -513,7 +513,7 @@ def fit_svi_from_chain(
     Fit SVI to each expiry slice in an OptionChain.
 
     Args:
-        chain: OptionChain object (from calibration.data.data_provider)
+        chain: OptionChain object (from calibration.marketdata.data_provider)
         forward: Forward price. If None, uses spot * exp((r-q)*T)
 
     Returns:

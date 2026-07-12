@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=65.0", "wheel"]
+requires = ["setuptools>=77.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -8,7 +8,8 @@ version = "0.1.0"
 description = "A stable, reproducible, differentiable market-simulation & calibration substrate for RL research and backtesting"
 readme = "README.md"
 requires-python = ">=3.11"  # floor set by jax 0.9 / flax (both >=3.11)
-license = {file = "LICENSE"}
+license = "MIT"
+license-files = ["LICENSE"]
 authors = [
     {name = "Yunian Pan", email = "yp1170@nyu.edu"}
 ]
@@ -26,9 +27,9 @@ classifiers = [
     "Programming Language :: Python :: 3.13",
 ]
 
-# Measured against the extracted tree (supersedes the goal's partial list).
-# flax/optax are core (calibration's NPE), not RL-only. gymnasium is required by
-# simulations. torch is intentionally absent (stays with deep_hedging in the monorepo).
+# flax/optax are core dependencies (used by the NPE calibrator, not only RL
+# consumers); gymnasium is required by the simulation environments. torch is
+# intentionally not a dependency.
 dependencies = [
     "numpy>=1.24.0",
     "scipy>=1.10.0",
@@ -84,8 +85,8 @@ ignore = [
     "E741",   # ambiguous single-letter names: standard math notation (l, I) in kernels
     "B008",   # function call in default: used deliberately for frozen param defaults
     "RUF001", "RUF002", "RUF003",  # Greek letters / math glyphs in docstrings are deliberate
-    # -- ratchet: pre-existing findings inherited from the monorepo; burn down
-    #    deliberately (each fix verified against tests), then re-enable. --
+    # -- ratchet: pre-existing minor findings; burn down deliberately
+    #    (each fix verified against tests), then re-enable. --
     "F841", "B007", "B028", "B905",
     "RUF012", "RUF013", "RUF022", "RUF059",
 ]
