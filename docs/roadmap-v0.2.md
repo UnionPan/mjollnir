@@ -38,7 +38,7 @@ each verified (tests + lint + docs --strict) before the next begins.
       (linear/sqrt/Almgren-Chriss, differentiable, golden-tested);
       `MarketState` PyTree + `make_market_step(process=..., impact=...)`;
       reference multi-agent example.
-- [ ] **W6. Calibration upgrades**:
+- [x] **W6. Calibration upgrades** (a shipped; b/c designed in docs/design/neural-calibration.md):
       (a) gradient-based risk-neutral Heston calibration via
           `jax.grad` through `fourier_price_batch` (exact gradients,
           replaces finite differences);

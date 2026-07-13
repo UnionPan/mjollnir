@@ -16,6 +16,25 @@ from mjollnir.calibration.physical.heston_particle_filter import HestonParticleF
 pf = HestonParticleFilter(n_particles=2000)
 ```
 
+## Gradient-based surface calibration
+
+`fit_heston_surface` differentiates the library's own COS pricer exactly
+(`jax.grad` through `fourier_price_batch`) — no finite differences, and the
+whole fit is jit-compiled. It returns a Q-measure `ParamSet`, so the result
+plugs straight into the artifact store, scenarios, and the kernel:
+
+```python
+from mjollnir.calibration import fit_heston_surface
+
+quotes = [(strike, T_years, is_call, mid), ...]
+res = fit_heston_surface(quotes, S0=100.0, r=0.02, asset="SPY")
+res.param_set.save("data/params/spy_heston_q.json")
+```
+
+On a noise-free 36-quote surface it recovers all five Heston parameters to
+<0.01% (tested); the amortized-NPE and signature-generator successors are
+specified in `docs/design/neural-calibration.md`.
+
 ## Command-line workflow
 
 Installed with the package:

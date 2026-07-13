@@ -4,7 +4,7 @@ All notable changes to this project are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/); versioning policy is described
 in `docs/guide/stability.md` (golden-test breaks = dynamics break = never a patch).
 
-## [Unreleased — 0.2.0]
+## [0.2.0] - 2026-07-13
 
 ### Changed (breaking)
 - **RNG migration**: the NumPy process layer now uses per-call
@@ -20,7 +20,10 @@ in `docs/guide/stability.md` (golden-test breaks = dynamics break = never a patc
   `almgren_chriss_step`); `MarketState` + `make_market_step` multi-agent
   contract; `mjollnir.params` (versioned ParamSet artifacts);
   `mjollnir.scenarios` (counterfactual shock library); property-based and
-  benchmark suites; executable examples gallery.
+  benchmark suites; executable examples gallery; gradient-based
+  risk-neutral Heston calibration (`fit_heston_surface`: exact jax.grad
+  through the COS pricer, all five params recovered to <0.01% on clean
+  surfaces, returns a Q-measure ParamSet).
 
 ## [0.1.0] - 2026-07-12
 
