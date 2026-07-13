@@ -29,9 +29,9 @@ each verified (tests + lint + docs --strict) before the next begins.
       `test_env_reset_determinism` must stay green.
 
 ## Phase 3 — capabilities
-- [ ] **W2. Versioned calibrated-parameter store**: `ParamSet` artifact
+- [x] **W2. Versioned calibrated-parameter store**: `ParamSet` artifact
       (schema + semver + provenance hash), save/load, CLI integration.
-- [ ] **W7. Scenario/stress module**: counterfactual transforms of a `ParamSet`
+- [x] **W7. Scenario/stress module**: counterfactual transforms of a `ParamSet`
       (vol spike, jump cascade, regime shift, correlation breakdown) as
       versioned configs.
 - [ ] **W5. Market impact + multi-agent contract**: `mjollnir.impact`

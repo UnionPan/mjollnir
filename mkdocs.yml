@@ -53,6 +53,7 @@ nav:
   - Guide:
       - RL substrate (Mode 1): guide/rl-substrate.md
       - Calibration & backtesting (Mode 2): guide/calibration.md
+      - Parameter store & scenarios: guide/params-scenarios.md
       - Reproducibility contract: guide/stability.md
   - Examples: examples.md
   - API reference:
@@ -61,4 +62,6 @@ nav:
       - mjollnir.simulations: reference/simulations.md
       - mjollnir.processes: reference/processes.md
       - mjollnir.calibration: reference/calibration.md
+      - mjollnir.params: reference/params.md
+      - mjollnir.scenarios: reference/scenarios.md
   - Changelog: changelog.md
