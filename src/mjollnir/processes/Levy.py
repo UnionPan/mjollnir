@@ -144,8 +144,8 @@ class LevyProcess(StochasticProcess):
             paths_anti[0] = X0
 
             # Reset seed for antithetic
-            if config.random_seed is not None:
-                np.random.seed(config.random_seed)
+            rng = np.random.default_rng(config.random_seed)
+            self._sim_rng = rng
 
             for i in range(len(t_grid) - 1):
                 # For Levy processes, antithetic means negating increments
@@ -206,7 +206,7 @@ class SubordinatedBrownianMotion(LevyProcess):
         dT = self._simulate_subordinator(dt, n_paths)
 
         # Generate Brownian increments scaled by time change
-        Z = np.random.normal(0, 1, (n_paths, self.dim))
+        Z = self.sim_rng.normal(0, 1, (n_paths, self.dim))
         increments = self.theta * dT[:, np.newaxis] + self.sigma * np.sqrt(dT[:, np.newaxis]) * Z
 
         return increments

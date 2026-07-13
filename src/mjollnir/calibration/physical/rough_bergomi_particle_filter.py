@@ -60,8 +60,7 @@ class RoughBergomiParticleFilter:
         if np.any(prices <= 0):
             raise ValueError("All prices must be positive")
 
-        if random_seed is not None:
-            np.random.seed(random_seed)
+        rng = np.random.default_rng(random_seed)
 
         returns = np.diff(np.log(prices))
         n_steps = len(returns)
@@ -76,7 +75,7 @@ class RoughBergomiParticleFilter:
 
         for t in range(n_steps):
             # Sample new Brownian increments for the variance driver
-            dW1_hist[:, t] = np.random.normal(0.0, np.sqrt(dt), size=self.n_particles)
+            dW1_hist[:, t] = rng.normal(0.0, np.sqrt(dt), size=self.n_particles)
 
             # Compute W_H at time t+1 for each particle
             W_H = dW1_hist[:, : t + 1] @ kernel[t + 1, : t + 1]
@@ -104,7 +103,7 @@ class RoughBergomiParticleFilter:
             filtered_variance[t] = np.sum(w_norm * v_t)
 
             if ess < self.resample_threshold * self.n_particles:
-                idx = self._systematic_resample(w_norm)
+                idx = self._systematic_resample(w_norm, rng)
                 dW1_hist = dW1_hist[idx]
 
         return RoughBergomiParticleFilterResult(
@@ -134,9 +133,9 @@ class RoughBergomiParticleFilter:
 
         return kernel
 
-    def _systematic_resample(self, weights: np.ndarray) -> np.ndarray:
+    def _systematic_resample(self, weights, rng: np.ndarray) -> np.ndarray:
         n = len(weights)
-        positions = (np.random.rand() + np.arange(n)) / n
+        positions = (rng.random() + np.arange(n)) / n
         cumulative_sum = np.cumsum(weights)
         idx = np.searchsorted(cumulative_sum, positions)
         return idx

@@ -159,7 +159,7 @@ class RegimeSwitchingMerton(RegimeSwitchingProcess):
         sigma_J = self.regime_params['sigma_J'][regime]
 
         # Sample number of jumps for each path
-        n_jumps_per_path = np.random.poisson(lambda_jump * dt, n_paths)
+        n_jumps_per_path = self.sim_rng.poisson(lambda_jump * dt, n_paths)
 
         # Optimize by grouping paths with same number of jumps
         unique_jump_counts = np.unique(n_jumps_per_path)
@@ -173,7 +173,7 @@ class RegimeSwitchingMerton(RegimeSwitchingProcess):
 
             # Generate log-normal jump sizes: Y = exp(Z) - 1, Z ~ N(mu_J, sigma_J^2)
             total_jumps = n_jumps * n_paths_with_jumps
-            log_jumps = np.random.normal(mu_J, sigma_J, (total_jumps, self.dim))
+            log_jumps = self.sim_rng.normal(mu_J, sigma_J, (total_jumps, self.dim))
             jump_proportions = np.exp(log_jumps) - 1.0
 
             # Reshape and sum jumps for each path
@@ -203,12 +203,14 @@ class RegimeSwitchingMerton(RegimeSwitchingProcess):
         initial_regime = 0  # Start in regime 0
         regime_paths = self._simulate_regime_path(T, dt, initial_regime, n_paths)
 
+        rng = np.random.default_rng(config.random_seed)
+        self._sim_rng = rng
         for i, t in enumerate(t_grid[:-1]):
             X_current = paths[i]
             current_regimes = regime_paths[i]
 
             # Generate Brownian increments
-            dW = np.random.normal(0, sqrt_dt, size=(n_paths, self.dim))
+            dW = rng.normal(0, sqrt_dt, size=(n_paths, self.dim))
 
             # Initialize step increments
             drift_term = np.zeros((n_paths, self.dim))
@@ -236,8 +238,8 @@ class RegimeSwitchingMerton(RegimeSwitchingProcess):
             paths_anti = np.zeros((len(t_grid), n_paths, self.dim))
             paths_anti[0] = X0
 
-            if config.random_seed is not None:
-                np.random.seed(config.random_seed)
+            rng = np.random.default_rng(config.random_seed)
+            self._sim_rng = rng
 
             regime_paths_anti = self._simulate_regime_path(T, dt, initial_regime, n_paths)
 
@@ -245,7 +247,7 @@ class RegimeSwitchingMerton(RegimeSwitchingProcess):
                 X_current = paths_anti[i]
                 current_regimes = regime_paths_anti[i]
 
-                dW = -np.random.normal(0, sqrt_dt, size=(n_paths, self.dim))
+                dW = -rng.normal(0, sqrt_dt, size=(n_paths, self.dim))
 
                 drift_term = np.zeros((n_paths, self.dim))
                 diffusion_term = np.zeros((n_paths, self.dim))

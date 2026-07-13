@@ -19,9 +19,14 @@ configure_jax_runtime()
 
 
 def ensure_jax_key(seed) -> jax.Array:
-    """Convert an integer seed or existing key to a JAX PRNG key."""
+    """Convert an integer seed or existing key to a JAX PRNG key.
+
+    ``None`` draws fresh OS entropy (matching the numpy Generator paths) —
+    an unseeded simulation is non-deterministic on every backend, never
+    silently pinned to key 0.
+    """
     if seed is None:
-        return jax.random.PRNGKey(0)
+        return jax.random.PRNGKey(int(np.random.SeedSequence().entropy % (2**31)))
     if isinstance(seed, (int, np.integer)):
         return jax.random.PRNGKey(int(seed))
     return seed

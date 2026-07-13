@@ -111,7 +111,7 @@ class MertonJD(JumpDiffusionProcess):
             Array of shape (n_jumps, 1) with jump proportions Y
         """
         # Generate log-jumps: Z ~ N(mu_J, sigma_J^2)
-        log_jumps = np.random.normal(self.mu_J, self.sigma_J, (n_jumps, self.dim))
+        log_jumps = self.sim_rng.normal(self.mu_J, self.sigma_J, (n_jumps, self.dim))
 
         # Convert to proportional jumps: Y = exp(Z) - 1
         jump_proportions = np.exp(log_jumps) - 1.0
@@ -137,7 +137,7 @@ class MertonJD(JumpDiffusionProcess):
         jumps = np.zeros((n_paths, self.dim))
 
         # Sample number of jumps for each path
-        n_jumps_per_path = np.random.poisson(self.jump_intensity * dt, n_paths)
+        n_jumps_per_path = self.sim_rng.poisson(self.jump_intensity * dt, n_paths)
 
         # Optimize by grouping paths with same number of jumps
         unique_jump_counts = np.unique(n_jumps_per_path)

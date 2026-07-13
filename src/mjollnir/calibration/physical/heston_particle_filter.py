@@ -59,8 +59,7 @@ class HestonParticleFilter:
         if np.any(prices <= 0):
             raise ValueError("All prices must be positive")
 
-        if random_seed is not None:
-            np.random.seed(random_seed)
+        rng = np.random.default_rng(random_seed)
 
         returns = np.diff(np.log(prices))
         n_steps = len(returns)
@@ -74,7 +73,7 @@ class HestonParticleFilter:
 
         for t in range(n_steps):
             # Propagate variance particles
-            z = np.random.normal(0.0, 1.0, size=self.n_particles)
+            z = rng.normal(0.0, 1.0, size=self.n_particles)
             v_particles = (
                 v_particles
                 + kappa * (theta - v_particles) * dt
@@ -103,7 +102,7 @@ class HestonParticleFilter:
 
             # Resample if needed
             if ess < self.resample_threshold * self.n_particles:
-                idx = self._systematic_resample(w_norm)
+                idx = self._systematic_resample(w_norm, rng)
                 v_particles = v_particles[idx]
 
         return HestonParticleFilterResult(
@@ -121,9 +120,9 @@ class HestonParticleFilter:
             dt=dt,
         )
 
-    def _systematic_resample(self, weights: np.ndarray) -> np.ndarray:
+    def _systematic_resample(self, weights, rng: np.ndarray) -> np.ndarray:
         n = len(weights)
-        positions = (np.random.rand() + np.arange(n)) / n
+        positions = (rng.random() + np.arange(n)) / n
         cumulative_sum = np.cumsum(weights)
         idx = np.searchsorted(cumulative_sum, positions)
         return idx

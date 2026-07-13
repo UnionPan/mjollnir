@@ -129,13 +129,13 @@ class NIG(SubordinatedBrownianMotion):
         lambda_ig = (self.delta * dt)**2
 
         # Generate IG using Michael-Schucany-Haas algorithm
-        nu = np.random.normal(0, 1, n_paths)
+        nu = self.sim_rng.normal(0, 1, n_paths)
         y = nu**2
         x = mean_ig + (mean_ig**2 * y) / (2 * lambda_ig) - \
             (mean_ig / (2 * lambda_ig)) * np.sqrt(4 * mean_ig * lambda_ig * y + mean_ig**2 * y**2)
 
         # Accept or use alternative
-        z = np.random.uniform(0, 1, n_paths)
+        z = self.sim_rng.uniform(0, 1, n_paths)
         mask = z <= mean_ig / (mean_ig + x)
         dT = np.where(mask, x, mean_ig**2 / x)
 
@@ -160,7 +160,7 @@ class NIG(SubordinatedBrownianMotion):
         dT = self._simulate_subordinator(dt, n_paths)
 
         # Generate Brownian increments scaled by time change
-        Z = np.random.normal(0, 1, (n_paths, self.dim))
+        Z = self.sim_rng.normal(0, 1, (n_paths, self.dim))
 
         # NIG increment: mu*dt + beta*dT + sqrt(dT)*Z
         increments = self.mu * dt + self.beta * dT[:, np.newaxis] + np.sqrt(dT[:, np.newaxis]) * Z

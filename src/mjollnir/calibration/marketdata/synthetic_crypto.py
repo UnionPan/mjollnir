@@ -144,7 +144,7 @@ class SyntheticOptionChainGenerator:
         self.enforce_intrinsic = enforce_intrinsic
 
         # Local RNG (don't pollute global state)
-        self._rng = np.random.RandomState(random_seed)
+        self._rng = np.random.default_rng(random_seed)
 
     def _convert_calibration_result(
         self,

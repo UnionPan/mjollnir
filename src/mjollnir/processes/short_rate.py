@@ -72,25 +72,27 @@ class Vasicek(DriftDiffusionProcess):
         paths = np.zeros((len(t_grid), n_paths, self.dim))
         paths[0] = X0
 
+        rng = np.random.default_rng(config.random_seed)
+        self._sim_rng = rng
         for i in range(1, len(t_grid)):
             t = t_grid[i]
             exp_kt = np.exp(-self.kappa * t)
             mean = X0 * exp_kt + self.theta * (1.0 - exp_kt)
             var = (self.sigma ** 2 / (2.0 * self.kappa)) * (1.0 - np.exp(-2.0 * self.kappa * t))
-            Z = np.random.normal(0, 1, (n_paths, self.dim))
+            Z = rng.normal(0, 1, (n_paths, self.dim))
             paths[i] = mean + np.sqrt(var) * Z
 
         if config.antithetic:
             paths_anti = np.zeros((len(t_grid), n_paths, self.dim))
             paths_anti[0] = X0
-            if config.random_seed is not None:
-                np.random.seed(config.random_seed)
+            rng = np.random.default_rng(config.random_seed)
+            self._sim_rng = rng
             for i in range(1, len(t_grid)):
                 t = t_grid[i]
                 exp_kt = np.exp(-self.kappa * t)
                 mean = X0 * exp_kt + self.theta * (1.0 - exp_kt)
                 var = (self.sigma ** 2 / (2.0 * self.kappa)) * (1.0 - np.exp(-2.0 * self.kappa * t))
-                Z = np.random.normal(0, 1, (n_paths, self.dim))
+                Z = rng.normal(0, 1, (n_paths, self.dim))
                 paths_anti[i] = mean - np.sqrt(var) * Z
             paths = np.concatenate([paths, paths_anti], axis=1)
 

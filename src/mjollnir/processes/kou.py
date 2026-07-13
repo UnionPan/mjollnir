@@ -120,12 +120,12 @@ class KouJD(JumpDiffusionProcess):
             Array of shape (n_jumps, 1) with jump proportions Y
         """
         # Determine direction of each jump (up or down)
-        is_upward = np.random.random((n_jumps, self.dim)) < self.p
+        is_upward = self.sim_rng.random((n_jumps, self.dim)) < self.p
 
         # Generate exponential random variables
         # Upward: ξ ~ Exp(eta_up), so ξ = -ln(U) / eta_up
         # Downward: ζ ~ Exp(eta_down), so ζ = -ln(U) / eta_down
-        uniform_samples = np.random.random((n_jumps, self.dim))
+        uniform_samples = self.sim_rng.random((n_jumps, self.dim))
 
         # Initialize jump sizes
         jump_proportions = np.zeros((n_jumps, self.dim))
@@ -157,7 +157,7 @@ class KouJD(JumpDiffusionProcess):
         jumps = np.zeros((n_paths, self.dim))
 
         # Sample number of jumps for each path
-        n_jumps_per_path = np.random.poisson(self.jump_intensity * dt, n_paths)
+        n_jumps_per_path = self.sim_rng.poisson(self.jump_intensity * dt, n_paths)
 
         # Optimize by grouping paths with same number of jumps
         unique_jump_counts = np.unique(n_jumps_per_path)

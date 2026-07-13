@@ -86,7 +86,7 @@ class SyntheticMertonOptionChainGenerator:
         self.price_floor = price_floor
         self.enforce_intrinsic = enforce_intrinsic
 
-        self._rng = np.random.RandomState(random_seed)
+        self._rng = np.random.default_rng(random_seed)
 
     def generate_single_chain(
         self,
@@ -256,10 +256,10 @@ class SyntheticMertonOptionChainGenerator:
         base = 500
         decay = np.exp(-3 * abs(moneyness - 1.0))
         time_decay = np.exp(-2 * T)
-        return int(base * decay * time_decay + self._rng.randint(0, 20))
+        return int(base * decay * time_decay + self._rng.integers(0, 20))
 
     def _generate_open_interest(self, moneyness: float, T: float) -> int:
         base = 2000
         decay = np.exp(-2 * abs(moneyness - 1.0))
         time_decay = np.exp(-1.5 * T)
-        return int(base * decay * time_decay + self._rng.randint(0, 50))
+        return int(base * decay * time_decay + self._rng.integers(0, 50))

@@ -105,7 +105,7 @@ class VarianceGamma(SubordinatedBrownianMotion):
         scale = self.nu       # scale parameter (NumPy uses scale = 1/rate)
 
         # Generate Gamma random variables
-        dT = np.random.gamma(shape, scale, n_paths)
+        dT = self.sim_rng.gamma(shape, scale, n_paths)
 
         return dT
 

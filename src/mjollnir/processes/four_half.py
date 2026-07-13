@@ -231,11 +231,13 @@ class FourHalf(MultiFactorProcess):
         paths[0] = X0
         sqrt_dt = np.sqrt(dt)
 
+        rng = np.random.default_rng(config.random_seed)
+        self._sim_rng = rng
         for i, t in enumerate(t_grid[:-1]):
             X_current = paths[i]
 
             # Generate correlated Brownian increments
-            dW = np.random.normal(0, sqrt_dt, size=(n_paths, self.dim))
+            dW = rng.normal(0, sqrt_dt, size=(n_paths, self.dim))
             if self.cholesky_decomp is not None:
                 dW = dW @ self.cholesky_decomp.T
 
@@ -265,13 +267,13 @@ class FourHalf(MultiFactorProcess):
             paths_anti = np.zeros((len(t_grid), n_paths, self.dim))
             paths_anti[0] = X0
 
-            if config.random_seed is not None:
-                np.random.seed(config.random_seed)
+            rng = np.random.default_rng(config.random_seed)
+            self._sim_rng = rng
 
             for i, t in enumerate(t_grid[:-1]):
                 X_current = paths_anti[i]
 
-                dW = -np.random.normal(0, sqrt_dt, size=(n_paths, self.dim))
+                dW = -rng.normal(0, sqrt_dt, size=(n_paths, self.dim))
                 if self.cholesky_decomp is not None:
                     dW = dW @ self.cholesky_decomp.T
 

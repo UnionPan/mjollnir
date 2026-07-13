@@ -97,7 +97,7 @@ class RegimeSwitchingProcess(StochasticProcess):
 
                 # Sample holding time (time until next regime switch)
                 if exit_rate > 1e-12:
-                    holding_time = np.random.exponential(1.0 / exit_rate)
+                    holding_time = self.sim_rng.exponential(1.0 / exit_rate)
                 else:
                     holding_time = np.inf
 
@@ -117,7 +117,7 @@ class RegimeSwitchingProcess(StochasticProcess):
 
                 if transition_rates.sum() > 1e-12:
                     transition_probs = transition_rates / transition_rates.sum()
-                    current_regime = np.random.choice(self.n_regimes, p=transition_probs)
+                    current_regime = self.sim_rng.choice(self.n_regimes, p=transition_probs)
 
                 current_time = next_jump_time
 
@@ -143,11 +143,13 @@ class RegimeSwitchingProcess(StochasticProcess):
         paths[0] = X0
         sqrt_dt = np.sqrt(dt)
 
+        rng = np.random.default_rng(config.random_seed)
+        self._sim_rng = rng
         for i, t in enumerate(t_grid[:-1]):
             X_current = paths[i]
 
             # Generate Brownian increments
-            dW = np.random.normal(0, sqrt_dt, size=(n_paths, self.dim))
+            dW = rng.normal(0, sqrt_dt, size=(n_paths, self.dim))
             if self.cholesky_decomp is not None:
                 dW = dW @ self.cholesky_decomp.T
 
@@ -172,14 +174,14 @@ class RegimeSwitchingProcess(StochasticProcess):
             paths_anti = np.zeros((len(t_grid), n_paths, self.dim))
             paths_anti[0] = X0
 
-            if config.random_seed is not None:
-                np.random.seed(config.random_seed)
+            rng = np.random.default_rng(config.random_seed)
+            self._sim_rng = rng
             regime_paths_anti = self._simulate_regime_path(T, dt, initial_regime, n_paths)
 
             for i, t in enumerate(t_grid[:-1]):
                 X_current = paths_anti[i]
 
-                dW = -np.random.normal(0, sqrt_dt, size=(n_paths, self.dim))
+                dW = -rng.normal(0, sqrt_dt, size=(n_paths, self.dim))
                 if self.cholesky_decomp is not None:
                     dW = dW @ self.cholesky_decomp.T
 

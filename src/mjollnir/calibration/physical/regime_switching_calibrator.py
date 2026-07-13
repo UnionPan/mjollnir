@@ -536,8 +536,8 @@ class RegimeSwitchingSimulator:
             - paths: shape (n_paths, n_steps+1)
             - regime_labels: shape (n_paths, n_steps+1)
         """
-        if seed is not None:
-            np.random.seed(seed)
+        rng = np.random.default_rng(seed)
+        self._sim_rng = rng
 
         n_steps = int(T / self.dt)
 
@@ -575,7 +575,7 @@ class RegimeSwitchingSimulator:
                 sigma = params.sigma * vol_multiplier
 
                 # Simulate GBM step
-                dW = np.random.normal(0, np.sqrt(self.dt))
+                dW = rng.normal(0, np.sqrt(self.dt))
                 S_t = paths[path_idx, t]
                 S_next = S_t * np.exp((mu - 0.5 * sigma**2) * self.dt + sigma * dW)
 
@@ -595,7 +595,7 @@ class RegimeSwitchingSimulator:
         probs = self.result.transition_matrix[regime_idx]
 
         # Sample from categorical distribution
-        next_idx = np.random.choice(len(probs), p=probs)
+        next_idx = self._sim_rng.choice(len(probs), p=probs)
         next_regime = self.idx_to_regime[next_idx]
 
         return next_regime

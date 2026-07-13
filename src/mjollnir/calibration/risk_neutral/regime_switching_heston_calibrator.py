@@ -636,6 +636,7 @@ class RegimeSwitchingHestonSimulator:
         scenario: str = 'baseline',
         initial_regime: int | None = None,
         r: float = 0.0,
+        random_seed: int | None = None,
     ) -> tuple[np.ndarray, np.ndarray]:
         """
         Simulate price and variance paths with regime switching.
@@ -655,6 +656,7 @@ class RegimeSwitchingHestonSimulator:
         """
         n_steps = int(T / self.dt)
         dt = self.dt
+        rng = np.random.default_rng(random_seed)
 
         # Initialize paths
         S_paths = np.zeros((n_paths, n_steps + 1))
@@ -682,7 +684,7 @@ class RegimeSwitchingHestonSimulator:
             else:
                 # Sample from stationary distribution
                 pi = self.result.long_run_probabilities()
-                current_regime = np.random.choice(regime_ids, p=pi)
+                current_regime = rng.choice(regime_ids, p=pi)
 
             # Simulate path
             for t in range(n_steps):
@@ -702,8 +704,8 @@ class RegimeSwitchingHestonSimulator:
                 v_t = max(v_paths[path_idx, t], 0)  # Ensure non-negative variance
 
                 # Correlated Brownian motions
-                dW_S = np.random.randn() * np.sqrt(dt)
-                dW_v = rho * dW_S + np.sqrt(1 - rho**2) * np.random.randn() * np.sqrt(dt)
+                dW_S = rng.standard_normal() * np.sqrt(dt)
+                dW_v = rho * dW_S + np.sqrt(1 - rho**2) * rng.standard_normal() * np.sqrt(dt)
 
                 # Heston dynamics (Euler-Maruyama discretization)
                 # dS = r * S * dt + sqrt(v) * S * dW_S
@@ -720,7 +722,7 @@ class RegimeSwitchingHestonSimulator:
                 if forced_regime is None and t < n_steps - 1:
                     regime_idx = regime_ids.index(current_regime)
                     transition_probs = self.result.transition_matrix[regime_idx, :]
-                    current_regime = np.random.choice(regime_ids, p=transition_probs)
+                    current_regime = rng.choice(regime_ids, p=transition_probs)
 
         return S_paths, v_paths
 

@@ -66,6 +66,18 @@ class StochasticProcess(ABC):
         name:
         params:
     """
+
+    @property
+    def sim_rng(self) -> np.random.Generator:
+        """Generator used by stochastic helper components (jump sizes,
+        subordinators, regime paths). ``simulate()`` binds it from
+        ``SimulationConfig.random_seed``; standalone helper calls get a
+        lazily created fresh generator — never the process-global stream."""
+        rng = getattr(self, "_sim_rng", None)
+        if rng is None:
+            rng = self._sim_rng = np.random.default_rng()
+        return rng
+
     def __init__(self, dim: int = 1, name: str = "StochasticProcess"):
         self.dim = dim
         self.name = name
@@ -185,7 +197,8 @@ class StochasticProcess(ABC):
         ):
             spec = self._build_jax_spec()
             if spec is not None:
-                seed = config.random_seed if config.random_seed is not None else 0
+                # None -> fresh entropy inside ensure_jax_key (matches numpy paths)
+                seed = config.random_seed
                 try:
                     return _jax_kernels.simulate(
                         drift_fn=spec['drift_fn'],
@@ -217,8 +230,8 @@ class StochasticProcess(ABC):
                     )
 
         # --- NumPy fallback ---
-        if config.random_seed is not None:
-            np.random.seed(config.random_seed)
+        rng = np.random.default_rng(config.random_seed)
+        self._sim_rng = rng
 
         dt = T/config.n_steps
         t_grid = np.linspace(0, T, config.n_steps+1)
@@ -254,11 +267,13 @@ class StochasticProcess(ABC):
         paths[0] = X0
         sqrt_dt = np.sqrt(dt)
 
+        rng = np.random.default_rng(config.random_seed)
+        self._sim_rng = rng
         for i, t in enumerate(t_grid[:-1]):
             X_current = paths[i]
 
             # Generate Brownian increments
-            dW = np.random.normal(0, sqrt_dt, size=(n_paths, self.dim))
+            dW = rng.normal(0, sqrt_dt, size=(n_paths, self.dim))
 
             # Apply correlation if specified
             if self.cholesky_decomp is not None:
@@ -278,14 +293,14 @@ class StochasticProcess(ABC):
             paths_anti[0] = X0
 
             # Reset seed for antithetic paths
-            if config.random_seed is not None:
-                np.random.seed(config.random_seed)
+            rng = np.random.default_rng(config.random_seed)
+            self._sim_rng = rng
 
             for i, t in enumerate(t_grid[:-1]):
                 X_current = paths_anti[i]
 
                 # Generate antithetic Brownian increments (negated)
-                dW = -np.random.normal(0, sqrt_dt, size=(n_paths, self.dim))
+                dW = -rng.normal(0, sqrt_dt, size=(n_paths, self.dim))
 
                 # Apply correlation if specified
                 if self.cholesky_decomp is not None:
@@ -328,11 +343,13 @@ class StochasticProcess(ABC):
 
         sqrt_dt = np.sqrt(dt)
 
+        rng = np.random.default_rng(config.random_seed)
+        self._sim_rng = rng
         for i, t in enumerate(t_grid[:-1]):
             X_current = paths[i]
 
             # Generate Brownian increments
-            dW = np.random.normal(0, sqrt_dt, size=(n_paths, self.dim))
+            dW = rng.normal(0, sqrt_dt, size=(n_paths, self.dim))
 
             # Apply correlation if specified
             if self.cholesky_decomp is not None:
@@ -359,14 +376,14 @@ class StochasticProcess(ABC):
             paths_anti[0] = X0
 
             # Reset seed for antithetic paths
-            if config.random_seed is not None:
-                np.random.seed(config.random_seed)
+            rng = np.random.default_rng(config.random_seed)
+            self._sim_rng = rng
 
             for i, t in enumerate(t_grid[:-1]):
                 X_current = paths_anti[i]
 
                 # Generate antithetic Brownian increments (negated)
-                dW = -np.random.normal(0, sqrt_dt, size=(n_paths, self.dim))
+                dW = -rng.normal(0, sqrt_dt, size=(n_paths, self.dim))
 
                 # Apply correlation if specified
                 if self.cholesky_decomp is not None:

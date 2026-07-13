@@ -67,7 +67,7 @@ class JumpDiffusionProcess(SingleFactorProcess):
         jumps = np.zeros((n_paths, self.dim))
 
         # Sample number of jumps for each path
-        n_jumps_per_path = np.random.poisson(self.jump_intensity * dt, n_paths)
+        n_jumps_per_path = self.sim_rng.poisson(self.jump_intensity * dt, n_paths)
 
         # Optimize by grouping paths with same number of jumps
         unique_jump_counts = np.unique(n_jumps_per_path)

@@ -192,7 +192,7 @@ class Bates(MultiFactorProcess):
         jumps = np.zeros((n_paths, self.dim))
 
         S = X[:, 0]
-        n_jumps_per_path = np.random.poisson(self.lambda_j * dt, n_paths)
+        n_jumps_per_path = self.sim_rng.poisson(self.lambda_j * dt, n_paths)
         unique_counts = np.unique(n_jumps_per_path)
 
         for n_j in unique_counts:
@@ -202,7 +202,7 @@ class Bates(MultiFactorProcess):
             n_with_jumps = np.sum(mask)
 
             # Log-normal jump sizes: Y = exp(Z) - 1, Z ~ N(mu_J, sigma_J)
-            log_jumps = np.random.normal(
+            log_jumps = self.sim_rng.normal(
                 self.mu_J, self.sigma_J, (n_with_jumps, n_j)
             )
             total_Y = (np.exp(log_jumps) - 1.0).sum(axis=1)

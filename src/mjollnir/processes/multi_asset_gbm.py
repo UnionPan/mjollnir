@@ -122,10 +122,12 @@ class MultiAssetGBM(MultiFactorProcess):
         # Pre-compute constants
         drift_adjusted = self.mu - 0.5 * self.sigma**2  # Shape (n_assets,)
 
+        rng = np.random.default_rng(config.random_seed)
+        self._sim_rng = rng
         for i, t in enumerate(t_grid[1:], 1):
             # Generate correlated Brownian motion W(t)
             sqrt_t = np.sqrt(t)
-            Z = np.random.normal(0, 1, size=(n_paths, self.dim))
+            Z = rng.normal(0, 1, size=(n_paths, self.dim))
 
             # Apply correlation
             if self.cholesky_decomp is not None:
@@ -144,12 +146,12 @@ class MultiAssetGBM(MultiFactorProcess):
             paths_anti = np.zeros((len(t_grid), n_paths, self.dim))
             paths_anti[0] = X0
 
-            if config.random_seed is not None:
-                np.random.seed(config.random_seed)
+            rng = np.random.default_rng(config.random_seed)
+            self._sim_rng = rng
 
             for i, t in enumerate(t_grid[1:], 1):
                 sqrt_t = np.sqrt(t)
-                Z = np.random.normal(0, 1, size=(n_paths, self.dim))
+                Z = rng.normal(0, 1, size=(n_paths, self.dim))
 
                 if self.cholesky_decomp is not None:
                     Z_corr = Z @ self.cholesky_decomp.T

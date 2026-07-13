@@ -115,6 +115,8 @@ class OrnsteinUhlenbeck(DriftDiffusionProcess):
         paths = np.zeros((len(t_grid), n_paths, self.dim))
         paths[0] = X0
 
+        rng = np.random.default_rng(config.random_seed)
+        self._sim_rng = rng
         for i, t in enumerate(t_grid[1:], 1):
             # Mean reversion component
             exp_theta_t = np.exp(-self.theta * t)
@@ -125,7 +127,7 @@ class OrnsteinUhlenbeck(DriftDiffusionProcess):
             std = np.sqrt(variance)
 
             # Generate Gaussian noise
-            Z = np.random.normal(0, 1, (n_paths, self.dim))
+            Z = rng.normal(0, 1, (n_paths, self.dim))
 
             paths[i] = mean + std * Z
 
@@ -134,8 +136,8 @@ class OrnsteinUhlenbeck(DriftDiffusionProcess):
             paths_anti = np.zeros((len(t_grid), n_paths, self.dim))
             paths_anti[0] = X0
 
-            if config.random_seed is not None:
-                np.random.seed(config.random_seed)
+            rng = np.random.default_rng(config.random_seed)
+            self._sim_rng = rng
 
             for i, t in enumerate(t_grid[1:], 1):
                 exp_theta_t = np.exp(-self.theta * t)
@@ -143,7 +145,7 @@ class OrnsteinUhlenbeck(DriftDiffusionProcess):
                 variance = (self.sigma**2 / (2 * self.theta)) * (1.0 - np.exp(-2 * self.theta * t))
                 std = np.sqrt(variance)
 
-                Z = np.random.normal(0, 1, (n_paths, self.dim))
+                Z = rng.normal(0, 1, (n_paths, self.dim))
                 paths_anti[i] = mean - std * Z  # Antithetic
 
             paths = np.concatenate([paths, paths_anti], axis=1)

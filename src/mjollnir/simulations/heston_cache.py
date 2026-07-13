@@ -279,7 +279,7 @@ class CachedHestonEnv(gym.Env if gym else object):
             )
         self.liability = liability
 
-        self._rng = np.random.RandomState(random_seed)
+        self._rng = np.random.default_rng(random_seed)
 
         self.action_space = spaces.Box(
             low=-self.position_limits,
@@ -322,9 +322,9 @@ class CachedHestonEnv(gym.Env if gym else object):
     ) -> tuple[dict[str, np.ndarray], dict[str, Any]]:
         super().reset(seed=seed)
         if seed is not None:
-            self._rng.seed(seed)
+            self._rng = np.random.default_rng(seed)
 
-        self.path_index = self._rng.randint(0, self.n_paths)
+        self.path_index = int(self._rng.integers(0, self.n_paths))
         self.t = 0
         self.S = float(self.spot_arr[self.path_index, self.t])
         self.v = float(self.var_arr[self.path_index, self.t])

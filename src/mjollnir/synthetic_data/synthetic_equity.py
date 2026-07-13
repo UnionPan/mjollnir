@@ -190,7 +190,7 @@ class SyntheticEquityOptionChainGenerator:
         self.enforce_intrinsic = enforce_intrinsic
 
         self.days_per_year = days_per_year
-        self._rng = np.random.RandomState(random_seed)
+        self._rng = np.random.default_rng(random_seed)
 
     def generate_single_chain(
         self,

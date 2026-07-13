@@ -4,6 +4,24 @@ All notable changes to this project are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/); versioning policy is described
 in `docs/guide/stability.md` (golden-test breaks = dynamics break = never a patch).
 
+## [Unreleased — 0.2.0]
+
+### Changed (breaking)
+- **RNG migration**: the NumPy process layer now uses per-call
+  `np.random.Generator` (PCG64) instead of the global `np.random` stream.
+  Sampled trajectories differ from v0.1 for the same seeds. Guarantees:
+  seeded determinism per call, cross-process isolation, no global-stream
+  side effects, unified `None` = fresh entropy on all backends (JAX fast
+  paths previously pinned `None` to key 0). See `tests/test_rng_isolation.py`.
+
+### Added
+- Widened `mjollnir.jax`: full QE kernel family + Merton/Bates/Kou/VG/NIG
+  COS pricers; market impact zoo (`linear_impact`, `sqrt_impact`,
+  `almgren_chriss_step`); `MarketState` + `make_market_step` multi-agent
+  contract; `mjollnir.params` (versioned ParamSet artifacts);
+  `mjollnir.scenarios` (counterfactual shock library); property-based and
+  benchmark suites; executable examples gallery.
+
 ## [0.1.0] - 2026-07-12
 
 ### Added

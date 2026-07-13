@@ -127,9 +127,11 @@ class Bachelier(DriftDiffusionProcess):
         paths = np.zeros((len(t_grid), n_paths, self.dim))
         paths[0] = X0
 
+        rng = np.random.default_rng(config.random_seed)
+        self._sim_rng = rng
         for i in range(1, len(t_grid)):
             t = t_grid[i]
-            Z = np.random.normal(0, 1, size=(n_paths, self.dim))
+            Z = rng.normal(0, 1, size=(n_paths, self.dim))
 
             drift_term = self.mu * t
             diffusion_term = self.sigma * np.sqrt(t) * Z
@@ -140,12 +142,12 @@ class Bachelier(DriftDiffusionProcess):
             paths_anti = np.zeros((len(t_grid), n_paths, self.dim))
             paths_anti[0] = X0
 
-            if config.random_seed is not None:
-                np.random.seed(config.random_seed)
+            rng = np.random.default_rng(config.random_seed)
+            self._sim_rng = rng
 
             for i in range(1, len(t_grid)):
                 t = t_grid[i]
-                Z = -np.random.normal(0, 1, size=(n_paths, self.dim))
+                Z = -rng.normal(0, 1, size=(n_paths, self.dim))
 
                 drift_term = self.mu * t
                 diffusion_term = self.sigma * np.sqrt(t) * Z

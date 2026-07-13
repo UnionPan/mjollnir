@@ -28,23 +28,23 @@ Given the same key and inputs, outputs are deterministic.
 
 Pin accordingly, e.g. `mjollnir==0.1.*` for an experiment series.
 
-## Known debt: process-layer RNG
+## Process-layer RNG contract (v0.2)
 
-The `mjollnir.jax` kernel is fully key-threaded. The classic NumPy `processes`
-layer, however, still seeds the **global** `np.random` stream inside
-`simulate()` when `SimulationConfig.random_seed` is set (inherited from the
-original monorepo). Consequences:
+The `mjollnir.jax` kernel is fully key-threaded. The NumPy `processes` layer
+uses **per-call `np.random.Generator`** instances (v0.2 migration; the old
+global-`np.random.seed` pattern is gone):
 
-- results are deterministic per call when a seed is given, **but**
-- simulating interleaved processes in one Python process makes them share and
-  clobber one global stream.
+- `SimulationConfig.random_seed` set → deterministic per call;
+- `random_seed=None` → fresh OS entropy on **every** backend (the JAX fast
+  paths no longer silently pin `None` to key 0);
+- simulations never read or write the ambient global `np.random` stream, so
+  interleaved processes cannot perturb each other;
+- stochastic helper components (jump sizes, subordinators, regime paths)
+  draw from the process's `sim_rng`, bound by `simulate()`.
 
-The gym environments no longer touch the global stream themselves (their only
-consumer is the explicitly-seeded `process.simulate` call), and
-`test_env_reset_determinism` pins the reset contract. Migrating `processes`
-to per-call `np.random.Generator` instances is planned for v0.2 — it will
-change sampled trajectories (generator algorithm changes), so it ships as a
-minor version with a changelog entry, per the policy above.
+`tests/test_rng_isolation.py` pins all four guarantees. Note: this migration
+changed sampled trajectories relative to v0.1 (MT19937 → PCG64), per the
+versioning policy above.
 
 ## Precision policy
 

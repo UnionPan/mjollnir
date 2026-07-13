@@ -101,8 +101,8 @@ class RoughBergomi(MultiFactorProcess):
                     stacklevel=2,
                 )
 
-        if config.random_seed is not None:
-            np.random.seed(config.random_seed)
+        rng = np.random.default_rng(config.random_seed)
+        self._sim_rng = rng
 
         n_steps = config.n_steps
         n_paths = config.n_paths
@@ -114,8 +114,8 @@ class RoughBergomi(MultiFactorProcess):
         S0 = float(X0_arr[0, 0])
 
         # Brownian increments
-        dW1 = np.random.normal(0.0, np.sqrt(dt), size=(n_steps, n_paths))
-        dW2 = np.random.normal(0.0, np.sqrt(dt), size=(n_steps, n_paths))
+        dW1 = rng.normal(0.0, np.sqrt(dt), size=(n_steps, n_paths))
+        dW2 = rng.normal(0.0, np.sqrt(dt), size=(n_steps, n_paths))
 
         # Fractional Brownian motion approximation (Riemann-Liouville)
         kernel = self._rl_kernel(t_grid, dt)

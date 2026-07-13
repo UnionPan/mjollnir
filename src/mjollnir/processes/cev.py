@@ -129,11 +129,13 @@ class CEV(DriftDiffusionProcess):
         paths[0] = X0
         sqrt_dt = np.sqrt(dt)
 
+        rng = np.random.default_rng(config.random_seed)
+        self._sim_rng = rng
         for i, t in enumerate(t_grid[:-1]):
             X_current = paths[i]
 
             # Generate Brownian increments
-            dW = np.random.normal(0, sqrt_dt, size=(n_paths, self.dim))
+            dW = rng.normal(0, sqrt_dt, size=(n_paths, self.dim))
 
             # Euler terms
             drift_term = self.drift(X_current, t) * dt
@@ -156,13 +158,13 @@ class CEV(DriftDiffusionProcess):
             paths_anti = np.zeros((len(t_grid), n_paths, self.dim))
             paths_anti[0] = X0
 
-            if config.random_seed is not None:
-                np.random.seed(config.random_seed)
+            rng = np.random.default_rng(config.random_seed)
+            self._sim_rng = rng
 
             for i, t in enumerate(t_grid[:-1]):
                 X_current = paths_anti[i]
 
-                dW = -np.random.normal(0, sqrt_dt, size=(n_paths, self.dim))
+                dW = -rng.normal(0, sqrt_dt, size=(n_paths, self.dim))
 
                 drift_term = self.drift(X_current, t) * dt
                 sigma = self.diffusion(X_current, t)
@@ -186,6 +188,8 @@ class CEV(DriftDiffusionProcess):
 
         For beta = 1: S_t = S_0 * exp((mu - 0.5*sigma^2)*t + sigma*W_t)
         """
+        rng = np.random.default_rng(config.random_seed)
+        self._sim_rng = rng
         if abs(self.beta - 1.0) < 1e-10:
             # Beta = 1: Use GBM exact simulation
             n_paths = config.n_paths
@@ -199,7 +203,7 @@ class CEV(DriftDiffusionProcess):
 
             for i, t in enumerate(t_grid[1:], 1):
                 sqrt_t = np.sqrt(t)
-                Z = np.random.normal(0, 1, (n_paths, self.dim))
+                Z = rng.normal(0, 1, (n_paths, self.dim))
                 W_t = sqrt_t * Z
 
                 exponent = drift_adjusted * t + self.sigma * W_t
@@ -210,12 +214,12 @@ class CEV(DriftDiffusionProcess):
                 paths_anti = np.zeros((len(t_grid), n_paths, self.dim))
                 paths_anti[0] = X0
 
-                if config.random_seed is not None:
-                    np.random.seed(config.random_seed)
+                rng = np.random.default_rng(config.random_seed)
+                self._sim_rng = rng
 
                 for i, t in enumerate(t_grid[1:], 1):
                     sqrt_t = np.sqrt(t)
-                    Z = np.random.normal(0, 1, (n_paths, self.dim))
+                    Z = rng.normal(0, 1, (n_paths, self.dim))
                     W_t = -sqrt_t * Z  # Antithetic
 
                     exponent = drift_adjusted * t + self.sigma * W_t
