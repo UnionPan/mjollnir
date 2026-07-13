@@ -34,7 +34,7 @@ each verified (tests + lint + docs --strict) before the next begins.
 - [x] **W7. Scenario/stress module**: counterfactual transforms of a `ParamSet`
       (vol spike, jump cascade, regime shift, correlation breakdown) as
       versioned configs.
-- [ ] **W5. Market impact + multi-agent contract**: `mjollnir.impact`
+- [x] **W5. Market impact + multi-agent contract**: `mjollnir.impact`
       (linear/sqrt/Almgren-Chriss, differentiable, golden-tested);
       `MarketState` PyTree + `make_market_step(process=..., impact=...)`;
       reference multi-agent example.

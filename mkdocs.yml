@@ -53,6 +53,7 @@ nav:
   - Guide:
       - RL substrate (Mode 1): guide/rl-substrate.md
       - Calibration & backtesting (Mode 2): guide/calibration.md
+      - Market impact & multi-agent: guide/multi-agent.md
       - Parameter store & scenarios: guide/params-scenarios.md
       - Reproducibility contract: guide/stability.md
   - Examples: examples.md

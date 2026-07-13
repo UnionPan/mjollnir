@@ -72,6 +72,14 @@ from mjollnir.pricer._jax_fourier_pricer import (
     _cos_truncation_range as cos_truncation_range,
 )
 
+# --- market impact + multi-agent contract ---------------------------------------
+from mjollnir.jax._impact import (
+    almgren_chriss_step,
+    linear_impact,
+    sqrt_impact,
+)
+from mjollnir.jax._market import MarketState, make_market_step
+
 # headline aliases
 heston_cf = jax_heston_cf
 
@@ -80,9 +88,11 @@ __all__ = [
     # CF parameter containers
     "HestonCFParams",
     "KouCFParams",
+    "MarketState",
     "MertonCFParams",
     "NIGCFParams",
     "VGCFParams",
+    "almgren_chriss_step",
     "chi_k",
     # headline primitives
     "configure_runtime",
@@ -113,10 +123,13 @@ __all__ = [
     "jax_merton_cf",
     "jax_nig_cf",
     "jax_vg_cf",
+    "linear_impact",
+    "make_market_step",
     "psi_k",
     # QE step-kernel family
     "qe_bates_step",
     "qe_four_half_step",
     "qe_heston_step",
     "qe_three_half_step",
+    "sqrt_impact",
 ]

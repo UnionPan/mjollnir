@@ -28,3 +28,13 @@ program**: `qe_heston_step` + `fourier_price` inside `lax.scan`, `vmap`-ed
 over 256 paths. The policy is the model delta (no parameters) to keep the
 example dependency-light — swap in a flax module and differentiate the
 episode loss w.r.t. its parameters for actual deep hedging.
+
+## Multi-agent market with impact
+
+[`examples/multi_agent_impact.py`](https://github.com/unionpan/mjollnir/blob/main/examples/multi_agent_impact.py)
+
+Five heterogeneous momentum traders share one Heston market and couple
+through square-root impact — `MarketState` + `make_market_step` +
+`sqrt_impact`, with policies and bookkeeping as ~15 lines of user code in
+the scan carry. Includes a falsification check: the same seed without
+impact produces a different path, proving the coupling is real.
