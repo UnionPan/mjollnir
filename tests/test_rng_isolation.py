@@ -13,13 +13,15 @@ pattern:
 import numpy as np
 import pytest
 
-from mjollnir.processes.base import SimulationConfig
-from mjollnir.processes.gbm import GBM
-from mjollnir.processes.heston import Heston
-from mjollnir.processes.kou import KouJD
-from mjollnir.processes.merton import MertonJD
-from mjollnir.processes.nig import NIG
-from mjollnir.processes.variance_gamma import VarianceGamma
+from mjollnir.processes import (
+    GBM,
+    NIG,
+    Heston,
+    KouJD,
+    MertonJD,
+    SimulationConfig,
+    VarianceGamma,
+)
 
 
 def _cfg(seed):

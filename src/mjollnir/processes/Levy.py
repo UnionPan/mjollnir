@@ -36,12 +36,12 @@ class LevyProcess(StochasticProcess):
         # They're characterized by their characteristic function
 
     @abstractmethod
-    def levy_triplet(self):
+    def levy_triplet(self) -> tuple:
         """
         Return the Levy-Khintchine triplet (gamma, sigma^2, nu)
 
         Returns:
-            tuple: (drift, gaussian_variance, levy_measure)
+            The triplet ``(drift, gaussian_variance, levy_measure)``:
                 - drift: gamma (deterministic drift)
                 - gaussian_variance: sigma^2 (Gaussian component variance)
                 - levy_measure: nu (measure describing jump distribution)

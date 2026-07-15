@@ -119,15 +119,21 @@ class TestSyntheticChainLaws:
     def test_chain_is_arbitrage_free_in_strike(self, atm_iv, spot):
         """Within each (maturity, right): mids decreasing (calls) /
         increasing (puts) in strike, and all quotes positive."""
+        import warnings
         from datetime import date
         from mjollnir.synthetic_data import (
             HestonVolatilityProfile,
             SyntheticEquityOptionChainGenerator,
         )
-        prof = HestonVolatilityProfile(
-            kappa=3.0, theta=atm_iv**2, xi=0.4, rho=-0.6,
-            v0=atm_iv**2, atm_iv=atm_iv,
-        )
+        with warnings.catch_warnings():
+            # low-IV draws violate Feller with the fixed xi — expected here;
+            # the profile warns (correctly), and the chain must STILL be
+            # arbitrage-free, which is exactly what this test asserts
+            warnings.simplefilter("ignore", UserWarning)
+            prof = HestonVolatilityProfile(
+                kappa=3.0, theta=atm_iv**2, xi=0.4, rho=-0.6,
+                v0=atm_iv**2, atm_iv=atm_iv,
+            )
         gen = SyntheticEquityOptionChainGenerator(random_seed=0)
         chain = gen.generate_single_chain(
             reference_date=date(2024, 1, 2), spot_price=spot, vol_profile=prof,

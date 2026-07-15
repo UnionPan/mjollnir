@@ -190,7 +190,7 @@ class NIG(SubordinatedBrownianMotion):
 
         return psi
 
-    def levy_triplet(self):
+    def levy_triplet(self) -> tuple:
         """
         Return the Levy-Khintchine triplet for NIG
 
@@ -200,7 +200,7 @@ class NIG(SubordinatedBrownianMotion):
         where K_1 is the modified Bessel function of the second kind.
 
         Returns:
-            tuple: (gamma, sigma_gaussian, levy_measure_description)
+            The triplet ``(gamma, sigma_gaussian, levy_measure_description)``.
         """
         levy_measure_desc = {
             'type': 'nig',

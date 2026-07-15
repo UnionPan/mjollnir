@@ -129,7 +129,7 @@ class VarianceGamma(SubordinatedBrownianMotion):
 
         return psi
 
-    def levy_triplet(self):
+    def levy_triplet(self) -> tuple:
         """
         Return the Levy-Khintchine triplet for VG
 
@@ -142,7 +142,7 @@ class VarianceGamma(SubordinatedBrownianMotion):
             C = 1/nu
 
         Returns:
-            tuple: (gamma, sigma_gaussian, levy_measure_description)
+            The triplet ``(gamma, sigma_gaussian, levy_measure_description)``.
         """
         # Compute exponential rates
         discriminant = self.theta**2 + 2.0 * self.sigma**2 / self.nu
