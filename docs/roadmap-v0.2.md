@@ -57,12 +57,8 @@ Out of scope here (user-owned): GitHub push/tag/Pages, PyPI publishing, CITATION
 - **Signature kernel first** (per docs/design/neural-calibration.md): truncated
   log-signatures in pure jnp — independently useful for NPE features and RL
   observations before the full market generator lands.
-- **`mjollnir.backtest`**: a thin driver formalizing the examples' hand-rolled
-  loop — (ParamSet, Scenario, strategy fn) → P&L statistics; the missing
-  middle layer between the kernel and research scripts.
-- **First-class `ImpliedVolSurface`**: chain → total-variance grid with
-  arbitrage checks (reusing the property-test laws), bridging to the SVI/SSVI
-  fitters and serving as the feature object for amortized calibration.
+- [x] **`mjollnir.backtest`** — SHIPPED 2026-07-15.
+- [x] **First-class `ImpliedVolSurface`** — SHIPPED 2026-07-15.
 - **Differentiable LSMC** (American/Bermudan) on the substrate — research-grade.
 - **Cross-asset surfacing**: `calibration.cross_asset` (factor model, DCC)
   exists but is undocumented and unexported — promote + document.

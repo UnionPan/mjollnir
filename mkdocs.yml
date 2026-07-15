@@ -54,6 +54,7 @@ nav:
       - RL substrate (Mode 1): guide/rl-substrate.md
       - Calibration & backtesting (Mode 2): guide/calibration.md
       - Market impact & multi-agent: guide/multi-agent.md
+      - Backtesting & vol surfaces: guide/backtesting.md
       - Parameter store & scenarios: guide/params-scenarios.md
       - Reproducibility contract: guide/stability.md
   - Examples: examples.md
@@ -65,6 +66,8 @@ nav:
       - mjollnir.calibration: reference/calibration.md
       - mjollnir.params: reference/params.md
       - mjollnir.scenarios: reference/scenarios.md
+      - mjollnir.backtest: reference/backtest.md
+      - mjollnir.surface: reference/surface.md
   - Design notes:
       - Neural & signature calibration: design/neural-calibration.md
   - Changelog: changelog.md

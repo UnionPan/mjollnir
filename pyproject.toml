@@ -91,6 +91,7 @@ ignore = [
 [tool.ruff.lint.per-file-ignores]
 "**/__init__.py" = ["F401"]        # re-export surfaces
 "examples/*.py" = ["E402"]         # narrative imports at the step that uses them
+"tests/*.py" = ["E731"]            # one-line lambda strategies read better in tests
 "src/mjollnir/pricer/__init__.py" = ["F403", "F405"]
 
 [tool.mypy]
