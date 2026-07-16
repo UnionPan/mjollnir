@@ -74,6 +74,7 @@ nav:
       - mjollnir.scenarios: reference/scenarios.md
       - mjollnir.backtest: reference/backtest.md
       - mjollnir.surface: reference/surface.md
+      - mjollnir.generator: reference/generator.md
   - Design notes:
       - Neural & signature calibration: design/neural-calibration.md
   - Changelog: changelog.md

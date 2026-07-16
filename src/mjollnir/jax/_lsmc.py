@@ -66,15 +66,18 @@ def _weighted_lstsq(X, y, w):
     return jnp.linalg.solve(A, Xw.T @ y)
 
 
-def lsmc_price(spots, variances, payoff_fn, dt, r):
+def lsmc_price(spots: jnp.ndarray, variances: jnp.ndarray,
+               payoff_fn, dt: float, r: float) -> jnp.ndarray:
     """Bermudan price by Longstaff-Schwartz over precomputed paths.
 
     Args:
-        spots, variances: ``(n_steps+1, n_paths)`` arrays (exercise allowed at
-            every step after 0).
-        payoff_fn: vectorized immediate-exercise payoff, e.g.
+        spots: ``(n_steps+1, n_paths)`` spot paths (exercise allowed at every
+            step after 0).
+        variances: ``(n_steps+1, n_paths)`` variance paths (regression basis).
+        payoff_fn (Callable): vectorized immediate-exercise payoff, e.g.
             ``lambda s: jnp.maximum(K - s, 0.0)``.
-        dt: step size in years; ``r``: discount rate.
+        dt: step size in years.
+        r: continuously compounded discount rate.
 
     Returns:
         Scalar price estimate (pathwise mean of optimally exercised value).

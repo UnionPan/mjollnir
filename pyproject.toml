@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mjollnir"
-version = "0.2.0"
+version = "0.3.0"
 description = "Counterfactual market simulation and backtesting for RL research, with market-model calibration pipelines"
 readme = "README.md"
 requires-python = ">=3.11"  # floor set by jax 0.9 / flax (both >=3.11)

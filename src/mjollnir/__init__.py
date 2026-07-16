@@ -12,4 +12,4 @@ Two consumption modes:
                               from market data (physical- and risk-neutral-measure).
 """
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"

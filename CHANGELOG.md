@@ -4,6 +4,22 @@ All notable changes to this project are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/); versioning policy is described
 in `docs/guide/stability.md` (golden-test breaks = dynamics break = never a patch).
 
+## [0.3.0] - 2026-07-16
+
+### Added
+- `mjollnir.backtest` (provenance-hashed, differentiable backtest driver)
+  and `mjollnir.surface` (`ImpliedVolSurface` with static-arbitrage report
+  and calibration bridge).
+- Pure-JAX signature kernel (`signature`, `log_signature`, `leadlag`),
+  cross-checked against iisignature; differentiable Longstaff-Schwartz
+  (`lsmc_price`) with autodiff early-exercise greeks.
+- `mjollnir.generator`: signature market generator trained on the
+  expected-signature MMD objective, with `GeneratorCard` provenance.
+- `mjollnir-params` CLI (show/verify/derive/scenario); cross-asset package
+  documented and tested; complete 30-class process catalogue exported.
+- CI: coverage gate, nightly jax-prerelease + pip-audit workflows;
+  architecture page.
+
 ## [0.2.0] - 2026-07-13
 
 ### Changed (breaking)
