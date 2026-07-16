@@ -54,9 +54,8 @@ Out of scope here (user-owned): GitHub push/tag/Pages, PyPI publishing, CITATION
 # v0.3 candidates (brainstormed 2026-07-15, not yet approved)
 
 ## Capabilities
-- **Signature kernel first** (per docs/design/neural-calibration.md): truncated
-  log-signatures in pure jnp — independently useful for NPE features and RL
-  observations before the full market generator lands.
+- [x] **Signature kernel** — SHIPPED 2026-07-16 (`mjollnir.jax.signature`,
+  cross-checked against iisignature at depth 4).
 - [x] **`mjollnir.backtest`** — SHIPPED 2026-07-15.
 - [x] **First-class `ImpliedVolSurface`** — SHIPPED 2026-07-15.
 - **Differentiable LSMC** (American/Bermudan) on the substrate — research-grade.

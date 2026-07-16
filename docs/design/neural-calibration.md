@@ -42,10 +42,11 @@ lead-lag embedding (`utils/leadlag.py`), CVAE over logsig features
 process discriminator for evaluation. That stack is esig/numpy/TF-era; the
 mjollnir port is **JAX-native**:
 
-1. `mjollnir.jax.signature`: truncated signature/log-signature of a batch of
-   paths via iterated Chen products in pure `jnp` (depth ≤ 4, dim ≤ 4 —
-   ~60 lines, jit/vmap-safe; no esig dependency). Golden-tested against
-   `iisignature` in a dev-only test.
+1. `mjollnir.jax.signature` — **SHIPPED 2026-07-16**: truncated
+   signature/log-signature + lead-lag embedding via iterated Chen products
+   in pure `jnp`; closed-form law tests (Chen identity, reparameterization
+   invariance, Levy-area = quadratic variation under lead-lag) and a
+   cross-check against `iisignature` at depth 4.
 2. `SignatureMarketGenerator`: flax CVAE (or MMD generator — decide by
    discriminator score) over logsigs, conditioned on a market-state summary;
    `sample(key, n_paths)` returns paths via inversion.

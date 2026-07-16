@@ -80,6 +80,9 @@ from mjollnir.jax._impact import (
 )
 from mjollnir.jax._market import MarketState, make_market_step
 
+# --- path signatures (feature map / market-generator brick) ----------------------
+from mjollnir.jax._signature import leadlag, log_signature, signature, signature_dim
+
 # headline aliases
 heston_cf = jax_heston_cf
 
@@ -123,7 +126,9 @@ __all__ = [
     "jax_merton_cf",
     "jax_nig_cf",
     "jax_vg_cf",
+    "leadlag",
     "linear_impact",
+    "log_signature",
     "make_market_step",
     "psi_k",
     # QE step-kernel family
@@ -131,5 +136,7 @@ __all__ = [
     "qe_four_half_step",
     "qe_heston_step",
     "qe_three_half_step",
+    "signature",
+    "signature_dim",
     "sqrt_impact",
 ]
