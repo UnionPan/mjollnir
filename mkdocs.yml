@@ -64,6 +64,7 @@ nav:
       - mjollnir.simulations: reference/simulations.md
       - mjollnir.processes: reference/processes.md
       - mjollnir.calibration: reference/calibration.md
+      - mjollnir.calibration.cross_asset: reference/cross_asset.md
       - mjollnir.params: reference/params.md
       - mjollnir.scenarios: reference/scenarios.md
       - mjollnir.backtest: reference/backtest.md

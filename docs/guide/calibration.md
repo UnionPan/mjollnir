@@ -57,3 +57,23 @@ from mjollnir.synthetic_data import SyntheticEquityOptionChainGenerator, HestonV
 Because these generators feed the RL environments' observations, they live
 *inside* the versioned substrate — pinning a `mjollnir` version pins the
 chains an agent sees.
+
+## Cross-asset structure
+
+`mjollnir.calibration.cross_asset` estimates the joint structure a
+single-asset calibration cannot see:
+
+- **`fit_factor_model`** — POET factor model with Marchenko-Pastur
+  factor-count selection; returns loadings, factor covariance, and floored
+  residual variances (`Σ ≈ BΩB′ + D`).
+- **`fit_dcc` / `dcc_corr_path`** — DCC-GARCH dynamic correlations over the
+  factor returns (jit-compiled likelihood, multi-start).
+- **`pool_parameters`** — empirical-Bayes shrinkage of per-ticker parameters
+  toward sector means, for thin-history names.
+
+```python
+from mjollnir.calibration.cross_asset import fit_factor_model, fit_dcc
+
+fm = fit_factor_model(returns, tickers)      # (T, N) panel
+dcc = fit_dcc(fm.factors)
+```

@@ -59,8 +59,8 @@ Out of scope here (user-owned): GitHub push/tag/Pages, PyPI publishing, CITATION
 - [x] **`mjollnir.backtest`** — SHIPPED 2026-07-15.
 - [x] **First-class `ImpliedVolSurface`** — SHIPPED 2026-07-15.
 - **Differentiable LSMC** (American/Bermudan) on the substrate — research-grade.
-- **Cross-asset surfacing**: `calibration.cross_asset` (factor model, DCC)
-  exists but is undocumented and unexported — promote + document.
+- [x] **Cross-asset surfacing** — SHIPPED 2026-07-16 (docs + tests; exports
+  already existed).
 
 ## Structure & ergonomics
 - **Split `simulations/heston_env.py` (1331 lines)**: env core / observation
