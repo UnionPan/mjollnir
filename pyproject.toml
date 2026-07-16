@@ -70,6 +70,7 @@ Repository = "https://github.com/unionpan/mjollnir"
 Changelog = "https://github.com/unionpan/mjollnir/blob/main/CHANGELOG.md"
 
 [project.scripts]
+mjollnir-params = "mjollnir.cli:main"
 mjollnir-build-universes = "mjollnir.calibration.cli.build_universes:main"
 mjollnir-calibrate = "mjollnir.calibration.cli.calibrate:main"
 mjollnir-train-npe = "mjollnir.calibration.cli.train_npe:main"
