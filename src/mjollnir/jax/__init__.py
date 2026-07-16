@@ -80,6 +80,9 @@ from mjollnir.jax._impact import (
 )
 from mjollnir.jax._market import MarketState, make_market_step
 
+# --- early exercise (Longstaff-Schwartz) ------------------------------------------
+from mjollnir.jax._lsmc import lsmc_price, simulate_heston_paths
+
 # --- path signatures (feature map / market-generator brick) ----------------------
 from mjollnir.jax._signature import leadlag, log_signature, signature, signature_dim
 
@@ -129,6 +132,7 @@ __all__ = [
     "leadlag",
     "linear_impact",
     "log_signature",
+    "lsmc_price",
     "make_market_step",
     "psi_k",
     # QE step-kernel family
@@ -138,5 +142,6 @@ __all__ = [
     "qe_three_half_step",
     "signature",
     "signature_dim",
+    "simulate_heston_paths",
     "sqrt_impact",
 ]

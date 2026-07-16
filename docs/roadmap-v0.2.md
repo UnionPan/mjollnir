@@ -58,7 +58,9 @@ Out of scope here (user-owned): GitHub push/tag/Pages, PyPI publishing, CITATION
   cross-checked against iisignature at depth 4).
 - [x] **`mjollnir.backtest`** — SHIPPED 2026-07-15.
 - [x] **First-class `ImpliedVolSurface`** — SHIPPED 2026-07-15.
-- **Differentiable LSMC** (American/Bermudan) on the substrate — research-grade.
+- [x] **Differentiable LSMC** — SHIPPED 2026-07-16 (`mjollnir.jax.lsmc_price`:
+  early-exercise premium, no-dividend call parity with the COS European,
+  autodiff early-exercise vega all tested).
 - [x] **Cross-asset surfacing** — SHIPPED 2026-07-16 (docs + tests; exports
   already existed).
 
