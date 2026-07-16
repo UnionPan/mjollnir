@@ -63,12 +63,19 @@ Out of scope here (user-owned): GitHub push/tag/Pages, PyPI publishing, CITATION
   already existed).
 
 ## Structure & ergonomics
-- **Split `simulations/heston_env.py` (1331 lines)**: env core / observation
-  builders / liability spec, mirroring the renderer split.
+- [x] **`heston_env.py` split — resolved 2026-07-16 as a scoped extraction**:
+  `HestonParams`/`Liability` moved to `simulations/contracts.py` (importable
+  without the gym env; re-exported for back-compat). The full method split was
+  evaluated and rejected: the env's settlement/reward/observation methods share
+  episode state cohesively, and cutting a working, RL-critical class into
+  modules for line count trades real regression risk for cosmetics.
 - **ParamSet CLI**: `mjollnir-params show|derive|verify` for artifact hygiene
   at the shell.
 - **Architecture diagram** in docs (dependency DAG, the two consumption modes).
 
 ## CI & supply chain
-- Coverage measurement + threshold; `pip-audit`/`deptry` job; nightly run
-  against jax pre-releases (see the 0.10 pin).
+- [x] **CI extras** — SHIPPED 2026-07-16: coverage gate (measured 35%,
+  fail-under 33), nightly jax-prerelease suite + pip-audit workflow,
+  mermaid architecture page.
+- [x] **ParamSet CLI** — SHIPPED 2026-07-16 (`mjollnir-params`).
+- [x] **Architecture diagram** — SHIPPED 2026-07-16 (docs/architecture.md).

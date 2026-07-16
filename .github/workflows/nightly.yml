@@ -1,0 +1,33 @@
+name: Nightly
+
+on:
+  schedule:
+    - cron: "17 6 * * *"
+  workflow_dispatch:
+
+jobs:
+  jax-prerelease:
+    # early warning for the jax 0.10 line: run the suite against pre-releases
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.12"
+      - run: uv pip install --system -e ".[dev]"
+      - name: Upgrade to jax pre-release
+        run: uv pip install --system -U --pre jax jaxlib
+      - run: python -c "import jax; print('jax', jax.__version__)"
+      - run: python -m pytest tests/ -q
+
+  audit:
+    # dependency vulnerabilities gate here (nightly), not on PRs,
+    # so new CVEs don't randomly break feature branches
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.12"
+      - run: uv pip install --system -e .
+      - run: uv tool run pip-audit

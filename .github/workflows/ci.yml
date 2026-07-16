@@ -28,7 +28,7 @@ jobs:
       - name: Install package
         run: uv pip install --system -e ".[dev]"
       - name: Run test suite (golden parity is the release gate)
-        run: python -m pytest tests/ -q
+        run: python -m pytest tests/ -q --cov=mjollnir --cov-fail-under=33
 
   build:
     runs-on: ubuntu-latest

@@ -30,7 +30,11 @@ theme:
 markdown_extensions:
   - admonition
   - pymdownx.highlight
-  - pymdownx.superfences
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
   - pymdownx.arithmatex:
       generic: true
   - tables
@@ -50,6 +54,7 @@ plugins:
 
 nav:
   - Home: index.md
+  - Architecture: architecture.md
   - Guide:
       - RL substrate (Mode 1): guide/rl-substrate.md
       - Calibration & backtesting (Mode 2): guide/calibration.md
