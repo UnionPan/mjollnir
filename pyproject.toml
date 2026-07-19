@@ -65,7 +65,7 @@ metal = ["jax-metal>=0.1.0"]
 
 [project.urls]
 Homepage = "https://github.com/unionpan/mjollnir"
-Documentation = "https://unionpan.github.io/mjollnir/"
+Documentation = "https://yunianpan.com/mjollnir/"
 Repository = "https://github.com/unionpan/mjollnir"
 Changelog = "https://github.com/unionpan/mjollnir/blob/main/CHANGELOG.md"
 

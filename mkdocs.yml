@@ -1,6 +1,6 @@
 site_name: mjollnir
 site_description: A stable, reproducible, differentiable market-simulation & calibration substrate for RL research and backtesting
-site_url: https://unionpan.github.io/mjollnir/
+site_url: https://yunianpan.com/mjollnir/  # project pages inherit the account's custom domain
 repo_url: https://github.com/unionpan/mjollnir
 repo_name: unionpan/mjollnir
 
