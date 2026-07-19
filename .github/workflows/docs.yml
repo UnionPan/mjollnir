@@ -22,8 +22,9 @@ jobs:
       - uses: astral-sh/setup-uv@v5
         with:
           python-version: "3.12"
+          activate-environment: true  # runner pythons are PEP 668 externally managed; install into a venv
       - name: Install package + docs toolchain
-        run: uv pip install --system -e ".[docs]"
+        run: uv pip install -e ".[docs]"
       - name: Build site
         run: mkdocs build --strict
       - uses: actions/upload-pages-artifact@v3
