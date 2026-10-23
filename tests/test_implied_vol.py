@@ -92,6 +92,26 @@ class TestImpliedVolBatch:
                                  np.array([True]), on_failure="zero")
 
 
+    def test_time_value_inside_pricer_error_is_nan(self):
+        # A deep in-the-money call is almost all intrinsic value: a time value of ~1e-11
+        # is pricer round-off, and inverting it would invent a volatility.
+        K = np.array([30.0])
+        is_call = np.array([True])
+        T = 5 / 252
+        intrinsic = S * np.exp(-Q * T) - K * np.exp(-R * T)
+        noisy = intrinsic + 1e-11
+        assert np.isfinite(implied_vol_batch_np(S, K, T, R, Q, noisy, is_call))
+        assert np.isnan(implied_vol_batch_np(S, K, T, R, Q, noisy, is_call, price_tolerance=1e-8))
+
+    def test_tolerance_keeps_informative_prices(self):
+        K = np.linspace(80, 120, 9)
+        is_call = K >= S
+        sigma = np.full(9, 0.25)
+        iv = implied_vol_batch_np(S, K, 0.25, R, Q, _bs(K, 0.25, sigma, is_call), is_call,
+                                  price_tolerance=1e-8)
+        np.testing.assert_allclose(iv, sigma, atol=1e-8)
+
+
 class TestSurfaceInversion:
     def test_from_chain_recovers_ivs_when_quotes_have_none(self):
         chain = _chain()

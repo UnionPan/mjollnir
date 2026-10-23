@@ -153,6 +153,7 @@ def implied_vol_bisection(
     is_call: jnp.ndarray,
     sigma_min: float = 0.005,
     sigma_max: float = 5.0,
+    price_tolerance: float = 0.0,
 ) -> jnp.ndarray:
     """
     Batch implied volatility via vectorized bisection.
@@ -163,18 +164,23 @@ def implied_vol_bisection(
         is_call: Boolean call/put flags, shape (n,)
         sigma_min: Lower end of the search range
         sigma_max: Upper end of the search range
+        price_tolerance: Absolute pricing error of ``market_prices``. A price
+            within this distance of ``BS(sigma_min)`` (for a deep in-the-money
+            option, essentially its intrinsic value) carries no volatility
+            information and returns NaN.
 
     Returns:
         Implied volatilities, shape (n,). NaN where the price is not strictly
-        inside ``(BS(sigma_min), BS(sigma_max))``: below intrinsic, above the
-        no-arbitrage upper bound, a zero wing price, an IV outside the search
-        range, a non-finite input, or an expired option.
+        inside ``(BS(sigma_min) + price_tolerance, BS(sigma_max))``: below
+        intrinsic, above the no-arbitrage upper bound, a zero wing price, a time
+        value inside the pricing error, an IV outside the search range, a
+        non-finite input, or an expired option.
     """
     lo = jnp.full_like(market_prices, sigma_min)
     hi = jnp.full_like(market_prices, sigma_max)
     price_lo = _bs_price(S, K, T, r, q, lo, is_call)
     price_hi = _bs_price(S, K, T, r, q, hi, is_call)
-    attainable = (market_prices > price_lo) & (market_prices < price_hi)
+    attainable = (market_prices > price_lo + price_tolerance) & (market_prices < price_hi)
 
     def bisect(bounds, _):
         lo, hi = bounds
@@ -195,6 +201,7 @@ def implied_vol_batch_np(
     sigma_init=None,
     sigma_min=0.005, sigma_max=5.0,
     on_failure="nan",
+    price_tolerance=0.0,
 ):
     """
     Batch IV inversion with numpy arrays in and out.
@@ -216,12 +223,17 @@ def implied_vol_batch_np(
             fixed-iteration Newton (``implied_vol_batch``), which always
             returns a value in ``[sigma_min, sigma_max]`` even when it is
             wrong; use it only to reproduce historical outputs.
+        price_tolerance: absolute error of ``market_prices`` (``on_failure="nan"``
+            only); time value below it is treated as uninformative (NaN). Pass
+            the pricer's accuracy when inverting model prices.
 
     Returns:
         numpy array of implied volatilities
     """
     if on_failure not in ("nan", "clip"):
         raise ValueError(f"on_failure must be 'nan' or 'clip', got {on_failure!r}")
+    if on_failure == "clip" and price_tolerance:
+        raise ValueError("price_tolerance needs on_failure='nan': clip mode never reports failure")
     n = len(K)
 
     S_j = jnp.broadcast_to(jnp.float64(S), (n,)) if np.isscalar(S) else jnp.array(S, dtype=jnp.float64)
@@ -234,7 +246,7 @@ def implied_vol_batch_np(
 
     if on_failure == "nan":
         result = implied_vol_bisection(
-            S_j, K_j, T_j, r_j, q_j, prices_j, is_call_j, sigma_min, sigma_max,
+            S_j, K_j, T_j, r_j, q_j, prices_j, is_call_j, sigma_min, sigma_max, price_tolerance,
         )
         return to_numpy(result)
 
