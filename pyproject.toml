@@ -42,6 +42,7 @@ dependencies = [
     "scikit-learn>=1.3.0",
     "joblib>=1.3.0",
     "zarr>=2.16.0",
+    "pyarrow>=14.0.0",  # parquet: price store, results store, calibration runner
     "matplotlib>=3.7.0",
     # market-data fetchers (candidate to split into a [data] extra with lazy imports)
     "yfinance>=0.2.28",
