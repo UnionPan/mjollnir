@@ -104,6 +104,11 @@ follow_imports = "silent"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+markers = [
+    "slow: long-running statistical recovery tests",
+    "network: needs live market data over the internet (deselected by default; run with -m network)",
+]
+addopts = "-m 'not network'"
 filterwarnings = [
     "error::DeprecationWarning:mjollnir.*",  # our own deprecations are bugs
 ]
