@@ -85,7 +85,8 @@ class ImpliedVolSurface:
         if missing.any():
             from mjollnir.pricer._jax_iv import implied_vol_batch_np
             iv[missing] = implied_vol_batch_np(
-                mids[missing], spot, K[missing], T[missing], r, q, is_call[missing],
+                S=spot, K=K[missing], T=T[missing], r=r, q=q,
+                market_prices=mids[missing], is_call=is_call[missing],
             )
 
         keep = np.isfinite(iv) & (iv > 0)

@@ -268,6 +268,9 @@ class SyntheticEquityOptionChainGenerator:
                     sigma_init=np.full(len(strikes_maturity), vol_profile.atm_iv),
                     sigma_min=vol_profile.min_iv,
                     sigma_max=vol_profile.max_iv,
+                    # These IVs feed env observations; keep the legacy Newton output
+                    # bit-identical until a breaking release (docs/guide/stability.md).
+                    on_failure="clip",
                 )
             except ImportError:
                 # Fallback to per-option IV if JAX not available

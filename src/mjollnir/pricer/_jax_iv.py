@@ -1,12 +1,20 @@
 """
 Vectorized Black-Scholes implied volatility inversion via JAX.
 
-Replaces per-option Newton-Raphson loops with a single JIT-compiled
-batch operation over all options simultaneously.
+Replaces per-option root-finding loops with a single JIT-compiled batch
+operation over all options simultaneously.
 
-For N options, the NumPy version runs N sequential Newton solves.
-This version runs all N in parallel with fixed-iteration Newton,
-compiled to a single XLA kernel.
+Two solvers are provided:
+
+- ``implied_vol_bisection`` (the default behind ``implied_vol_batch_np``):
+  bisection on ``[sigma_min, sigma_max]``. A Black-Scholes price is strictly
+  increasing in sigma, so bisection always converges, needs no vega, and
+  reports NaN for any price outside ``(BS(sigma_min), BS(sigma_max))``.
+- ``implied_vol_batch``: the original fixed-iteration damped Newton. It never
+  reports failure: unattainable prices come back clipped to the bounds, and
+  low-vega quotes (short-dated wings) can stall at the initial guess. It is
+  kept bit-identical because the synthetic option-chain generator's IVs feed
+  environment observations (see docs/guide/stability.md).
 
 author: Yunian Pan
 email: yp1170@nyu.edu
@@ -111,17 +119,85 @@ def implied_vol_batch(
 
 
 # ============================================================================
+# Vectorized bisection IV solver (reports failure as NaN)
+# ============================================================================
+_BISECTION_STEPS = 100  # halves [sigma_min, sigma_max] far below float64 resolution
+
+
+def _bs_price(S, K, T, r, q, sigma, is_call):
+    """
+    Vectorized Black-Scholes price, accurate in the far wings.
+
+    Puts use ``N(-d)`` rather than ``1 - N(d)``, which cancels to zero for
+    deep out-of-the-money puts. ``_bs_price_and_vega`` keeps the original
+    form because the legacy Newton solver must stay bit-identical.
+    """
+    sqrt_T = jnp.sqrt(T)
+    d1 = (jnp.log(S / K) + (r - q + 0.5 * sigma ** 2) * T) / (sigma * sqrt_T)
+    d2 = d1 - sigma * sqrt_T
+    cdf = jax.scipy.stats.norm.cdf
+    call_price = S * jnp.exp(-q * T) * cdf(d1) - K * jnp.exp(-r * T) * cdf(d2)
+    put_price = K * jnp.exp(-r * T) * cdf(-d2) - S * jnp.exp(-q * T) * cdf(-d1)
+    return jnp.where(is_call, call_price, put_price)
+
+
+@guard_pricer
+@jax.jit
+def implied_vol_bisection(
+    S: jnp.ndarray,
+    K: jnp.ndarray,
+    T: jnp.ndarray,
+    r: jnp.ndarray,
+    q: jnp.ndarray,
+    market_prices: jnp.ndarray,
+    is_call: jnp.ndarray,
+    sigma_min: float = 0.005,
+    sigma_max: float = 5.0,
+) -> jnp.ndarray:
+    """
+    Batch implied volatility via vectorized bisection.
+
+    Args:
+        S, K, T, r, q: Spot, strike, maturity, rate, dividend yield, shape (n,)
+        market_prices: Option prices, shape (n,)
+        is_call: Boolean call/put flags, shape (n,)
+        sigma_min: Lower end of the search range
+        sigma_max: Upper end of the search range
+
+    Returns:
+        Implied volatilities, shape (n,). NaN where the price is not strictly
+        inside ``(BS(sigma_min), BS(sigma_max))``: below intrinsic, above the
+        no-arbitrage upper bound, a zero wing price, an IV outside the search
+        range, a non-finite input, or an expired option.
+    """
+    lo = jnp.full_like(market_prices, sigma_min)
+    hi = jnp.full_like(market_prices, sigma_max)
+    price_lo = _bs_price(S, K, T, r, q, lo, is_call)
+    price_hi = _bs_price(S, K, T, r, q, hi, is_call)
+    attainable = (market_prices > price_lo) & (market_prices < price_hi)
+
+    def bisect(bounds, _):
+        lo, hi = bounds
+        mid = 0.5 * (lo + hi)
+        price_mid = _bs_price(S, K, T, r, q, mid, is_call)
+        below = price_mid < market_prices
+        return (jnp.where(below, mid, lo), jnp.where(below, hi, mid)), None
+
+    (lo, hi), _ = jax.lax.scan(bisect, (lo, hi), None, length=_BISECTION_STEPS)
+    return jnp.where(attainable, 0.5 * (lo + hi), jnp.nan)
+
+
+# ============================================================================
 # Convenience: numpy in/out wrapper
 # ============================================================================
 def implied_vol_batch_np(
     S, K, T, r, q, market_prices, is_call,
     sigma_init=None,
     sigma_min=0.005, sigma_max=5.0,
+    on_failure="nan",
 ):
     """
     Batch IV inversion with numpy arrays in and out.
-
-    Drop-in replacement for per-option Newton loops.
 
     Args:
         S: float or array — spot price(s)
@@ -131,13 +207,21 @@ def implied_vol_batch_np(
         q: float or array — dividend yield
         market_prices: array — option prices
         is_call: bool array or list — True for calls
-        sigma_init: array — initial guesses (default: 0.2)
-        sigma_min: IV floor
-        sigma_max: IV ceiling
+        sigma_init: array — Newton initial guesses, ``on_failure="clip"`` only
+            (default: 0.2)
+        sigma_min: lower end of the IV search range
+        sigma_max: upper end of the IV search range
+        on_failure: ``"nan"`` (default) solves by bisection and returns NaN
+            wherever the price cannot be inverted. ``"clip"`` runs the legacy
+            fixed-iteration Newton (``implied_vol_batch``), which always
+            returns a value in ``[sigma_min, sigma_max]`` even when it is
+            wrong; use it only to reproduce historical outputs.
 
     Returns:
         numpy array of implied volatilities
     """
+    if on_failure not in ("nan", "clip"):
+        raise ValueError(f"on_failure must be 'nan' or 'clip', got {on_failure!r}")
     n = len(K)
 
     S_j = jnp.broadcast_to(jnp.float64(S), (n,)) if np.isscalar(S) else jnp.array(S, dtype=jnp.float64)
@@ -147,6 +231,12 @@ def implied_vol_batch_np(
     q_j = jnp.broadcast_to(jnp.float64(q), (n,)) if np.isscalar(q) else jnp.array(q, dtype=jnp.float64)
     prices_j = jnp.array(market_prices, dtype=jnp.float64)
     is_call_j = jnp.array(is_call, dtype=bool) if not isinstance(is_call, jnp.ndarray) else is_call
+
+    if on_failure == "nan":
+        result = implied_vol_bisection(
+            S_j, K_j, T_j, r_j, q_j, prices_j, is_call_j, sigma_min, sigma_max,
+        )
+        return to_numpy(result)
 
     if sigma_init is None:
         sigma_init_j = jnp.full(n, 0.2)
