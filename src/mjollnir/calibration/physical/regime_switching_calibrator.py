@@ -266,7 +266,8 @@ class RegimeSwitchingCalibrator:
             - Sideways: Neither condition met
         """
         prices = np.asarray(prices)
-        regime_labels = np.zeros(len(prices), dtype=int)  # Default: sideways
+        # Sideways (1) until the lookback window is filled; 0 is Bear.
+        regime_labels = np.ones(len(prices), dtype=int)
 
         # Compute rolling max (peak) and min (trough)
         window = 60  # 60-day window for peak/trough
@@ -357,8 +358,8 @@ class RegimeSwitchingCalibrator:
             duration_stats = self._analyze_regime_duration(regime_labels, regime_id)
 
             # Summary statistics
-            mean_return = np.mean(regime_returns) * (365 / self.dt)
-            median_return = np.median(regime_returns) * (365 / self.dt)
+            mean_return = np.mean(regime_returns) / self.dt  # annualized, like mu
+            median_return = np.median(regime_returns) / self.dt
             skew = stats.skew(regime_returns) if len(regime_returns) > 3 else np.nan
             kurt = stats.kurtosis(regime_returns) if len(regime_returns) > 3 else np.nan
 
