@@ -64,6 +64,23 @@ class TestParamSet:
         grandchild = child.derive(set_={"rho": -0.9})
         assert grandchild.parent_hash == child.content_hash()
 
+    def test_derivation_is_deterministic(self, monkeypatch):
+        """Same parent + same transformation = same identity, whenever it runs."""
+        import mjollnir.params as params_module
+
+        ps = _base()
+        first = vol_spike(2.0).apply(ps)
+
+        class _Later(params_module.datetime):
+            @classmethod
+            def now(cls, tz=None):
+                return params_module.datetime(2031, 1, 1, tzinfo=tz)
+
+        monkeypatch.setattr(params_module, "datetime", _Later)
+        again = vol_spike(2.0).apply(ps)
+        assert again.created_at == first.created_at == ps.created_at
+        assert again.content_hash() == first.content_hash()
+
     def test_derive_unknown_param_raises(self):
         with pytest.raises(KeyError, match="lambda_j"):
             _base().derive(scale={"lambda_j": 2.0})

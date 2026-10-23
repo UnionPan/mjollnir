@@ -172,6 +172,9 @@ class ParamSet:
         ``scale`` multiplies parameters; ``set_`` overrides them absolutely.
         The child records this set's hash as ``parent_hash``, so counterfactual
         parameter sets always trace back to the calibration that spawned them.
+        A derivation is a pure function of its parent: the child keeps the
+        parent's ``created_at``, so the same parent and shock always produce the
+        same content hash.
         """
         new = dict(self.params)
         for k, m in (scale or {}).items():
@@ -185,7 +188,6 @@ class ParamSet:
             params=MappingProxyType(new),
             parent_hash=self.content_hash(),
             note=note if note is not None else self.note,
-            created_at=datetime.now(UTC).isoformat(timespec="seconds"),
         )
 
     def as_kwargs(self) -> dict[str, float]:
