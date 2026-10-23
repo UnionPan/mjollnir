@@ -73,6 +73,7 @@ nav:
       - mjollnir.params: reference/params.md
       - mjollnir.scenarios: reference/scenarios.md
       - mjollnir.backtest: reference/backtest.md
+      - mjollnir.hedging: reference/hedging.md
       - mjollnir.surface: reference/surface.md
       - mjollnir.generator: reference/generator.md
   - Design notes:

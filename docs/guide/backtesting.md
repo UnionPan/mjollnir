@@ -25,6 +25,36 @@ Every result carries the **content hash of the ParamSet actually simulated**
 verifiable parameter artifact. Costs and impact are differentiable — a
 strategy's parameters can be trained through the backtest itself.
 
+## `mjollnir.hedging` — counterfactual hedging of an option book
+
+A hedging experiment fixes a *book* from one calibration (a short European
+option, the premium received, each hedger's assumptions) and runs it through a
+*world*: the calibration itself or a counterfactual `Scenario`. The book stays
+fixed while the world changes, so the comparison answers "what if the market
+had turned out like this after we sold?".
+
+```python
+from mjollnir.hedging import EuropeanOption, compare_hedgers
+from mjollnir.scenarios import vol_spike
+
+call = EuropeanOption(strike=100.0, maturity=21 / 252)
+calm = compare_hedgers(book, call, n_paths=4096, cost_bps=5.0, seed=7)
+spike = compare_hedgers(book, call, n_paths=4096, cost_bps=5.0, seed=7,
+                        scenario=vol_spike(2.0))
+for name in calm:
+    print(name, calm[name].pnl.std(), spike[name].pnl.std())
+```
+
+The default hedgers are no hedge, Black-Scholes delta at the premium's implied
+vol, and Heston delta (autodiff of the COS price at the path's variance). All
+hedgers see the same paths, and `run_backtest` reports per-path `pnl` (wealth
+minus the liability payoff), `costs` and `positions`.
+
+Hedgers are `ParametricStrategy` values: a module-level function plus numeric
+parameters. Market parameters and strategy parameters both enter the compiled
+program as traced inputs, so a new calibration, scenario or strike reuses it;
+only a new strategy function or horizon recompiles.
+
 ## `mjollnir.surface` — the vol surface object
 
 `ImpliedVolSurface` bridges market data and calibration:
