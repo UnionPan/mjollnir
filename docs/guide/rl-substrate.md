@@ -34,8 +34,10 @@ spot, var, key = qe_heston_step(
 
 One call = one Andersen quadratic-exponential step of `(S, v)`; variance is
 guaranteed non-negative. The returned key is the split successor — thread it
-into the next step. For per-path independent noise, `jax.vmap` over a batch
-of keys.
+into the next step. Each element of a batched state is an independent path:
+noise is drawn with the batch's shape, so one key drives the whole batch.
+Writing the kernel per path and `jax.vmap`-ing it over a batch of keys is
+equivalent and is what the golden parity suite pins.
 
 The full QE family is exported alongside it: `qe_bates_step` (Heston +
 Merton jumps), `qe_three_half_step` (3/2 model), `qe_four_half_step`

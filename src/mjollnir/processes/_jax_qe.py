@@ -110,9 +110,12 @@ def _qe_variance_step_cir(
     beta = jnp.maximum((1.0 - p) / m_safe, _EPS_M)
 
     # ---- Sample noise (always both, then select) ----
+    # One draw per path: noise takes the broadcast shape of the step's inputs,
+    # so a batched call with a single key still yields independent paths.
+    shape = jnp.shape(psi)
     key, k_z, k_u = jax.random.split(key, 3)
-    Z = jax.random.normal(k_z)
-    U = jax.random.uniform(k_u, minval=0.0, maxval=1.0)
+    Z = jax.random.normal(k_z, shape)
+    U = jax.random.uniform(k_u, shape, minval=0.0, maxval=1.0)
 
     # Quadratic candidate: v = a (b + Z)²  (always ≥ 0)
     v_quad = a * (b + Z) ** 2
@@ -159,7 +162,7 @@ def _log_spot_step_central(
     I = 0.5 * (v0 + v_next) * dt  # trapezoidal integrated variance
 
     key, k_zs = jax.random.split(key)
-    Z_S = jax.random.normal(k_zs)
+    Z_S = jax.random.normal(k_zs, jnp.broadcast_shapes(jnp.shape(log_spot), jnp.shape(I)))
 
     drift_term = mu * dt - 0.5 * I
     martingale_term = (rho / sigma_v) * (
@@ -267,9 +270,10 @@ def qe_bates_step(
     # Compound Poisson log-jump:
     #   N ~ Poisson(λ dt);  Σ J_i | N ~ N(N μ_j, N σ_j²)
     key, k_n, k_j = jax.random.split(key, 3)
-    n_jumps = jax.random.poisson(k_n, lambda_j * dt)
+    shape = jnp.broadcast_shapes(jnp.shape(log_spot_cont), jnp.shape(lambda_j))
+    n_jumps = jax.random.poisson(k_n, lambda_j * dt, shape)
     n_jumps_f = jnp.asarray(n_jumps, dtype=log_spot.dtype)
-    Z_j = jax.random.normal(k_j)
+    Z_j = jax.random.normal(k_j, shape)
     log_jump = n_jumps_f * mu_j + jnp.sqrt(n_jumps_f) * sigma_j * Z_j
 
     log_spot_next = log_spot_cont + log_jump
@@ -327,9 +331,10 @@ def qe_three_half_step(
     log_spot = jnp.log(jnp.maximum(spot, 1e-300))
     I = 0.5 * (variance + v_next) * dt
 
+    shape = jnp.broadcast_shapes(jnp.shape(log_spot), jnp.shape(I))
     key, k_zv, k_zorth = jax.random.split(key, 3)
-    Z_v = jax.random.normal(k_zv)
-    Z_orth = jax.random.normal(k_zorth)
+    Z_v = jax.random.normal(k_zv, shape)
+    Z_orth = jax.random.normal(k_zorth, shape)
 
     drift_term = mu * dt - 0.5 * I
     diffusion_term = jnp.sqrt(jnp.maximum(I, 0.0)) * (
@@ -388,9 +393,10 @@ def qe_four_half_step(
         + b_coef ** 2 * I_inv_v
     )
 
+    shape = jnp.broadcast_shapes(jnp.shape(log_spot), jnp.shape(integrated_inst_var))
     key, k_zv, k_zorth = jax.random.split(key, 3)
-    Z_v = jax.random.normal(k_zv)
-    Z_orth = jax.random.normal(k_zorth)
+    Z_v = jax.random.normal(k_zv, shape)
+    Z_orth = jax.random.normal(k_zorth, shape)
 
     diffusion_term = jnp.sqrt(jnp.maximum(integrated_inst_var, 0.0)) * (
         rho * Z_v + jnp.sqrt(1.0 - rho ** 2) * Z_orth
