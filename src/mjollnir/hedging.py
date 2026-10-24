@@ -33,13 +33,12 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 
-import jax
 import jax.numpy as jnp
 import numpy as np
 from jax.scipy.stats import norm
 
 from mjollnir.backtest import BacktestResult, ParametricStrategy, run_backtest
-from mjollnir.jax import fourier_price
+from mjollnir.jax import fourier_price, heston_cos_delta
 from mjollnir.params import ParamSet
 from mjollnir.pricer._jax_iv import implied_vol_batch_np
 from mjollnir.scenarios import Scenario
@@ -58,7 +57,9 @@ __all__ = [
 
 Strategy = Callable[[Any, Any, Any, Any], Any]
 
-_DELTA_COS_TERMS = 128  # COS terms for per-step hedge deltas (prices use the 256 default)
+# Widest COS window for hedge deltas, as a multiple of max(theta, v0): covers worlds whose
+# variance rises up to this factor (e.g. a 2x vol spike) at the full truncation width.
+_DELTA_WINDOW_VARIANCE_MULTIPLE = 4.0
 
 
 @dataclass(frozen=True)
@@ -119,18 +120,18 @@ def _bs_delta(p, spot, variance, position, step):
     return jnp.where(p["is_call"], delta, delta - 1.0)
 
 
-def _heston_price(spot, variance, tau, strike, kappa, theta, sigma_v, rho, is_call):
-    return fourier_price(spot, strike, tau, 0.0, 0.0, variance, kappa, theta, sigma_v,
-                         rho, is_call, N=_DELTA_COS_TERMS)
+def _heston_delta_scalar(spot, variance, tau, strike, kappa, theta, sigma_v, rho, is_call, v_top):
+    return heston_cos_delta(spot, variance, tau, strike, 0.0, 0.0, kappa, theta, sigma_v, rho,
+                            is_call, v_top)
 
 
-_heston_spot_delta = jnp.vectorize(jax.grad(_heston_price))
+_heston_spot_delta = jnp.vectorize(_heston_delta_scalar)
 
 
 def _heston_delta(p, spot, variance, position, step):
     tau = p["maturity"] - step * p["dt"]
     return _heston_spot_delta(spot, variance, tau, p["strike"], p["kappa"], p["theta"],
-                              p["sigma_v"], p["rho"], p["is_call"])
+                              p["sigma_v"], p["rho"], p["is_call"], p["v_top"])
 
 
 def no_hedge() -> ParametricStrategy:
@@ -147,10 +148,14 @@ def heston_delta(option: EuropeanOption, params: ParamSet, dt: float) -> Paramet
     """Heston delta ``dC/dS`` from ``params``' dynamics at the path's current variance.
 
     The hedger observes the simulated variance, so this is the model-consistent
-    benchmark for a desk that tracks volatility, not a filter-based hedger.
+    benchmark for a desk that tracks volatility, not a filter-based hedger. Deltas come
+    from :func:`mjollnir.jax.heston_cos_delta`, which shares the characteristic-function
+    work across paths.
     """
     dynamics = {k: float(params.params[k]) for k in ("kappa", "theta", "sigma_v", "rho")}
-    return ParametricStrategy(_heston_delta, {**_option_params(option, dt), **dynamics})
+    v_top = _DELTA_WINDOW_VARIANCE_MULTIPLE * max(dynamics["theta"], float(params.params["v0"]))
+    return ParametricStrategy(_heston_delta, {**_option_params(option, dt), **dynamics,
+                                              "v_top": v_top})
 
 
 def standard_hedgers(option: EuropeanOption, book: ParamSet, *, dt: float,

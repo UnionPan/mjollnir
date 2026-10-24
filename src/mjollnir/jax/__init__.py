@@ -16,6 +16,7 @@ Headline primitives
 * ``qe_heston_step(...)``   — one Andersen quadratic-exponential Heston ``(S, v)`` step.
 * ``fourier_price(...)``    — differentiable Heston COS/Fourier vanilla price (single).
 * ``fourier_price_batch``   — batched COS pricer over a strike/maturity grid.
+* ``heston_cos_delta(...)`` — fast Heston delta for many paths (vmap over spot/variance).
 
 Lower-level building blocks (characteristic functions, COS coefficients, truncation)
 are re-exported for consumers that compose their own pricing graphs.
@@ -35,6 +36,7 @@ from mjollnir.processes._jax_qe import (
 # --- differentiable Fourier/COS pricer -----------------------------------------
 # Headline pricers: fully traced (grad/jit/vmap-safe wrt all market inputs).
 from mjollnir.jax._pricing import fourier_price, fourier_price_batch
+from mjollnir.jax._greeks import heston_cos_delta
 
 from mjollnir.pricer._jax_fourier_pricer import (
     # characteristic-function parameter containers
@@ -109,6 +111,7 @@ __all__ = [
     "fourier_price",
     "fourier_price_batch",
     "heston_cf",
+    "heston_cos_delta",
     "jax_bates_cf",
     "jax_cos_price_bates",
     "jax_cos_price_bates_multi",
