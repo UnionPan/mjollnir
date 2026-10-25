@@ -334,33 +334,26 @@ def _jax_cos_price_single(
     return price
 
 
-@jax.jit
-def _jax_cos_price_multi(
-    cf_values: jnp.ndarray,
+def _cos_payoff_coefficients(
     strikes: jnp.ndarray,
-    T: float,
-    r: float,
     a: float,
     b: float,
     is_call: jnp.ndarray,
+    N: int,
 ) -> jnp.ndarray:
-    """COS price for multiple strikes. Broadcasting over strike dimension.
+    """COS payoff coefficients of European options, k = 0 term half-weighted.
+
+    They depend only on the strikes and the window ``[a, b]``, not on the model:
+    a calibration on a fixed window computes them once and re-prices every
+    iteration with one matrix-vector product per expiry.
 
     Uses explicit (M, N) broadcasting instead of vmap for MPS compatibility.
     The MPS backend crashes on vmap + scatter ops (.at[].set).
 
-    cf_values: shape (N,) — CF evaluated on k-grid (shared across strikes)
-    strikes: shape (M,)
-    is_call: shape (M,) boolean
-    Returns: shape (M,)
+    strikes: shape (M,); is_call: shape (M,) boolean. Returns shape (M, N).
     """
-    N = cf_values.shape[0]
     k = jnp.arange(N)                          # (N,)
     ba = b - a
-    u_k = k * jnp.pi / ba                      # (N,)
-
-    F_k = jnp.real(cf_values * jnp.exp(-1j * u_k * a))  # (N,)
-
     log_K = jnp.log(strikes)                    # (M,)
     w = k * jnp.pi / ba                         # (N,)
 
@@ -400,12 +393,35 @@ def _jax_cos_price_multi(
 
     # k=0 half weight (multiplicative mask — MPS-safe)
     half_weight = jnp.where(k == 0, 0.5, 1.0)   # (N,)
+    return V_k * half_weight[None, :]
 
-    # Sum over k dimension
-    prices = jnp.exp(-r * T) * jnp.sum(
-        F_k[None, :] * V_k * half_weight[None, :], axis=-1
-    )
-    return prices
+
+def _cos_cf_weights(cf_values: jnp.ndarray, a: float, b: float) -> jnp.ndarray:
+    """Re[phi(u_k) exp(-i u_k a)]: the model's side of the COS sum, shape (N,)."""
+    u_k = jnp.arange(cf_values.shape[0]) * jnp.pi / (b - a)
+    return jnp.real(cf_values * jnp.exp(-1j * u_k * a))
+
+
+@jax.jit
+def _jax_cos_price_multi(
+    cf_values: jnp.ndarray,
+    strikes: jnp.ndarray,
+    T: float,
+    r: float,
+    a: float,
+    b: float,
+    is_call: jnp.ndarray,
+) -> jnp.ndarray:
+    """COS price for multiple strikes. Broadcasting over strike dimension.
+
+    cf_values: shape (N,) — CF evaluated on k-grid (shared across strikes)
+    strikes: shape (M,)
+    is_call: shape (M,) boolean
+    Returns: shape (M,)
+    """
+    F_k = _cos_cf_weights(cf_values, a, b)                                   # (N,)
+    V_k = _cos_payoff_coefficients(strikes, a, b, is_call, cf_values.shape[0])  # (M, N)
+    return jnp.exp(-r * T) * jnp.sum(F_k[None, :] * V_k, axis=-1)
 
 
 def _cos_truncation_range(
