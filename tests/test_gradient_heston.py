@@ -54,3 +54,34 @@ class TestGradientHeston:
     def test_empty_quotes_raise(self):
         with pytest.raises(ValueError, match="no quotes"):
             fit_heston_surface([], S0, R, Q)
+
+
+class TestBoundedCost:
+    """The properties a public endpoint relies on."""
+
+    def test_fixed_buckets_reuse_one_program(self):
+        from mjollnir.calibration.risk_neutral import gradient_heston as gh
+
+        small, large = _surface()[:12], _surface()
+        gh.fit_heston_surface(small, S0, R, Q, buckets=(64, 8))
+        compiled = gh._fitter.cache_info().currsize
+        res = gh.fit_heston_surface(large, S0, R, Q, buckets=(64, 8))
+        assert gh._fitter.cache_info().currsize == compiled  # no new program
+        assert res.converged and res.n_quotes == len(large)
+
+    def test_oversized_inputs_are_refused(self):
+        quotes = _surface()
+        with pytest.raises(ValueError, match="do not fit"):
+            fit_heston_surface(quotes, S0, R, Q, buckets=(16, 4))
+        with pytest.raises(ValueError, match="buckets must come from"):
+            fit_heston_surface(quotes, S0, R, Q, buckets=(50, 4))
+        with pytest.raises(ValueError, match="at most"):
+            fit_heston_surface(quotes * 20, S0, R, Q)
+
+    def test_standard_errors_cover_the_truth_on_a_noisy_surface(self):
+        res = fit_heston_surface(_surface(noise=0.003, seed=11), S0, R, Q)
+        for name in ("v0", "rho", "sigma_v"):
+            est, se = res.param_set.params[name], res.std_errors[name]
+            assert 0 < se < 0.5 * abs(TRUE[name]), name
+            assert abs(est - TRUE[name]) < 4 * se, name
+        assert res.iv_rmse is not None and res.iv_rmse < 0.01
