@@ -8,11 +8,15 @@ is vmapped over paths.
 
 Contract:
 
-* market physics comes from a Q- or P-measure Heston ``ParamSet`` (optionally
-  transformed by a ``Scenario`` first — the counterfactual path);
+* market physics comes from a ParamSet of any model with a simulated world in
+  :mod:`mjollnir.worlds` (optionally transformed by a ``Scenario`` first, the
+  counterfactual path);
 * the ``strategy`` is a jax-traceable callable
-  ``(spot, variance, position, step) -> target_position`` in units of the
-  underlying (deltas, not orders);
+  ``(spot, state, position, step) -> target_position`` in units of the
+  underlying (deltas, not orders), where ``state`` is what the model's world
+  exposes (the variance for Heston);
+* cash earns ``rate`` and held shares earn the dividend yield ``dividend``;
+  the spot itself drifts at ``mu``;
 * trading costs enter either as proportional ``cost_bps`` or through a
   market-impact function (both differentiable, so a strategy's parameters
   can be trained through the backtest itself);
@@ -47,11 +51,11 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 
-from mjollnir.jax._market import MarketState, make_market_step
 from mjollnir.params import ParamSet
 from mjollnir.scenarios import Scenario
+from mjollnir.worlds import World, market_params, world_for
 
-__all__ = ["BacktestResult", "ParametricStrategy", "run_backtest"]
+__all__ = ["BacktestResult", "ParametricStrategy", "run_backtest", "run_backtests"]
 
 
 class ParametricStrategy(NamedTuple):
@@ -80,38 +84,73 @@ class _Closure:
         return self.strategy(spot, variance, position, step)
 
 
-@partial(jax.jit, static_argnames=("strategy_fn", "impact", "horizon_steps"))
-def _simulate(keys, market, strategy_fn, strategy_params, *, impact, horizon_steps):
+@partial(jax.jit, static_argnames=("world", "strategy_fn", "impact", "horizon_steps"))
+def _simulate(keys, market, model, world: World, strategy_fn, strategy_params, *, impact, horizon_steps):
     """Vmapped episodes; every number arrives traced, so the program is reusable."""
-    step = make_market_step(
-        dt=market["dt"], mu=market["mu"], kappa=market["kappa"], theta=market["theta"],
-        sigma_v=market["sigma_v"], rho=market["rho"], impact=impact,
-    )
+    dt = market["dt"]
+    growth = jnp.exp(market["rate"] * dt)          # cash over one step
+    dividend = jnp.expm1(market["dividend"] * dt)  # per unit of value held over one step
 
     def episode(key):
-        state = MarketState.create(spot=market["spot0"], variance=market["v0"], key=key)
+        state, path, key = world.init(model, key, horizon_steps, dt)
+        spot = jnp.asarray(market["spot0"], jnp.float64)
 
         def body(carry, i):
-            state, pos, cash, paid = carry
-            target = strategy_fn(strategy_params, state.spot, state.variance, pos, i)
+            spot, state, key, pos, cash, paid = carry
+            target = strategy_fn(strategy_params, spot, state, pos, i)
             trade = target - pos
-            cost = jnp.abs(trade) * state.spot * market["cost_rate"]
-            cash = cash - trade * state.spot - cost
-            new_state = step(state, trade)
-            wealth = cash + target * new_state.spot
-            return (new_state, target, cash, paid + cost), (new_state.spot, wealth, target)
+            cost = jnp.abs(trade) * spot * market["cost_rate"]
+            cash = (cash - trade * spot - cost) * growth + target * spot * dividend
+            moved = spot if impact is None else impact(spot, trade)
+            new_spot, state, key = world.step(moved, state, i, model, path, dt, market["mu"], key)
+            wealth = cash + target * new_spot
+            return (new_spot, state, key, target, cash, paid + cost), (new_spot, wealth, target)
 
         zero = jnp.zeros((), jnp.float64)
-        init = (state, zero, jnp.asarray(market["initial_cash"], jnp.float64), zero)
-        (_final, _pos, _cash, paid), (spots, wealth, positions) = jax.lax.scan(
-            body, init, jnp.arange(horizon_steps))
-        spots = jnp.concatenate([jnp.asarray(market["spot0"])[None], spots])
+        init = (spot, jnp.asarray(state, jnp.float64), key, zero,
+                jnp.asarray(market["initial_cash"], jnp.float64), zero)
+        (*_, paid), (spots, wealth, positions) = jax.lax.scan(body, init, jnp.arange(horizon_steps))
+        spots = jnp.concatenate([spot[None], spots])
         wealth = jnp.concatenate([jnp.asarray(market["initial_cash"], jnp.float64)[None], wealth])
         return spots, wealth, positions, paid
 
     return jax.vmap(episode)(keys)
 
-_HESTON_KEYS = {"v0", "kappa", "theta", "sigma_v", "rho"}
+
+@partial(jax.jit, static_argnames=("world", "strategy_fns", "horizon_steps"))
+def _simulate_many(keys, market, model, world: World, strategy_fns, strategy_params, *, horizon_steps):
+    """Several strategies on the same paths in one scan: the world is simulated
+    once and every strategy keeps its own position, cash and costs. Valid only
+    without market impact (the strategies cannot move the price)."""
+    dt = market["dt"]
+    growth = jnp.exp(market["rate"] * dt)
+    dividend = jnp.expm1(market["dividend"] * dt)
+    n = len(strategy_fns)
+
+    def episode(key):
+        state, path, key = world.init(model, key, horizon_steps, dt)
+        spot = jnp.asarray(market["spot0"], jnp.float64)
+
+        def body(carry, i):
+            spot, state, key, pos, cash, paid = carry
+            target = jnp.stack([fn(params, spot, state, pos[j], i)
+                                for j, (fn, params) in enumerate(zip(strategy_fns, strategy_params, strict=True))])
+            trade = target - pos
+            cost = jnp.abs(trade) * spot * market["cost_rate"]
+            cash = (cash - trade * spot - cost) * growth + target * spot * dividend
+            new_spot, state, key = world.step(spot, state, i, model, path, dt, market["mu"], key)
+            wealth = cash + target * new_spot
+            return (new_spot, state, key, target, cash, paid + cost), (new_spot, wealth, target)
+
+        zeros = jnp.zeros((n,), jnp.float64)
+        cash0 = jnp.full((n,), market["initial_cash"], jnp.float64)
+        init = (spot, jnp.asarray(state, jnp.float64), key, zeros, cash0, zeros)
+        (*_, paid), (spots, wealth, positions) = jax.lax.scan(body, init, jnp.arange(horizon_steps))
+        spots = jnp.concatenate([spot[None], spots])
+        wealth = jnp.concatenate([cash0[None, :], wealth])          # (horizon + 1, n)
+        return spots, wealth, positions, paid
+
+    return jax.vmap(episode)(keys)
 
 
 @dataclass(frozen=True)
@@ -144,6 +183,8 @@ def run_backtest(
     horizon_steps: int = 252,
     dt: float = 1.0 / 252,
     mu: float = 0.0,
+    rate: float = 0.0,
+    dividend: float = 0.0,
     spot0: float = 100.0,
     initial_cash: float = 0.0,
     cost_bps: float = 0.0,
@@ -153,16 +194,19 @@ def run_backtest(
     steps_per_year: float = 252.0,
     liability: Callable[[Any], Any] | None = None,
 ) -> BacktestResult:
-    """Run a vmapped, jit-compiled Heston backtest of ``strategy``.
+    """Run a vmapped, jit-compiled backtest of ``strategy`` in ``params``' world.
 
     Args:
-        params: a Heston :class:`ParamSet` (measure P or Q; ``mu`` is supplied
-            separately since Q-sets carry no drift).
-        strategy: jax-traceable ``(spot, variance, position, step) ->
+        params: a :class:`ParamSet` of any model in :mod:`mjollnir.worlds`
+            (measure P or Q; ``mu`` is supplied separately since Q-sets carry
+            no drift).
+        strategy: jax-traceable ``(spot, state, position, step) ->
             target_position`` in units of the underlying.
         n_paths: Monte Carlo paths (vmapped).
         horizon_steps: episode length in steps of ``dt``.
-        mu: drift used for simulation (0 for risk-neutral experiments).
+        mu: spot drift used for simulation (r - q for a risk-neutral drift).
+        rate: interest earned on cash, continuously compounded.
+        dividend: dividend yield earned on shares held.
         cost_bps: proportional transaction cost in basis points of traded value.
         scenario: optional :class:`~mjollnir.scenarios.Scenario` applied to
             ``params`` first (provenance-chained).
@@ -173,22 +217,8 @@ def run_backtest(
             (jax- or numpy-traceable), e.g. ``EuropeanOption.payoff`` for a
             short option; ``pnl`` and the headline statistics net it out.
     """
-    if params.model != "heston":
-        raise ValueError(f"run_backtest currently supports heston ParamSets, "
-                         f"got model={params.model!r}")
-    if scenario is not None:
-        params = scenario.apply(params)
-    p = params.as_kwargs()
-    missing = _HESTON_KEYS - p.keys()
-    if missing:
-        raise ValueError(f"ParamSet missing Heston parameters: {sorted(missing)}")
-
-    market = {
-        "dt": dt, "mu": mu, "spot0": spot0, "initial_cash": initial_cash,
-        "cost_rate": cost_bps * 1e-4,
-        **{k: p[k] for k in ("v0", "kappa", "theta", "sigma_v", "rho")},
-    }
-    market = {k: jnp.asarray(v, jnp.float64) for k, v in market.items()}
+    world, params, model, market = _prepare(params, scenario, dt, mu, rate, dividend, spot0, initial_cash,
+                                            cost_bps)
     if isinstance(strategy, ParametricStrategy):
         strategy_fn, strategy_params = strategy.fn, strategy.params
     else:
@@ -196,11 +226,14 @@ def run_backtest(
 
     keys = jax.random.split(jax.random.PRNGKey(seed), n_paths)
     spots, wealth, positions, costs = _simulate(
-        keys, market, strategy_fn, strategy_params,
+        keys, market, model, world, strategy_fn, strategy_params,
         impact=impact, horizon_steps=horizon_steps,
     )
-    spots, wealth = np.asarray(spots), np.asarray(wealth)
+    return _result(np.asarray(spots), np.asarray(wealth), np.asarray(positions), np.asarray(costs),
+                   params, scenario, liability, steps_per_year)
 
+
+def _result(spots, wealth, positions, costs, params, scenario, liability, steps_per_year) -> BacktestResult:
     terminal = wealth[:, -1]
     if liability is not None:
         terminal = terminal - np.asarray(liability(spots[:, -1]), dtype=terminal.dtype)
@@ -223,6 +256,61 @@ def run_backtest(
         params_hash=params.content_hash(),
         scenario=getattr(scenario, "name", None),
         pnl=terminal,
-        costs=np.asarray(costs),
-        positions=np.asarray(positions),
+        costs=costs,
+        positions=positions,
     )
+
+
+def _prepare(params: ParamSet, scenario: Scenario | None, dt, mu, rate, dividend, spot0, initial_cash, cost_bps):
+    world = world_for(params.model)
+    if scenario is not None:
+        foreign = (set(scenario.scale) | set(scenario.set_)) - set(params.params)
+        if foreign:
+            # a set_ would silently add a parameter the world never reads: a
+            # "counterfactual" identical to the factual world
+            raise ValueError(f"scenario {scenario.name} changes {sorted(foreign)}, which a "
+                             f"{params.model} model does not have")
+        params = scenario.apply(params)
+    model = market_params(params.model, params.as_kwargs())
+    market = {
+        "dt": dt, "mu": mu, "rate": rate, "dividend": dividend, "spot0": spot0,
+        "initial_cash": initial_cash, "cost_rate": cost_bps * 1e-4,
+    }
+    return world, params, model, {k: jnp.asarray(v, jnp.float64) for k, v in market.items()}
+
+
+def run_backtests(
+    params: ParamSet,
+    strategies: dict[str, ParametricStrategy],
+    *,
+    n_paths: int = 256,
+    horizon_steps: int = 252,
+    dt: float = 1.0 / 252,
+    mu: float = 0.0,
+    rate: float = 0.0,
+    dividend: float = 0.0,
+    spot0: float = 100.0,
+    initial_cash: float = 0.0,
+    cost_bps: float = 0.0,
+    scenario: Scenario | None = None,
+    seed: int = 0,
+    steps_per_year: float = 252.0,
+    liability: Callable[[Any], Any] | None = None,
+) -> dict[str, BacktestResult]:
+    """:func:`run_backtest` for several parametric strategies on the same paths.
+
+    One compiled program simulates the world once and runs every strategy
+    alongside (no market impact, so none of them moves the price); results
+    equal separate ``run_backtest`` calls with the same seed.
+    """
+    world, params, model, market = _prepare(params, scenario, dt, mu, rate, dividend, spot0, initial_cash,
+                                            cost_bps)
+    names = list(strategies)
+    fns = tuple(strategies[n].fn for n in names)
+    keys = jax.random.split(jax.random.PRNGKey(seed), n_paths)
+    spots, wealth, positions, costs = _simulate_many(
+        keys, market, model, world, fns, tuple(strategies[n].params for n in names), horizon_steps=horizon_steps)
+    spots, wealth, positions, costs = (np.asarray(x) for x in (spots, wealth, positions, costs))
+    return {name: _result(spots, wealth[:, :, j], positions[:, :, j], costs[:, j], params, scenario, liability,
+                          steps_per_year)
+            for j, name in enumerate(names)}

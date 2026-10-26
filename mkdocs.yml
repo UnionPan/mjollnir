@@ -72,8 +72,10 @@ nav:
       - mjollnir.calibration.cross_asset: reference/cross_asset.md
       - mjollnir.params: reference/params.md
       - mjollnir.scenarios: reference/scenarios.md
+      - mjollnir.worlds: reference/worlds.md
       - mjollnir.backtest: reference/backtest.md
       - mjollnir.hedging: reference/hedging.md
+      - mjollnir.model_pricing: reference/model_pricing.md
       - mjollnir.surface: reference/surface.md
       - mjollnir.generator: reference/generator.md
   - Design notes:

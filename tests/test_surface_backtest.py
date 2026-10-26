@@ -117,7 +117,8 @@ class TestBacktest:
         assert crisis.params_hash != base.params_hash
         assert crisis.std_terminal > base.std_terminal   # more vol => wider outcomes
 
-    def test_rejects_non_heston(self):
-        ps = ParamSet.create("merton", "P", {"sigma": 0.2})
-        with pytest.raises(ValueError, match="heston"):
-            run_backtest(ps, lambda s, v, p, i: 0.0)
+    def test_rejects_models_it_cannot_simulate(self):
+        with pytest.raises(ValueError, match="no simulated world"):
+            run_backtest(ParamSet.create("sabr", "Q", {"alpha": 0.2}), lambda s, v, p, i: 0.0)
+        with pytest.raises(ValueError, match="missing"):
+            run_backtest(ParamSet.create("merton", "P", {"sigma": 0.2}), lambda s, v, p, i: 0.0)

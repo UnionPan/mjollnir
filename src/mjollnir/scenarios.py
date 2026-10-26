@@ -133,11 +133,78 @@ LIBRARY = {
     "jump_cascade": jump_cascade,
 }
 
+
+# ---------------------------------------------------------------------------
+# The same archetypes for every simulated world (mjollnir.worlds)
+# ---------------------------------------------------------------------------
+
+# scenario -> models it means something for
+SCENARIO_MODELS = {
+    "vol_spike": ("gbm", "heston", "merton", "regime_switching_gbm", "garch", "rough_bergomi"),
+    "correlation_breakdown": ("heston", "rough_bergomi"),
+    "regime_shift": ("heston", "garch"),
+    "jump_cascade": ("merton",),
+}
+
+
+def scenario_for(name: str, severity: float, params: ParamSet) -> Scenario:
+    """The archetype ``name`` expressed in ``params``' own model.
+
+    The severity keeps its meaning across models: a vol spike of 2 doubles
+    spot vol; a regime shift of 3 makes volatility shocks last 3 times longer
+    with long-run variance up by sqrt(3); a correlation breakdown pins rho.
+    Raises if the archetype means nothing for the model (correlation in GBM).
+    """
+    model = params.model
+    if model not in SCENARIO_MODELS.get(name, ()):
+        raise ValueError(f"{name} has no meaning for a {model} model")
+    s = float(severity)
+    if name == "correlation_breakdown":
+        return correlation_breakdown(s)
+    if name == "jump_cascade":
+        k = s
+        return Scenario(name=f"jump_cascade[{k:g}x]",
+                        description=f"jump rate x{k:g}, mean jump x{k ** 0.5:.3g}",
+                        scale={"lambda_j": k, "mu_j": k**0.5})
+    if name == "regime_shift":
+        if model == "heston":
+            return regime_shift(s)
+        p = params.params
+        persistence = p["alpha"] + p["beta"]
+        slower = persistence ** (1.0 / s)  # half-life x s
+        long_run = p["omega"] / (1.0 - persistence) * s**0.5
+        alpha = p["alpha"] * slower / persistence
+        return Scenario(name=f"regime_shift[{s:g}]",
+                        description=f"variance shocks last {s:g}x longer, long-run variance x{s ** 0.5:.3g}",
+                        set_={"alpha": alpha, "beta": slower - alpha, "omega": long_run * (1.0 - slower)})
+    # vol_spike
+    if model == "heston":
+        return vol_spike(s)
+    long_run = ((1 + s) / 2) ** 2
+    description = f"spot vol x{s:g}"
+    if model == "gbm":
+        scale = {"sigma": s}
+    elif model == "merton":
+        scale = {"sigma": s, "sigma_j": s**0.5}
+        description += f", jump vol x{s ** 0.5:.3g}"
+    elif model == "regime_switching_gbm":
+        scale = {k: s for k in params.params if k.startswith("sigma_") and k[6:].isdigit()}
+        description = f"every regime's vol x{s:g}"
+    elif model == "garch":
+        scale = {"h0": s**2, "omega": long_run}
+        description += f", long-run vol x{(1 + s) / 2:g}"
+    else:  # rough_bergomi
+        scale = {"xi0": s**2, "eta": s**0.5}
+        description += f", vol-of-vol x{s ** 0.5:.3g}"
+    return Scenario(name=f"vol_spike[{s:g}x]", description=description, scale=scale)
+
 __all__ = [
     "LIBRARY",
+    "SCENARIO_MODELS",
     "Scenario",
     "correlation_breakdown",
     "jump_cascade",
     "regime_shift",
+    "scenario_for",
     "vol_spike",
 ]
