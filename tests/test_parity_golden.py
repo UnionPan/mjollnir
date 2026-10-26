@@ -36,8 +36,10 @@ GOLDEN_VAR_64 = 0.08583288257697771
 GOLDEN_PRICE = 5.986438898451416        # ATM call, S0=K=100
 GOLDEN_DELTA = 0.6108256957214958       # d price / d S0
 GOLDEN_DPDV0 = 43.95845557345104        # d price / d v0
-GOLDEN_BATCH = [12.749299984536274, 5.986438898451429, 10.818755773028288]
-# strikes [90, 100, 110], is_call [True, True, False]
+GOLDEN_BATCH = [12.749299984536274, 5.986438898451429, 10.818755777076351]
+# strikes [90, 100, 110], is_call [True, True, False]. The 110 put moved by
+# 4e-9 when the COS window gained the cumulant rule (heston_cos_range): against
+# a 65536-term reference the old value was off by -4.1e-9, the new by -1.1e-11.
 
 
 def _roll(key, n_steps=64, batch=4):

@@ -303,8 +303,18 @@ def _jax_cos_price_single(
     a: float,
     b: float,
     is_call: bool,
+    forward_pv: float | None = None,
 ) -> float:
-    """COS price for a single strike. cf_values already evaluated on k-grid."""
+    """COS price for a single strike. cf_values already evaluated on k-grid.
+
+    With ``forward_pv`` (S0 exp(-qT)), a call is priced as the put plus
+    ``forward_pv - K exp(-rT)``: on a window wide enough for heavy tails, the
+    call payoff's exp(x) growth makes its own coefficients cancel
+    catastrophically, while the put's stay bounded (Fang and Oosterlee).
+    """
+    if forward_pv is not None:
+        put = _jax_cos_price_single(cf_values, K, T, r, a, b, False)
+        return jnp.where(is_call, put + forward_pv - K * jnp.exp(-r * T), put)
     N = cf_values.shape[0]
     k = jnp.arange(N)
     ba = b - a
@@ -411,17 +421,71 @@ def _jax_cos_price_multi(
     a: float,
     b: float,
     is_call: jnp.ndarray,
+    forward_pv: float | None = None,
 ) -> jnp.ndarray:
     """COS price for multiple strikes. Broadcasting over strike dimension.
 
     cf_values: shape (N,) — CF evaluated on k-grid (shared across strikes)
     strikes: shape (M,)
     is_call: shape (M,) boolean
+    forward_pv: S0 exp(-qT); when given, calls come from puts by parity
+        (see ``_jax_cos_price_single``)
     Returns: shape (M,)
     """
     F_k = _cos_cf_weights(cf_values, a, b)                                   # (N,)
-    V_k = _cos_payoff_coefficients(strikes, a, b, is_call, cf_values.shape[0])  # (M, N)
-    return jnp.exp(-r * T) * jnp.sum(F_k[None, :] * V_k, axis=-1)
+    if forward_pv is None:
+        V_k = _cos_payoff_coefficients(strikes, a, b, is_call, cf_values.shape[0])  # (M, N)
+        return jnp.exp(-r * T) * jnp.sum(F_k[None, :] * V_k, axis=-1)
+    puts_only = jnp.zeros_like(jnp.asarray(is_call, dtype=bool))
+    V_put = _cos_payoff_coefficients(strikes, a, b, puts_only, cf_values.shape[0])
+    puts = jnp.exp(-r * T) * jnp.sum(F_k[None, :] * V_put, axis=-1)
+    return jnp.where(is_call, puts + forward_pv - strikes * jnp.exp(-r * T), puts)
+
+
+HESTON_COS_TERMS = 1024
+STRIKE_MARGIN = 0.25  # log-strike margin of the COS window around every strike
+CUMULANT_L = 10.0  # Fang and Oosterlee's L for the c2 + sqrt|c4| rule
+
+
+def heston_cos_range(params: HestonCFParams, log_S0, v0, T, L: float = 12.0, strikes=None):
+    """COS window ``[a, b]`` for Heston: wide enough for the density's tails,
+    with every strike inside.
+
+    The union of two rules. ``L`` standard deviations of the mean-reversion-
+    aware effective variance holds the bulk; Fang and Oosterlee's
+    ``L * sqrt(c2 + sqrt|c4|)``, from the log price's exact cumulants (the
+    log characteristic function's derivatives at 0, by autodiff), widens the
+    window when vol-of-vol fattens the tails (with their recommended L of 10,
+    which 1024 terms resolve). The second-moment rule alone
+    truncated ordinary wing prices by up to 2e-3 and broke put-call parity by
+    5e-2 at high vol-of-vol. Traceable and gradient-free: the price depends
+    on the window only through truncation error.
+    """
+    kT = params.kappa * T
+    reversion = (1.0 - jnp.exp(-kT)) / jnp.maximum(kT, 1e-12)
+    v_eff = params.theta + (v0 - params.theta) * reversion
+    centre = log_S0 + (params.mu - 0.5 * v_eff) * T
+    half = L * jnp.sqrt(jnp.maximum(v_eff * T, 1e-12))
+
+    def log_cf(u):
+        return jnp.log(jax_heston_cf(params, jnp.reshape(u, (1,)), log_S0, v0, T)[0])
+
+    d1 = jax.jacfwd(log_cf)
+    d2 = jax.jacfwd(d1)
+    d4 = jax.jacfwd(jax.jacfwd(d2))
+    zero = jnp.asarray(0.0)
+    c1 = jnp.imag(d1(zero))
+    c2 = -jnp.real(d2(zero))
+    c4 = jnp.real(d4(zero))
+    half_cum = CUMULANT_L * jnp.sqrt(jnp.maximum(c2, 0.0) + jnp.sqrt(jnp.abs(c4)))
+    usable = jnp.isfinite(c1) & jnp.isfinite(half_cum)
+    a = jnp.where(usable, jnp.minimum(centre - half, c1 - half_cum), centre - half)
+    b = jnp.where(usable, jnp.maximum(centre + half, c1 + half_cum), centre + half)
+    if strikes is not None:
+        log_k = jnp.log(jnp.asarray(strikes))
+        a = jnp.minimum(a, jnp.min(log_k) - STRIKE_MARGIN)
+        b = jnp.maximum(b, jnp.max(log_k) + STRIKE_MARGIN)
+    return jax.lax.stop_gradient(a), jax.lax.stop_gradient(b)
 
 
 def _cos_truncation_range(
@@ -543,19 +607,18 @@ def jax_cos_price_gbm_multi(
 def jax_cos_price_heston(
     S0: float, K: float, T: float, r: float, q: float,
     v0: float, kappa: float, theta: float, sigma_v: float, rho: float,
-    is_call: bool = True, N: int = 256, L: float = 12.0,
+    is_call: bool = True, N: int = HESTON_COS_TERMS, L: float = 12.0,
 ) -> float:
     """COS price for Heston model."""
     mu = r - q
     log_S0 = np.log(S0)
-    sigma_approx = np.sqrt(v0)
-    a, b = _cos_truncation_range(log_S0, mu - 0.5 * v0, sigma_approx, T, L)
-    k = jnp.arange(N)
-    u = k * jnp.pi / (b - a)
     params = HestonCFParams(v0=v0, kappa=kappa, theta=theta,
                             sigma_v=sigma_v, rho=rho, mu=mu)
+    a, b = heston_cos_range(params, log_S0, v0, T, L, strikes=jnp.asarray([K]))
+    k = jnp.arange(N)
+    u = k * jnp.pi / (b - a)
     cf_vals = jax_heston_cf(params, u, log_S0, v0, T)
-    price = _jax_cos_price_single(cf_vals, K, T, r, a, b, is_call)
+    price = _jax_cos_price_single(cf_vals, K, T, r, a, b, is_call, forward_pv=S0 * np.exp(-q * T))
     return float(price)
 
 
@@ -563,20 +626,20 @@ def jax_cos_price_heston(
 def jax_cos_price_heston_multi(
     S0: float, strikes: np.ndarray, T: float, r: float, q: float,
     v0: float, kappa: float, theta: float, sigma_v: float, rho: float,
-    is_call: np.ndarray, N: int = 256, L: float = 12.0,
+    is_call: np.ndarray, N: int = HESTON_COS_TERMS, L: float = 12.0,
 ) -> np.ndarray:
     """COS prices for Heston across multiple strikes."""
     mu = r - q
     log_S0 = np.log(S0)
-    sigma_approx = np.sqrt(v0)
-    a, b = _cos_truncation_range(log_S0, mu - 0.5 * v0, sigma_approx, T, L)
-    k = jnp.arange(N)
-    u = k * jnp.pi / (b - a)
     params = HestonCFParams(v0=v0, kappa=kappa, theta=theta,
                             sigma_v=sigma_v, rho=rho, mu=mu)
+    a, b = heston_cos_range(params, log_S0, v0, T, L, strikes=jnp.asarray(strikes))
+    k = jnp.arange(N)
+    u = k * jnp.pi / (b - a)
     cf_vals = jax_heston_cf(params, u, log_S0, v0, T)
     prices = _jax_cos_price_multi(
         cf_vals, jnp.asarray(strikes), T, r, a, b, jnp.asarray(is_call),
+        forward_pv=S0 * np.exp(-q * T),
     )
     return to_numpy(prices)
 

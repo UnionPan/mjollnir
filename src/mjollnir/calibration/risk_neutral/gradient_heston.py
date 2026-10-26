@@ -104,10 +104,11 @@ def _windows(S0, r, q, expiries, lo_logk, hi_logk, window_vol):
             np.maximum(centre + half, hi_logk + _STRIKE_MARGIN))
 
 
-def _model_prices(u, S0, coefficients, discounts, quote_expiry, expiries, a, b, r, q):
+def _model_prices(u, S0, coefficients, discounts, parity, quote_expiry, expiries, a, b, r, q):
     """COS price of every quote: the characteristic function once per expiry (a
     chain has a handful), then one dot product per quote with its precomputed
-    payoff coefficients."""
+    put coefficients; calls add their parity term (bounded put payoffs keep
+    wide windows accurate)."""
     v0, kappa, theta, sigma_v, rho = _constrain(u)
     cf_params = HestonCFParams(v0=v0, kappa=kappa, theta=theta, sigma_v=sigma_v, rho=rho, mu=r - q)
     k = jnp.arange(_COS_TERMS)
@@ -117,14 +118,14 @@ def _model_prices(u, S0, coefficients, discounts, quote_expiry, expiries, a, b, 
         return _cos_cf_weights(cf, a_e, b_e)
 
     weights = jax.vmap(expiry_weights)(expiries, a, b)          # (expiries, N)
-    return discounts * jnp.sum(weights[quote_expiry] * coefficients, axis=-1)
+    return discounts * jnp.sum(weights[quote_expiry] * coefficients, axis=-1) + parity
 
 
-def _payoff_coefficients(strikes, is_call, quote_expiry, a, b):
-    def one(K, call, e):
-        return _cos_payoff_coefficients(K[None], a[e], b[e], call[None], _COS_TERMS)[0]
+def _put_coefficients(strikes, quote_expiry, a, b):
+    def one(K, e):
+        return _cos_payoff_coefficients(K[None], a[e], b[e], jnp.zeros(1, dtype=bool), _COS_TERMS)[0]
 
-    return jax.jit(jax.vmap(one))(strikes, is_call, quote_expiry)
+    return jax.jit(jax.vmap(one))(strikes, quote_expiry)
 
 
 @cache
@@ -251,9 +252,11 @@ def fit_heston_surface(
     expiries, lo_logk, hi_logk = (np.concatenate([x, np.full(extra, x[0])]) for x in (expiries, lo_logk, hi_logk))
     sqrt_w = np.sqrt(np.concatenate([w / max(w.mean(), 1e-300), np.zeros(pad)]))
     a, b = _windows(S0, r, q, expiries, lo_logk, hi_logk, window_vol)
-    coefficients = _payoff_coefficients(jnp.asarray(arr[:, 0]), jnp.asarray(arr[:, 2] > 0.5),
-                                        jnp.asarray(quote_expiry), jnp.asarray(a), jnp.asarray(b))
-    market = (coefficients, jnp.asarray(np.exp(-r * arr[:, 1])), jnp.asarray(quote_expiry),
+    coefficients = _put_coefficients(jnp.asarray(arr[:, 0]), jnp.asarray(quote_expiry),
+                                     jnp.asarray(a), jnp.asarray(b))
+    # call = put + S0 exp(-qT) - K exp(-rT)
+    parity = np.where(arr[:, 2] > 0.5, S0 * np.exp(-q * arr[:, 1]) - arr[:, 0] * np.exp(-r * arr[:, 1]), 0.0)
+    market = (coefficients, jnp.asarray(np.exp(-r * arr[:, 1])), jnp.asarray(parity), jnp.asarray(quote_expiry),
               jnp.asarray(expiries), jnp.asarray(a), jnp.asarray(b))
 
     var0 = _atm_variance(quotes, S0, r, q)
