@@ -17,9 +17,31 @@ author: Yunian Pan
 email: yp1170@nyu.edu
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+
 import numpy as np
 from scipy import optimize, stats
+
+from mjollnir.calibration.physical.uncertainty import observed_information_std_errors
+
+PARAM_NAMES = ("mu", "sigma", "lambda_", "mu_j", "sigma_j")
+
+
+def merton_neg_log_likelihood(params: np.ndarray, returns: np.ndarray, dt: float, k_max: int = 5) -> float:
+    """Negative log-likelihood of log returns under Merton (Poisson mixture of normals)."""
+    mu, sigma, lambda_, mu_j, sigma_j = params
+    if sigma <= 0 or lambda_ <= 0 or sigma_j <= 0:
+        return 1e12
+    k_grid = np.arange(k_max + 1)                                   # (K,)
+    kappa = np.exp(mu_j + 0.5 * sigma_j**2) - 1.0
+    base_mean = (mu - 0.5 * sigma**2 - lambda_ * kappa) * dt
+    base_var = sigma**2 * dt
+    weights = stats.poisson.pmf(k_grid, lambda_ * dt)              # (K,)
+    mean_k = base_mean + k_grid * mu_j                              # (K,)
+    var_k = base_var + k_grid * sigma_j**2                          # (K,)
+    comp = stats.norm.pdf(returns[:, None], loc=mean_k[None, :], scale=np.sqrt(var_k)[None, :])  # (T, K)
+    mix_prob = np.maximum(comp @ weights, 1e-300)                   # (T,)
+    return -float(np.sum(np.log(mix_prob)))
 
 
 @dataclass
@@ -37,6 +59,21 @@ class MertonCalibrationResult:
     bic: float
     n_observations: int
     dt: float
+    converged: bool = True
+    message: str = ""
+    std_errors: dict[str, float] = field(default_factory=dict)  # observed information
+
+    @property
+    def jump_variance_share(self) -> float:
+        """Share of return variance that jumps carry; better identified than
+        lambda and sigma_j separately (many small jumps look like diffusion)."""
+        jump = self.lambda_ * (self.mu_j**2 + self.sigma_j**2)
+        return float(jump / (self.sigma**2 + jump))
+
+    @property
+    def total_vol(self) -> float:
+        """Annualized volatility of returns, diffusion and jumps together."""
+        return float(np.sqrt(self.sigma**2 + self.lambda_ * (self.mu_j**2 + self.sigma_j**2)))
 
     def summary(self) -> str:
         lines = [
@@ -48,6 +85,7 @@ class MertonCalibrationResult:
             f"lambda  = {self.lambda_:.6f}",
             f"mu_j    = {self.mu_j:.6f}",
             f"sigma_j = {self.sigma_j:.6f}",
+            f"jump share of variance = {self.jump_variance_share:.3f}",
             "",
             f"logL = {self.log_likelihood:.2f}",
             f"AIC  = {self.aic:.2f}",
@@ -60,7 +98,15 @@ class MertonCalibrationResult:
 class MertonJumpCalibrator:
     """
     MLE calibration for the Merton jump-diffusion model.
+
+    The likelihood is multimodal (rare large jumps against frequent small
+    ones), so the fit starts from several jump regimes and keeps the best.
+    A fit where no start converges is reported as not converged; it never
+    falls back to its starting values.
     """
+
+    # (lambda per year, sigma_j) starts: rare-large to frequent-small jumps
+    STARTS = ((2.0, 0.08), (10.0, 0.04), (40.0, 0.02))
 
     def __init__(self, k_max: int = 5):
         """
@@ -78,15 +124,8 @@ class MertonJumpCalibrator:
 
         returns = np.diff(np.log(prices))
         n = len(returns)
-
         mu_init = np.mean(returns) / dt
         sigma_init = np.std(returns, ddof=1) / np.sqrt(dt)
-        lambda_init = 0.1
-        mu_j_init = 0.0
-        sigma_j_init = 0.05
-
-        x0 = np.array([mu_init, sigma_init, lambda_init, mu_j_init, sigma_j_init])
-
         bounds = [
             (None, None),      # mu
             (1e-6, None),      # sigma
@@ -95,46 +134,19 @@ class MertonJumpCalibrator:
             (1e-6, None),      # sigma_j
         ]
 
-        k_grid = np.arange(self.k_max + 1)  # (K,)
+        def nll(x):
+            return merton_neg_log_likelihood(x, returns, dt, self.k_max)
 
-        def neg_log_likelihood(params: np.ndarray) -> float:
-            mu, sigma, lambda_, mu_j, sigma_j = params
-            if sigma <= 0 or lambda_ <= 0 or sigma_j <= 0:
-                return 1e12
-
-            kappa = np.exp(mu_j + 0.5 * sigma_j**2) - 1.0
-            base_mean = (mu - 0.5 * sigma**2 - lambda_ * kappa) * dt
-            base_var = sigma**2 * dt
-
-            # Vectorized Poisson-mixture likelihood over (T, K). Same math as
-            # the original per-return loop, but ~100x faster: L-BFGS-B calls
-            # this NLL thousands of times (finite-difference gradients over 5
-            # params), and scalar scipy.stats calls in a double loop dominated
-            # the entire calibration runtime.
-            weights = stats.poisson.pmf(k_grid, lambda_ * dt)          # (K,)
-            mean_k = base_mean + k_grid * mu_j                          # (K,)
-            var_k = base_var + k_grid * sigma_j**2                      # (K,)
-            comp = stats.norm.pdf(
-                returns[:, None], loc=mean_k[None, :],
-                scale=np.sqrt(var_k)[None, :],
-            )                                                           # (T, K)
-            mix_prob = np.maximum(comp @ weights, 1e-300)               # (T,)
-            return -float(np.sum(np.log(mix_prob)))
-
-        result = optimize.minimize(
-            neg_log_likelihood,
-            x0,
-            method="L-BFGS-B",
-            bounds=bounds,
-        )
-
-        if not result.success:
-            # Fall back to initial guesses if optimization fails
-            params = x0
-            log_likelihood = -neg_log_likelihood(params)
-        else:
-            params = result.x
-            log_likelihood = -result.fun
+        best = None
+        for lambda_init, sigma_j_init in self.STARTS:
+            x0 = np.array([mu_init, 0.8 * sigma_init, lambda_init, 0.0, sigma_j_init])
+            result = optimize.minimize(nll, x0, method="L-BFGS-B", bounds=bounds)
+            if np.isfinite(result.fun) and (best is None or result.fun < best.fun):
+                best = result
+        converged = bool(best.success)
+        params = best.x
+        log_likelihood = -float(best.fun)
+        std = observed_information_std_errors(nll, params) if converged else np.full(5, np.inf)
 
         mu, sigma, lambda_, mu_j, sigma_j = params
         k = 5
@@ -152,4 +164,7 @@ class MertonJumpCalibrator:
             bic=float(bic),
             n_observations=n,
             dt=dt,
+            converged=converged,
+            message=str(best.message),
+            std_errors=dict(zip(PARAM_NAMES, (float(x) for x in std), strict=True)),
         )

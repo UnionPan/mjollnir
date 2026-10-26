@@ -30,6 +30,15 @@ from .rough_bergomi_calibrator import (
     RoughBergomiCalibrator,
     RoughBergomiCalibrationResult,
 )
+from .rough_vol_variogram import (
+    RoughBergomiVariogramCalibrator,
+    RoughBergomiVariogramResult,
+)
+from .uncertainty import (
+    BootstrapResult,
+    observed_information_std_errors,
+    parametric_bootstrap,
+)
 from .merton_calibrator import (
     MertonJumpCalibrator,
     MertonCalibrationResult,
@@ -66,6 +75,8 @@ __all__ = [
     'DEFAULT_BASKET_50',
     # Multi-asset calibration pipeline
     'AssetCalibration',
+    # Classical-estimator uncertainty
+    'BootstrapResult',
     # Correlation
     'CorrelationCalibrator',
     'CorrelationResult',
@@ -98,6 +109,8 @@ __all__ = [
     'RoughBergomiCalibrator',
     'RoughBergomiParticleFilter',
     'RoughBergomiParticleFilterResult',
+    'RoughBergomiVariogramCalibrator',
+    'RoughBergomiVariogramResult',
     # Volatility estimators
     'VolatilityEstimate',
     'VolatilityEstimator',
@@ -106,6 +119,8 @@ __all__ = [
     'compare_ohlc_estimators',
     'compare_volatility_methods',
     'garman_klass_volatility',
+    'observed_information_std_errors',
+    'parametric_bootstrap',
     'parkinson_volatility',
     'rogers_satchell_volatility',
     'save_calibration',

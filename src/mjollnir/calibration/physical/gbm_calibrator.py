@@ -205,7 +205,9 @@ class GBMCalibrator:
 
         # Standard errors (from Fisher information matrix)
         # For GBM, the MLE has known asymptotic distribution
-        mu_stderr = sigma / np.sqrt(n)
+        # mu = mean(daily)/dt, so its error is sd(daily)/sqrt(n)/dt = sigma/sqrt(n dt):
+        # the drift is pinned down by the window's length in years, not its count
+        mu_stderr = sigma / np.sqrt(n * dt)
         sigma_stderr = sigma / np.sqrt(2 * n)
 
         # Confidence intervals (assuming normal distribution of MLE)

@@ -1,16 +1,19 @@
 """
-Heston QMLE calibrator (physical measure).
+Heston moment calibrator (physical measure), historically named "QMLE".
 
 Fits Heston SV parameters {kappa, theta, sigma_v, rho, mu, v0} to a daily
-return series via two-step Quasi-Maximum Likelihood:
+return series by the method of moments on a realized-variance proxy:
 
-    Step 1.  Realized variance proxy from squared log-returns.
-    Step 2.  Fit AR(1) discretization of Heston variance dynamics by MLE
-             on the Gaussian-conditional log-likelihood of (v_{t+1} | v_t):
-                 v_{t+1} ≈ v_t + kappa*(theta - v_t)*dt + sigma_v*sqrt(v_t)*Z
-             → estimate {kappa, theta, sigma_v}.
-    Step 3.  Estimate rho from sample correlation of (r_t, Δv_t).
+    Step 1.  Realized variance proxy: a rolling mean of squared log-returns.
+    Step 2.  theta from the proxy's mean, kappa from its AR(1) coefficient,
+             sigma_v from its stationary variance.
+    Step 3.  rho from the covariance of (r_t, Δv_t).
     Step 4.  mu := mean(r_t)/dt;   v0 := current realized variance.
+
+The AR(1) Gaussian likelihood is computed as a diagnostic only; nothing is
+maximized. The proxy is smoothed and noisy, so kappa and sigma_v are biased:
+:meth:`HestonQMLECalibrator.bootstrap` measures the estimator's spread and
+bias at the fitted point by simulating from it and refitting.
 
 Much faster than full particle-filter MLE; appropriate for batch
 calibration over hundreds of equities. For higher-fidelity single-asset
@@ -31,6 +34,10 @@ from dataclasses import dataclass
 
 import numpy as np
 from scipy import stats
+
+from mjollnir.calibration.physical.uncertainty import BootstrapResult, parametric_bootstrap
+
+BOOTSTRAP_PARAMS = ("kappa", "theta", "sigma_v", "rho", "mu")
 
 
 @dataclass
@@ -250,3 +257,32 @@ class HestonQMLECalibrator:
             return_var_corr_pvalue=float(p_value),
             converged=bool(converged),
         )
+
+    def bootstrap(self, result: HestonQMLEResult, n_boot: int = 200, seed: int = 0) -> BootstrapResult:
+        """Spread and bias of this estimator at ``result``.
+
+        Simulates ``n_boot`` daily histories as long as the data from the
+        fitted Heston model (full-truncation Euler, starting at the long-run
+        variance), refits each, and summarizes the refits.
+        """
+        estimate = {k: float(getattr(result, k)) for k in BOOTSTRAP_PARAMS}
+        dt, n = result.dt, result.n_observations
+
+        def simulate(rng: np.random.Generator, size: int) -> np.ndarray:
+            kappa, theta, sigma_v, rho, mu = (estimate[k] for k in BOOTSTRAP_PARAMS)
+            v = np.full(size, theta)
+            log_s = np.zeros((size, n + 1))
+            shocks = rng.standard_normal((n, 2, size))
+            for t in range(n):
+                v_plus = np.maximum(v, 0.0)
+                z_v, z_perp = shocks[t]
+                z_s = rho * z_v + np.sqrt(1.0 - rho**2) * z_perp
+                log_s[:, t + 1] = log_s[:, t] + (mu - 0.5 * v_plus) * dt + np.sqrt(v_plus * dt) * z_s
+                v = v + kappa * (theta - v_plus) * dt + sigma_v * np.sqrt(v_plus * dt) * z_v
+            return 100.0 * np.exp(log_s)
+
+        def refit(path: np.ndarray) -> dict[str, float]:
+            fitted = self.fit(path, dt=dt)
+            return {k: float(getattr(fitted, k)) for k in BOOTSTRAP_PARAMS}
+
+        return parametric_bootstrap(estimate, simulate, refit, n_boot=n_boot, seed=seed)

@@ -351,7 +351,7 @@ class RegimeSwitchingCalibrator:
 
             # Standard errors
             n = len(regime_returns)
-            mu_stderr = sigma / np.sqrt(n) if n > 0 else np.nan
+            mu_stderr = sigma / np.sqrt(n * self.dt) if n > 0 else np.nan  # mu = mean/dt
             sigma_stderr = sigma / np.sqrt(2 * n) if n > 0 else np.nan
 
             # Regime duration analysis
