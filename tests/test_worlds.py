@@ -72,6 +72,27 @@ def test_garch_returns_have_the_long_run_variance():
     assert returns.var() == pytest.approx(long_run, rel=0.05)
 
 
+def test_student_t_garch_keeps_its_drift_and_variance_and_fattens_the_tails():
+    p = WORLDS["garch"]
+    long_run = p["omega"] / (1 - p["alpha"] - p["beta"])
+    gaussian = ParamSet.create("garch", "P", {**p, "h0": long_run})
+    student = ParamSet.create("garch", "P", {**p, "h0": long_run, "nu": 4.0})
+    runs = [run_backtest(ps, _hold_one_share, n_paths=8192, horizon_steps=126, mu=0.07, seed=3)
+            for ps in (gaussian, student)]
+    terminal = runs[1].spots[:, -1]
+    error = terminal.std() / np.sqrt(terminal.size)
+    assert abs(terminal.mean() - 100.0 * np.exp(0.07 * 0.5)) < 4 * error
+    simple = [np.diff(r.spots, axis=1) / r.spots[:, :-1] - (np.exp(0.07 * DT) - 1) for r in runs]
+    assert simple[1].var() == pytest.approx(long_run, rel=0.05)
+    standardized = [x / x.std() for x in simple]
+    assert np.mean(np.abs(standardized[1]) > 5) > 5 * np.mean(np.abs(standardized[0]) > 5)
+
+
+def test_garch_degrees_of_freedom_must_give_a_finite_variance():
+    with pytest.raises(ValueError, match="nu must exceed 2"):
+        market_params("garch", {**WORLDS["garch"], "nu": 2.0})
+
+
 def test_regimes_follow_their_chain():
     """Starting in the calm regime, the time spent turbulent approaches the
     chain's stationary share p_10 / (p_01 + p_10) = 1/6."""

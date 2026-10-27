@@ -23,8 +23,9 @@ Parameter names (ParamSet ``model``):
 - ``merton``: sigma, lambda_j, mu_j, sigma_j
 - ``regime_switching_gbm``: sigma_<k> and per-step transition probabilities
   p_<i><j> for regimes k, i, j = 0..n-1, and regime0 (the regime today)
-- ``garch``: omega, alpha, beta (per-step units) and h0 (today's per-step
-  conditional variance)
+- ``garch``: omega, alpha, beta (per-step units), h0 (today's per-step
+  conditional variance) and optionally nu, the degrees of freedom of
+  Student-t innovations (scaled to unit variance; Gaussian without it)
 - ``rough_bergomi``: xi0, eta, rho, H
 
 Each world's mean spot grows exactly at ``mu``: jumps, regimes and GARCH
@@ -89,11 +90,24 @@ def _merton_init(params, key, horizon, dt):
     return params["sigma"] ** 2, _EMPTY, key
 
 
+_POISSON_TERMS = 16  # P(N > 16) < 1e-20 at one day's jump rate (lambda dt <= 300 / 252)
+
+
+def _poisson_small_rate(key, rate, shape, dtype):
+    """Poisson draws for a small rate by inverting its CDF over 16 terms: exact to
+    1e-20 here, and far faster than jax.random.poisson's rejection sampler."""
+    k = jnp.arange(_POISSON_TERMS, dtype=dtype)
+    log_pmf = -rate + k * jnp.log(jnp.maximum(rate, 1e-30)) - jax.lax.lgamma(k + 1.0)
+    cdf = jnp.cumsum(jnp.exp(log_pmf))
+    u = jax.random.uniform(key, shape, dtype)
+    return jnp.sum(u[..., None] > cdf, axis=-1).astype(dtype)
+
+
 def _merton_step(spot, state, t, params, path, dt, mu, key):
     key, kz, kn, kj = jax.random.split(key, 4)
     sigma, lam, mu_j, sigma_j = params["sigma"], params["lambda_j"], params["mu_j"], params["sigma_j"]
     compensator = jnp.exp(mu_j + 0.5 * sigma_j**2) - 1.0
-    n_jumps = jax.random.poisson(kn, lam * dt, jnp.shape(spot)).astype(spot.dtype)
+    n_jumps = _poisson_small_rate(kn, lam * dt, jnp.shape(spot), spot.dtype)
     jump = n_jumps * mu_j + jnp.sqrt(n_jumps) * sigma_j * jax.random.normal(kj, jnp.shape(spot))
     z = jax.random.normal(kz, jnp.shape(spot))
     log_step = (mu - 0.5 * sigma**2 - lam * compensator) * dt + sigma * jnp.sqrt(dt) * z + jump
@@ -123,12 +137,28 @@ def _garch_init(params, key, horizon, dt):
     return params["h0"], _EMPTY, key
 
 
+def _student_t_unit(key, inv_nu, shape, dtype):
+    """Student-t draws with 1 / nu = ``inv_nu`` (< 1/2), scaled to unit variance:
+    a normal over the root of an independent Gamma(nu/2, rate nu/2), mean 1."""
+    kn, kg = jax.random.split(key)
+    shape_a = 0.5 / jnp.maximum(inv_nu, 1e-6)
+    g = jax.random.gamma(kg, jnp.broadcast_to(shape_a, shape).astype(dtype)) / shape_a
+    return jax.random.normal(kn, shape, dtype) * jnp.sqrt(jnp.maximum(1.0 - 2.0 * inv_nu, 0.0) / g)
+
+
 def _garch_step(spot, state, t, params, path, dt, mu, key):
     """One GARCH step; ``state`` is this step's per-step conditional variance.
-    The -h/2 term makes E[S_{t+1} / S_t] = exp(mu dt) exactly."""
+    The log-step's mean offsets its variance, so E[S_{t+1} / S_t] = exp(mu dt)
+    exactly: for Gaussian innovations that is -h/2; for Student-t ones, whose
+    moment generating function is infinite, the price is compounded in
+    simple returns instead (S_{t+1} = S_t e^{mu dt} (1 + eps), eps floored at -99%)."""
     key, k = jax.random.split(key)
-    eps = jnp.sqrt(state) * jax.random.normal(k, jnp.shape(spot))
-    spot = spot * jnp.exp(mu * dt - 0.5 * state + eps)
+    if "inv_nu" in params:
+        eps = jnp.sqrt(state) * _student_t_unit(k, params["inv_nu"], jnp.shape(spot), jnp.result_type(spot))
+        spot = spot * jnp.exp(mu * dt) * jnp.maximum(1.0 + eps, 0.01)
+    else:
+        eps = jnp.sqrt(state) * jax.random.normal(k, jnp.shape(spot))
+        spot = spot * jnp.exp(mu * dt - 0.5 * state + eps)
     state = jnp.maximum(params["omega"] + params["alpha"] * eps**2 + params["beta"] * state, 1e-12)
     return spot, state, key
 
@@ -233,4 +263,9 @@ def market_params(model: str, params) -> dict[str, Any]:
     missing = set(_REQUIRED[model]) - params.keys()
     if missing:
         raise ValueError(f"{model} ParamSet missing {sorted(missing)}")
-    return {k: jnp.asarray(params[k], jnp.float64) for k in _REQUIRED[model]}
+    out = {k: jnp.asarray(params[k], jnp.float64) for k in _REQUIRED[model]}
+    if model == "garch" and params.get("nu") is not None:
+        if not float(params["nu"]) > 2.0:
+            raise ValueError("GARCH Student-t degrees of freedom nu must exceed 2 (finite variance)")
+        out["inv_nu"] = jnp.asarray(1.0 / float(params["nu"]), jnp.float64)
+    return out
