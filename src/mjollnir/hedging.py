@@ -315,7 +315,8 @@ def compare_hedgers(
         hedgers: name -> strategy; defaults to :func:`standard_hedgers`.
         scenario: counterfactual applied to the simulated world only.
         mu: spot drift of the simulation; defaults to ``rate - dividend``.
-        rate, dividend: the book's rate and the underlying's dividend yield.
+        rate: the book's risk-free rate (continuous).
+        dividend: the underlying's dividend yield (continuous).
         premium: the price received; defaults to :func:`model_price`.
     """
     if premium is None:
