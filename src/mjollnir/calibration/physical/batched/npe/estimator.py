@@ -7,8 +7,6 @@ Implements:
 - Per-row log-likelihood diagnostic
 - Checkpoint loading with clear error messages
 """
-import os
-os.environ["JAX_PLATFORMS"] = "cpu"
 
 from pathlib import Path
 

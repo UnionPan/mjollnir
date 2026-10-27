@@ -6,8 +6,6 @@ Implements a conditional MDN with diagonal Gaussian components:
 - Output: mixture of K diagonal Gaussians over θ ∈ ℝ⁶
 - Architecture: MLP with ReLU activations
 """
-import os
-os.environ["JAX_PLATFORMS"] = "cpu"
 
 import jax
 import jax.numpy as jnp

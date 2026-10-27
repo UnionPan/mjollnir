@@ -7,8 +7,6 @@ Implements:
 - Euler-discretized Heston path simulator (full truncation)
 - 16-dimensional summary features for NPE training/inference
 """
-import os
-os.environ["JAX_PLATFORMS"] = "cpu"
 
 import jax
 import jax.numpy as jnp

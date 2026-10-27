@@ -6,8 +6,6 @@ Implements:
 - Save/load functionality
 - Posterior sampling in natural parameter space
 """
-import os
-os.environ["JAX_PLATFORMS"] = "cpu"
 
 import pickle
 from collections.abc import Callable
