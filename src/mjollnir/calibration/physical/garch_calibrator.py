@@ -96,13 +96,24 @@ class GARCHCalibrationResult:
         return "\n".join(lines)
 
 
+def _sigmoid(x):
+    return 1.0 / (1.0 + np.exp(-x))
+
+
 class GARCHCalibrator:
     """
     QMLE calibration for GARCH(1,1) using Gaussian likelihood.
 
-    A fit whose optimizer does not converge is reported as such; it never
-    falls back to its starting values.
+    The optimizer works in well-scaled coordinates: the long-run variance
+    relative to the sample's (log), persistence alpha + beta (logit) and
+    alpha's share of it (logit). In natural coordinates omega (~1e-6) and
+    alpha, beta (~0.1-0.9) differ by five orders of magnitude, and L-BFGS-B
+    stopped at its starting point while reporting convergence. Several
+    starts guard against a local optimum. A fit whose optimizer does not
+    converge is reported as such; it never falls back to its starting values.
     """
+
+    STARTS = ((0.90, 0.05), (0.97, 0.05), (0.99, 0.05), (0.95, 0.15), (0.98, 0.15))  # (persistence, alpha share)
 
     def fit(self, prices: np.ndarray, dt: float = 1.0 / 252.0) -> GARCHCalibrationResult:
         prices = np.asarray(prices).flatten()
@@ -114,21 +125,32 @@ class GARCHCalibrator:
         returns = np.diff(np.log(prices))
         n = len(returns)
         var_init = float(np.var(returns, ddof=1))
-        x0 = np.array([np.mean(returns), 0.1 * var_init, 0.05, 0.9])
-        bounds = [
-            (None, None),      # mu
-            (1e-12, None),     # omega
-            (1e-6, 1.0),       # alpha
-            (1e-6, 1.0),       # beta
-        ]
+        sd = np.sqrt(var_init)
+
+        def natural(z):
+            persistence = 0.999 * _sigmoid(z[2])
+            share = _sigmoid(z[3])
+            long_run = var_init * np.exp(z[1])
+            return np.array([z[0] * sd, long_run * (1.0 - persistence), share * persistence,
+                             (1.0 - share) * persistence])
+
+        def nll_z(z):
+            return garch_neg_log_likelihood(natural(z), returns, var_init)
 
         def nll(x):
             return garch_neg_log_likelihood(x, returns, var_init)
 
-        result = optimize.minimize(nll, x0, method="L-BFGS-B", bounds=bounds)
-        params = result.x
-        log_likelihood = -float(result.fun)
-        converged = bool(result.success)
+        best = None
+        for persistence, share in self.STARTS:
+            z0 = np.array([np.mean(returns) / sd, 0.0, np.log(persistence / 0.999 / (1 - persistence / 0.999)),
+                           np.log(share / (1 - share))])
+            result = optimize.minimize(nll_z, z0, method="BFGS", options={"gtol": 1e-6, "maxiter": 500})
+            if np.isfinite(result.fun) and (best is None or result.fun < best.fun):
+                best = result
+        params = natural(best.x)
+        log_likelihood = -float(best.fun)
+        # BFGS reports precision loss at a flat optimum; the gradient norm is the real test
+        converged = bool(best.success or np.max(np.abs(best.jac)) < 1e-3)
         std = observed_information_std_errors(nll, params) if converged else np.full(4, np.inf)
 
         mu, omega, alpha, beta = params
@@ -147,6 +169,6 @@ class GARCHCalibrator:
             n_observations=n,
             dt=dt,
             converged=converged,
-            message=str(result.message),
+            message=str(best.message),
             std_errors=dict(zip(PARAM_NAMES, (float(x) for x in std), strict=True)),
         )

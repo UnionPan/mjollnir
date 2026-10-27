@@ -163,3 +163,14 @@ def test_rough_vol_variogram_ignores_stale_zero_returns():
     stale = RoughBergomiVariogramCalibrator().fit(100 * np.exp(np.concatenate([[0], np.cumsum(returns)])))
     assert stale.noise_floor == pytest.approx(clean.noise_floor, rel=0.05)
     assert clean.noise_floor == pytest.approx(np.pi**2 / 4, rel=0.15)
+
+
+def test_garch_optimizer_leaves_its_starting_point():
+    """In natural coordinates L-BFGS-B stopped at (alpha, beta) = (0.05, 0.9),
+    its start, reporting convergence; the scaled fit must find the optimum."""
+    truth = {"omega": 3e-6, "alpha": 0.12, "beta": 0.84}
+    fit = GARCHCalibrator().fit(_garch_prices(**truth, n=3000, seed=21))
+    assert fit.converged
+    assert abs(fit.alpha - 0.05) > 0.02 and abs(fit.beta - 0.9) > 0.02
+    for name, value in truth.items():
+        assert abs(getattr(fit, name) - value) < 4 * fit.std_errors[name], name
