@@ -70,6 +70,7 @@ nav:
       - mjollnir.processes: reference/processes.md
       - mjollnir.calibration: reference/calibration.md
       - mjollnir.calibration.cross_asset: reference/cross_asset.md
+      - mjollnir.inference: reference/inference.md
       - mjollnir.params: reference/params.md
       - mjollnir.scenarios: reference/scenarios.md
       - mjollnir.worlds: reference/worlds.md

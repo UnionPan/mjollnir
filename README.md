@@ -69,6 +69,7 @@ Console entry points (installed with the package):
 mjollnir-build-universes   # assemble ticker universes
 mjollnir-calibrate         # calibrate per-universe model parameters
 mjollnir-train-npe         # train the neural posterior estimator
+mjollnir-train-posterior   # train an amortized posterior network (mjollnir.inference)
 ```
 
 ## Package map
@@ -81,6 +82,7 @@ mjollnir-train-npe         # train the neural posterior estimator
 | `mjollnir.derivatives`| Vanilla contract definitions |
 | `mjollnir.synthetic_data`  | Shared low-level layer: `OptionChain`/`OptionQuote` value types + synthetic option-chain generators (used by *both* simulations and calibration) |
 | `mjollnir.calibration`| Physical (QMLE, particle filters, GARCH, OHLC vol, NPE) and risk-neutral (Heston-COS, SABR, Dupire, SVI/SSVI) calibration, data fetchers, CLIs |
+| `mjollnir.inference`  | Amortized Bayesian calibration: posterior networks trained on simulated worlds, validation, predictive checks |
 | `mjollnir.simulations`| Gym-style Heston / Merton / rough-Bergomi hedging environments |
 
 Dependency direction: `processes` → `pricer`/`derivatives` → `synthetic` →

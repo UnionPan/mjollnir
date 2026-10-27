@@ -75,6 +75,7 @@ mjollnir-params = "mjollnir.cli:main"
 mjollnir-build-universes = "mjollnir.calibration.cli.build_universes:main"
 mjollnir-calibrate = "mjollnir.calibration.cli.calibrate:main"
 mjollnir-train-npe = "mjollnir.calibration.cli.train_npe:main"
+mjollnir-train-posterior = "mjollnir.inference.cli:main"
 
 [tool.ruff]
 target-version = "py311"
