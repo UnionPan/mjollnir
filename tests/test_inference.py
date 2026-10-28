@@ -115,3 +115,18 @@ def test_a_history_the_model_cannot_produce_fails_its_predictive_check(small_gar
     assert checks["model"].n_replicates == 64 and "log_n" not in checks["model"].names
     assert len(checks["model"].misfits) <= 3, checks["model"].misfits
     assert "log_kurtosis" in checks["thin"].misfits
+
+
+def test_an_artifact_loads_on_a_cpu_whose_logarithms_differ_in_the_last_bit(small_garch_artifact, tmp_path):
+    """The stored prior box is compared with a tolerance: a one-ulp difference loads, a real change does not."""
+    import json
+
+    path = save_artifact(small_garch_artifact, tmp_path)
+    meta = json.loads((path / "meta.json").read_text())
+    meta["prior_low"][0] = float(np.nextafter(meta["prior_low"][0], 0.0))
+    (path / "meta.json").write_text(json.dumps(meta))
+    load_artifact(path)
+    meta["prior_low"][0] += 1e-6
+    (path / "meta.json").write_text(json.dumps(meta))
+    with pytest.raises(ArtifactIntegrityError, match="different garch specification"):
+        load_artifact(path)

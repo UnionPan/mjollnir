@@ -87,8 +87,13 @@ def load_artifact(directory: str | Path) -> NPEArtifact:
     if hashlib.sha256(weights).hexdigest() != meta["weights_sha256"]:
         raise ArtifactIntegrityError(f"{directory}: weights do not match their recorded hash")
     model = MODELS[meta["model"]]
-    if list(model.params) != meta["params"] or list(model.low) != meta["prior_low"] \
-            or list(model.high) != meta["prior_high"]:
+    # The prior box is computed (logs, arctanh) when the module loads: compare with a
+    # tolerance, since NumPy's vectorized transcendentals can differ in the last bit
+    # from one CPU to another; a different specification differs by far more.
+    same_box = (len(model.low) == len(meta["prior_low"]) and len(model.high) == len(meta["prior_high"])
+                and np.allclose(model.low, meta["prior_low"], rtol=1e-12, atol=1e-12)
+                and np.allclose(model.high, meta["prior_high"], rtol=1e-12, atol=1e-12))
+    if list(model.params) != meta["params"] or not same_box:
         raise ArtifactIntegrityError(f"{directory}: trained for a different {model.name} specification")
     artifact = NPEArtifact(
         model=model, params={}, feature_mean=np.asarray(meta["feature_mean"]),
