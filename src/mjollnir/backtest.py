@@ -55,7 +55,8 @@ from mjollnir.params import ParamSet
 from mjollnir.scenarios import Scenario
 from mjollnir.worlds import World, market_params, world_for
 
-__all__ = ["BacktestResult", "ParametricStrategy", "run_backtest", "run_backtests"]
+__all__ = ["BacktestResult", "HedgeMarket", "ParametricStrategy", "hedge_market", "run_backtest", "run_backtests",
+           "simulate_hedge"]
 
 
 class ParametricStrategy(NamedTuple):
@@ -277,6 +278,48 @@ def _prepare(params: ParamSet, scenario: Scenario | None, dt, mu, rate, dividend
         "initial_cash": initial_cash, "cost_rate": cost_bps * 1e-4,
     }
     return world, params, model, {k: jnp.asarray(v, jnp.float64) for k, v in market.items()}
+
+
+class HedgeMarket(NamedTuple):
+    """A world and its parameters as traced arrays: the inputs of :func:`simulate_hedge`.
+
+    ``model`` holds the world's parameters and ``market`` the drift, rates,
+    spot, cash and cost rate, all as JAX arrays, so both can be vmapped
+    (several books or drifts in one program) or differentiated through.
+    """
+
+    world: World
+    model: dict
+    market: dict
+
+
+def hedge_market(params: ParamSet, *, dt: float = 1.0 / 252, mu: float = 0.0, rate: float = 0.0,
+                 dividend: float = 0.0, spot0: float = 100.0, initial_cash: float = 0.0,
+                 cost_bps: float = 0.0, scenario: Scenario | None = None) -> HedgeMarket:
+    """The traced inputs :func:`simulate_hedge` takes for ``params``' world."""
+    world, _, model, market = _prepare(params, scenario, dt, mu, rate, dividend, spot0, initial_cash, cost_bps)
+    return HedgeMarket(world, model, market)
+
+
+def simulate_hedge(market: HedgeMarket, strategy_fn: Callable[..., Any], strategy_params: Any, keys, *,
+                   horizon_steps: int, payoff: Callable[[Any], Any] | None = None):
+    """Per-path hedging P&L and costs as JAX arrays: the differentiable core of a backtest.
+
+    ``strategy_fn(strategy_params, spot, state, position, step)`` is run on one
+    path per key of ``market``'s world; returns ``(pnl, costs)``, each
+    ``(len(keys),)``, where pnl is terminal wealth minus ``payoff`` of the
+    terminal spot. Everything is traceable, so ``jax.grad`` with respect to
+    ``strategy_params`` (or the market's traced numbers) trains a strategy
+    through the simulated world: proportional costs are differentiable almost
+    everywhere. ``strategy_fn`` must be hashable and stable (a module-level
+    function), as in :class:`ParametricStrategy`.
+    """
+    spots, wealth, _, costs = _simulate(keys, market.market, market.model, market.world, strategy_fn,
+                                        strategy_params, impact=None, horizon_steps=horizon_steps)
+    pnl = wealth[:, -1]
+    if payoff is not None:
+        pnl = pnl - payoff(spots[:, -1])
+    return pnl, costs
 
 
 def run_backtests(

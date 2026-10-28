@@ -158,3 +158,35 @@ def test_black_scholes_greeks_are_the_price_derivatives(is_call):
         float(jax.grad(jax.grad(price, 0), 0)(S, T, sigma)), rel=1e-8)
     assert float(bs_vega(S, K, T, r, q, sigma)) == pytest.approx(float(jax.grad(price, 2)(S, T, sigma)), rel=1e-9)
     assert float(bs_theta(S, K, T, r, q, sigma, is_call)) == pytest.approx(-float(jax.grad(price, 1)(S, T, sigma)), rel=1e-9)
+
+
+def test_a_hedge_can_be_trained_through_the_simulated_world():
+    """simulate_hedge is differentiable in the strategy's parameters: its gradient matches
+    finite differences, and descending it moves a scaled delta hedge toward the full one."""
+    import jax
+    import jax.numpy as jnp
+
+    from mjollnir.backtest import hedge_market, simulate_hedge
+    from mjollnir.model_pricing import bs_delta
+
+    book = _book("gbm")
+    option = EuropeanOption(strike=100.0, maturity=21 * DT, is_call=True)
+    premium = model_price(option, book, SPOT, rate=RATE, dividend=DIVIDEND, dt=DT)
+    market = hedge_market(book, dt=DT, mu=RATE - DIVIDEND, rate=RATE, dividend=DIVIDEND, spot0=SPOT,
+                          initial_cash=premium)
+    keys = jax.random.split(jax.random.PRNGKey(3), 2048)
+
+    def scaled_delta(p, spot, state, position, step):
+        tau = option.maturity - step * DT
+        return p["scale"] * bs_delta(spot, option.strike, tau, RATE, DIVIDEND, 0.3, True)
+
+    def loss(scale):
+        pnl, _ = simulate_hedge(market, scaled_delta, {"scale": scale}, keys, horizon_steps=21,
+                                payoff=lambda s: jnp.maximum(s - option.strike, 0.0))
+        return jnp.var(pnl)
+
+    grad = float(jax.grad(loss)(0.5))
+    numeric = float((loss(0.5 + 1e-4) - loss(0.5 - 1e-4)) / 2e-4)
+    assert grad == pytest.approx(numeric, rel=1e-4)
+    assert grad < 0  # more of the delta hedge removes variance
+    assert float(loss(1.0)) < 0.1 * float(loss(0.0))
