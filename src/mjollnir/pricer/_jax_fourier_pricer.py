@@ -461,14 +461,34 @@ def heston_cos_range(params: HestonCFParams, log_S0, v0, T, L: float = 12.0, str
     5e-2 at high vol-of-vol. Traceable and gradient-free: the price depends
     on the window only through truncation error.
     """
+    v_eff = _effective_variance(params, v0, T)
+    return _cumulant_range(lambda u: jax_heston_cf(params, u, log_S0, v0, T), log_S0 + (params.mu - 0.5 * v_eff) * T,
+                           v_eff, T, L, strikes)
+
+
+def bates_cos_range(params: BatesCFParams, log_S0, v0, T, L: float = 12.0, strikes=None):
+    """COS window ``[a, b]`` for Bates: Heston's rules (:func:`heston_cos_range`)
+    with the jumps' variance ``lambda (mu_J^2 + sigma_J^2)`` added to the bulk and
+    the jumps in the cumulants, so a window sized from today's variance alone
+    cannot cut off a crash."""
+    v_eff = _effective_variance(params, v0, T) + params.lambda_j * (params.mu_J**2 + params.sigma_J**2)
+    return _cumulant_range(lambda u: jax_bates_cf(params, u, log_S0, v0, T), log_S0 + (params.mu - 0.5 * v_eff) * T,
+                           v_eff, T, L, strikes)
+
+
+def _effective_variance(params, v0, T):
+    """The mean-reversion-aware average variance over ``[0, T]``."""
     kT = params.kappa * T
     reversion = (1.0 - jnp.exp(-kT)) / jnp.maximum(kT, 1e-12)
-    v_eff = params.theta + (v0 - params.theta) * reversion
-    centre = log_S0 + (params.mu - 0.5 * v_eff) * T
+    return params.theta + (v0 - params.theta) * reversion
+
+
+def _cumulant_range(cf, centre, v_eff, T, L, strikes):
+    """The union of ``L`` standard deviations of ``v_eff`` and the cumulant rule, around every strike."""
     half = L * jnp.sqrt(jnp.maximum(v_eff * T, 1e-12))
 
     def log_cf(u):
-        return jnp.log(jax_heston_cf(params, jnp.reshape(u, (1,)), log_S0, v0, T)[0])
+        return jnp.log(cf(jnp.reshape(u, (1,)))[0])
 
     d1 = jax.jacfwd(log_cf)
     d2 = jax.jacfwd(d1)
@@ -697,18 +717,17 @@ def jax_cos_price_bates(
     S0: float, K: float, T: float, r: float, q: float,
     v0: float, kappa: float, theta: float, sigma_v: float, rho: float,
     lambda_j: float, mu_J: float, sigma_J: float,
-    is_call: bool = True, N: int = 256, L: float = 12.0,
+    is_call: bool = True, N: int = HESTON_COS_TERMS, L: float = 12.0,
 ) -> float:
     """COS price for Bates model."""
     mu = r - q
     log_S0 = np.log(S0)
-    sigma_approx = np.sqrt(v0)
-    a, b = _cos_truncation_range(log_S0, mu - 0.5 * v0, sigma_approx, T, L)
-    k = jnp.arange(N)
-    u = k * jnp.pi / (b - a)
     params = BatesCFParams(v0=v0, kappa=kappa, theta=theta, sigma_v=sigma_v,
                            rho=rho, mu=mu, lambda_j=lambda_j,
                            mu_J=mu_J, sigma_J=sigma_J)
+    a, b = bates_cos_range(params, log_S0, v0, T, L, strikes=jnp.asarray([K]))
+    k = jnp.arange(N)
+    u = k * jnp.pi / (b - a)
     cf_vals = jax_bates_cf(params, u, log_S0, v0, T)
     price = _jax_cos_price_single(cf_vals, K, T, r, a, b, is_call)
     return float(price)
@@ -719,18 +738,17 @@ def jax_cos_price_bates_multi(
     S0: float, strikes: np.ndarray, T: float, r: float, q: float,
     v0: float, kappa: float, theta: float, sigma_v: float, rho: float,
     lambda_j: float, mu_J: float, sigma_J: float,
-    is_call: np.ndarray, N: int = 256, L: float = 12.0,
+    is_call: np.ndarray, N: int = HESTON_COS_TERMS, L: float = 12.0,
 ) -> np.ndarray:
     """COS prices for Bates across multiple strikes."""
     mu = r - q
     log_S0 = np.log(S0)
-    sigma_approx = np.sqrt(v0)
-    a, b = _cos_truncation_range(log_S0, mu - 0.5 * v0, sigma_approx, T, L)
-    k = jnp.arange(N)
-    u = k * jnp.pi / (b - a)
     params = BatesCFParams(v0=v0, kappa=kappa, theta=theta, sigma_v=sigma_v,
                            rho=rho, mu=mu, lambda_j=lambda_j,
                            mu_J=mu_J, sigma_J=sigma_J)
+    a, b = bates_cos_range(params, log_S0, v0, T, L, strikes=jnp.asarray(strikes))
+    k = jnp.arange(N)
+    u = k * jnp.pi / (b - a)
     cf_vals = jax_bates_cf(params, u, log_S0, v0, T)
     prices = _jax_cos_price_multi(
         cf_vals, jnp.asarray(strikes), T, r, a, b, jnp.asarray(is_call),
