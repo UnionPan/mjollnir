@@ -138,7 +138,8 @@ class RegimeSwitchingCalibrationResult:
 
         E[T] = 1 / (1 - P[stay in regime])
         """
-        stay_prob = self.transition_matrix[regime_id, regime_id]
+        idx = sorted(self.regime_params).index(regime_id)  # the matrix is in sorted-id order
+        stay_prob = self.transition_matrix[idx, idx]
         if stay_prob >= 1.0:
             return np.inf
         return 1.0 / (1.0 - stay_prob)
@@ -453,12 +454,11 @@ class RegimeSwitchingCalibrator:
             j = regime_to_idx[regime_labels[t + 1]]
             transitions[i, j] += 1
 
-        # Normalize to probabilities
-        row_sums = transitions.sum(axis=1, keepdims=True)
-        row_sums[row_sums == 0] = 1  # Avoid division by zero
-        transition_probs = transitions / row_sums
-
-        return transition_probs
+        # A regime never left within the window (seen only at its end) stays put:
+        # every row must be a probability distribution
+        never_left = transitions.sum(axis=1) == 0
+        transitions[never_left, never_left] = 1.0
+        return transitions / transitions.sum(axis=1, keepdims=True)
 
 
 class RegimeSwitchingSimulator:

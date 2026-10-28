@@ -174,3 +174,24 @@ def test_garch_optimizer_leaves_its_starting_point():
     assert abs(fit.alpha - 0.05) > 0.02 and abs(fit.beta - 0.9) > 0.02
     for name, value in truth.items():
         assert abs(getattr(fit, name) - value) < 4 * fit.std_errors[name], name
+
+
+@pytest.mark.parametrize("method", ["discretization", "exact_mle"])
+def test_ou_standard_errors_match_the_spread_across_histories(method):
+    """theta = a / (1 - b) needs the a-b covariance: without it the reported
+    error was five times the true spread, and exact MLE reported sqrt(|gradient|)."""
+    from mjollnir.calibration.physical.ou_calibrator import OUCalibrator
+
+    dt, kappa, theta, sigma, n, reps = 1 / 252, 4.0, 0.5, 0.3, 3000, 60
+    decay = np.exp(-kappa * dt)
+    shock = sigma * np.sqrt((1 - decay**2) / (2 * kappa))
+    rng = np.random.default_rng(3)
+    x = np.empty((reps, n))
+    x[:, 0] = theta
+    for i in range(1, n):
+        x[:, i] = theta + (x[:, i - 1] - theta) * decay + shock * rng.standard_normal(reps)
+    fits = [OUCalibrator(method=method).fit(path, dt) for path in x]
+    for name in ("kappa", "theta", "sigma"):
+        spread = np.std([getattr(f, name) for f in fits])
+        reported = np.mean([getattr(f, f"{name}_stderr") for f in fits])
+        assert reported == pytest.approx(spread, rel=0.35), (name, reported, spread)

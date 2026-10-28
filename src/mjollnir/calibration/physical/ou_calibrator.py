@@ -25,6 +25,7 @@ import numpy as np
 from scipy import stats, optimize
 from dataclasses import dataclass
 import warnings
+from mjollnir.calibration.physical.uncertainty import observed_information_std_errors
 
 
 @dataclass
@@ -246,14 +247,16 @@ class OUCalibrator:
         # Covariance matrix: σ²_ε * (X'X)^{-1}
         XtX_inv = np.linalg.inv(X_design.T @ X_design)
         beta_cov = residual_var * XtX_inv
-        a_stderr = np.sqrt(beta_cov[0, 0])
         b_stderr = np.sqrt(beta_cov[1, 1])
 
         # Delta method for parameter standard errors
         # This is approximate - for exact SE, use numerical Hessian
         if b < 1.0 and b > 0:
             kappa_stderr = b_stderr / (b * dt)  # d(kappa)/db = -1/(b*dt)
-            theta_stderr = a_stderr / (1 - b)   # Approximate
+            # delta method on theta = a / (1 - b): a and b are strongly correlated in an AR(1)
+            # regression, so the covariance term cancels most of a's own variance
+            grad = np.array([1.0 / (1 - b), a / (1 - b) ** 2])
+            theta_stderr = float(np.sqrt(grad @ beta_cov @ grad))
         else:
             kappa_stderr = np.nan
             theta_stderr = np.std(series) / np.sqrt(n)
@@ -374,17 +377,8 @@ class OUCalibrator:
 
         kappa, theta, sigma = result.x
 
-        # Compute standard errors from Hessian (numerical)
-        # For production, use more robust Hessian computation
-        try:
-            # Finite difference Hessian
-            hess = optimize.approx_fprime(result.x, neg_log_likelihood, epsilon=1e-5)
-            stderr = np.sqrt(np.abs(hess))
-        except Exception:
-            # Fallback to discretization estimates
-            stderr = [quick_result.kappa_stderr, quick_result.theta_stderr, quick_result.sigma_stderr]
-
-        kappa_stderr, theta_stderr, sigma_stderr = stderr
+        # Standard errors from the inverse observed information (inf where the likelihood is flat)
+        kappa_stderr, theta_stderr, sigma_stderr = observed_information_std_errors(neg_log_likelihood, result.x)
 
         # Confidence intervals
         z = stats.norm.ppf(0.5 + self.confidence_level / 2)
