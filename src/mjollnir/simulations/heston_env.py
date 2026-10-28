@@ -13,13 +13,7 @@ Email: yp1170@nyu.edu
 """
 
 import numpy as np
-try:
-    import gymnasium as gym
-    from gymnasium import spaces
-except ImportError:
-    print("Warning: gymnasium not installed. Install with: pip install gymnasium")
-    gym = None
-    spaces = None
+from mjollnir._optional import require
 
 from typing import ClassVar, Any
 from datetime import date, timedelta
@@ -39,6 +33,9 @@ from mjollnir.simulations.renderer import HestonEnvRenderer
 
 
 from mjollnir.simulations.contracts import HestonParams, Liability
+
+gym = require("gymnasium", "envs")
+spaces = gym.spaces
 
 
 class HestonEnv(gym.Env if gym else object):

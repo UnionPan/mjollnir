@@ -10,13 +10,7 @@ from typing import ClassVar, Any
 
 import numpy as np
 
-try:
-    import gymnasium as gym
-    from gymnasium import spaces
-except ImportError:
-    print("Warning: gymnasium not installed. Install with: pip install gymnasium")
-    gym = None
-    spaces = None
+from mjollnir._optional import require
 
 from mjollnir.processes.merton import MertonJD
 from mjollnir.processes.base import SimulationConfig
@@ -24,6 +18,9 @@ from mjollnir.synthetic_data.synthetic_merton_equity import (
     SyntheticMertonOptionChainGenerator,
     MertonVolatilityProfile,
 )
+
+gym = require("gymnasium", "envs")
+spaces = gym.spaces
 
 
 @dataclass

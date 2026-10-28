@@ -10,12 +10,15 @@ Email: yp1170@nyu.edu
 """
 
 import numpy as np
-import matplotlib.pyplot as plt
-from matplotlib import cm
-from matplotlib.gridspec import GridSpec
 from scipy.interpolate import griddata
 from typing import Any
 import warnings
+
+from mjollnir._optional import require
+
+plt = require("matplotlib.pyplot", "envs")
+cm = require("matplotlib.cm", "envs")
+GridSpec = require("matplotlib.gridspec", "envs").GridSpec
 
 warnings.filterwarnings('ignore', category=UserWarning)
 

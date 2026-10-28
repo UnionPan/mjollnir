@@ -27,9 +27,11 @@ classifiers = [
     "Programming Language :: Python :: 3.13",
 ]
 
-# flax/optax are core dependencies (used by the NPE calibrator, not only RL
-# consumers); gymnasium is required by the simulation environments. torch is
-# intentionally not a dependency.
+# The core: simulators, pricers, hedging backtests, scenarios and calibrators.
+# flax/optax are core (the NPE posterior networks). Market-data fetchers, the
+# calibration pipeline and the gym environments are extras, imported only by
+# the modules that need them (see mjollnir._optional). torch is intentionally
+# not a dependency.
 dependencies = [
     "numpy>=1.24.0",
     "scipy>=1.10.0",
@@ -38,20 +40,29 @@ dependencies = [
     "jaxlib>=0.9.0,<0.13",
     "flax>=0.8.0",
     "optax>=0.2.0",
-    "gymnasium>=0.29.0",
-    "scikit-learn>=1.3.0",
-    "joblib>=1.3.0",
-    "zarr>=2.16.0",
-    "pyarrow>=14.0.0",  # parquet: price store, results store, calibration runner
-    "matplotlib>=3.7.0",
-    # market-data fetchers (candidate to split into a [data] extra with lazy imports)
-    "yfinance>=0.2.28",
-    "pandas-datareader>=0.10.0",
-    "requests>=2.31.0",
 ]
 
 [project.optional-dependencies]
+# yfinance and the exchange fetchers (mjollnir.calibration.marketdata)
+data = [
+    "yfinance>=0.2.28",
+    "requests>=2.31.0",
+]
+# the price and results stores and the universe calibration runner (parquet, parallel fits)
+pipeline = [
+    "mjollnir[data]",
+    "pyarrow>=14.0.0",
+    "joblib>=1.3.0",
+]
+# the gymnasium environments, their zarr cache and the matplotlib renderer (mjollnir.simulations)
+envs = [
+    "gymnasium>=0.29.0",
+    "zarr>=2.16.0",
+    "matplotlib>=3.7.0",
+]
+all = ["mjollnir[data,pipeline,envs]"]
 dev = [
+    "mjollnir[all]",
     "pytest>=7.4.0",
     "pytest-cov>=4.1.0",
     "hypothesis>=6.100",

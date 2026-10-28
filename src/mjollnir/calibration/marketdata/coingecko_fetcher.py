@@ -16,13 +16,16 @@ email: yp1170@nyu.edu
 """
 
 from typing import ClassVar
-import requests
+from mjollnir._optional import require
+
 import pandas as pd
 import numpy as np
 from datetime import datetime, date
 import time
 import warnings
 from mjollnir.calibration.marketdata.errors import FETCH_ERRORS
+
+requests = require("requests", "data")
 
 
 class CoinGeckoFetcher:

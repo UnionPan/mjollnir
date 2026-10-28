@@ -17,12 +17,15 @@ email: yp1170@nyu.edu
 """
 
 from typing import ClassVar
-import requests
+from mjollnir._optional import require
+
 import pandas as pd
 from datetime import datetime, timedelta, date
 import time
 import warnings
 from mjollnir.calibration.marketdata.errors import FETCH_ERRORS
+
+requests = require("requests", "data")
 
 
 class BinanceFetcher:

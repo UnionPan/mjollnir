@@ -5,124 +5,54 @@ Calibrate models from historical price data (OHLCV).
 Used for real-world forecasting, risk management, and counterfactual simulation.
 
 Key characteristic: Drift μ is estimated from historical returns (not set to r).
+
+Every name loads with its first use: the calibrators need only the core
+install, the universe pipeline (``calibrate_universe`` and its report) the
+[pipeline] extra.
 """
 
-from .gbm_calibrator import GBMCalibrator, GBMCalibrationResult
-from .ou_calibrator import OUCalibrator, OUCalibrationResult
-from .volatility import (
-    VolatilityEstimate,
-    VolatilityEstimator,
-    GARCHEstimator,
-    compare_volatility_methods,
-    parkinson_volatility,
-    garman_klass_volatility,
-    rogers_satchell_volatility,
-    yang_zhang_volatility,
-    compare_ohlc_estimators,
-)
-from .regime_switching_calibrator import (
-    RegimeSwitchingCalibrator,
-    RegimeSwitchingSimulator,
-    RegimeSwitchingCalibrationResult,
-    RegimeParameters,
-)
-from .rough_bergomi_calibrator import (
-    RoughBergomiCalibrator,
-    RoughBergomiCalibrationResult,
-)
-from .rough_vol_variogram import (
-    RoughBergomiVariogramCalibrator,
-    RoughBergomiVariogramResult,
-)
-from .uncertainty import (
-    BootstrapResult,
-    observed_information_std_errors,
-    parametric_bootstrap,
-)
-from .merton_calibrator import (
-    MertonJumpCalibrator,
-    MertonCalibrationResult,
-)
-from .garch_calibrator import (
-    GARCHCalibrator,
-    GARCHCalibrationResult,
-)
-from .heston_particle_filter import (
-    HestonParticleFilter,
-    HestonParticleFilterResult,
-)
-from .heston_qmle import (
-    HestonQMLECalibrator,
-    HestonQMLEResult,
-)
-from .multi_asset_pipeline import (
-    AssetCalibration,
-    DEFAULT_BASKET_50,
-    calibrate_universe,
-    calibration_report,
-    save_calibration,
-)
-from .rough_bergomi_particle_filter import (
-    RoughBergomiParticleFilter,
-    RoughBergomiParticleFilterResult,
-)
-from .correlation import (
-    CorrelationCalibrator,
-    CorrelationResult,
-)
+from mjollnir._lazy import lazy_exports
 
-__all__ = [
-    'DEFAULT_BASKET_50',
-    # Multi-asset calibration pipeline
-    'AssetCalibration',
-    # Classical-estimator uncertainty
-    'BootstrapResult',
-    # Correlation
-    'CorrelationCalibrator',
-    'CorrelationResult',
-    'GARCHCalibrationResult',
-    # GARCH
-    'GARCHCalibrator',
-    'GARCHEstimator',
-    'GBMCalibrationResult',
-    # GBM
-    'GBMCalibrator',
-    # Particle filters
-    'HestonParticleFilter',
-    'HestonParticleFilterResult',
-    # Heston QMLE (physical-measure SV calibration)
-    'HestonQMLECalibrator',
-    'HestonQMLEResult',
-    'MertonCalibrationResult',
-    # Merton jump-diffusion
-    'MertonJumpCalibrator',
-    'OUCalibrationResult',
-    # Ornstein-Uhlenbeck
-    'OUCalibrator',
-    'RegimeParameters',
-    'RegimeSwitchingCalibrationResult',
-    # Regime-switching
-    'RegimeSwitchingCalibrator',
-    'RegimeSwitchingSimulator',
-    'RoughBergomiCalibrationResult',
-    # Rough Bergomi
-    'RoughBergomiCalibrator',
-    'RoughBergomiParticleFilter',
-    'RoughBergomiParticleFilterResult',
-    'RoughBergomiVariogramCalibrator',
-    'RoughBergomiVariogramResult',
-    # Volatility estimators
-    'VolatilityEstimate',
-    'VolatilityEstimator',
-    'calibrate_universe',
-    'calibration_report',
-    'compare_ohlc_estimators',
-    'compare_volatility_methods',
-    'garman_klass_volatility',
-    'observed_information_std_errors',
-    'parametric_bootstrap',
-    'parkinson_volatility',
-    'rogers_satchell_volatility',
-    'save_calibration',
-    'yang_zhang_volatility',
-]
+__getattr__, __dir__, __all__ = lazy_exports(__name__, globals(), {
+    "GBMCalibrator": ".gbm_calibrator",
+    "GBMCalibrationResult": ".gbm_calibrator",
+    "OUCalibrator": ".ou_calibrator",
+    "OUCalibrationResult": ".ou_calibrator",
+    "VolatilityEstimate": ".volatility",
+    "VolatilityEstimator": ".volatility",
+    "GARCHEstimator": ".volatility",
+    "compare_volatility_methods": ".volatility",
+    "parkinson_volatility": ".volatility",
+    "garman_klass_volatility": ".volatility",
+    "rogers_satchell_volatility": ".volatility",
+    "yang_zhang_volatility": ".volatility",
+    "compare_ohlc_estimators": ".volatility",
+    "RegimeSwitchingCalibrator": ".regime_switching_calibrator",
+    "RegimeSwitchingSimulator": ".regime_switching_calibrator",
+    "RegimeSwitchingCalibrationResult": ".regime_switching_calibrator",
+    "RegimeParameters": ".regime_switching_calibrator",
+    "RoughBergomiCalibrator": ".rough_bergomi_calibrator",
+    "RoughBergomiCalibrationResult": ".rough_bergomi_calibrator",
+    "RoughBergomiVariogramCalibrator": ".rough_vol_variogram",
+    "RoughBergomiVariogramResult": ".rough_vol_variogram",
+    "BootstrapResult": ".uncertainty",
+    "observed_information_std_errors": ".uncertainty",
+    "parametric_bootstrap": ".uncertainty",
+    "MertonJumpCalibrator": ".merton_calibrator",
+    "MertonCalibrationResult": ".merton_calibrator",
+    "GARCHCalibrator": ".garch_calibrator",
+    "GARCHCalibrationResult": ".garch_calibrator",
+    "HestonParticleFilter": ".heston_particle_filter",
+    "HestonParticleFilterResult": ".heston_particle_filter",
+    "HestonQMLECalibrator": ".heston_qmle",
+    "HestonQMLEResult": ".heston_qmle",
+    "AssetCalibration": ".multi_asset_pipeline",
+    "DEFAULT_BASKET_50": ".multi_asset_pipeline",
+    "calibrate_universe": ".multi_asset_pipeline",
+    "calibration_report": ".multi_asset_pipeline",
+    "save_calibration": ".multi_asset_pipeline",
+    "RoughBergomiParticleFilter": ".rough_bergomi_particle_filter",
+    "RoughBergomiParticleFilterResult": ".rough_bergomi_particle_filter",
+    "CorrelationCalibrator": ".correlation",
+    "CorrelationResult": ".correlation",
+})

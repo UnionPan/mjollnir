@@ -12,15 +12,32 @@ Email: yp1170@nyu.edu
 import numpy as np
 import pandas as pd
 from dataclasses import dataclass, asdict
-import warnings
 from pathlib import Path
 
-try:
-    from sklearn.cluster import KMeans
-    HAS_SKLEARN = True
-except ImportError:
-    HAS_SKLEARN = False
-    warnings.warn("scikit-learn not available, regime calibration will use simple threshold", stacklevel=2)
+
+
+def two_means_1d(values: np.ndarray) -> np.ndarray:
+    """Labels (0 low, 1 high) of the exact two-cluster k-means split of 1-D ``values``.
+
+    In one dimension the optimal clusters are contiguous in sorted order, so the
+    split minimizing the within-cluster sum of squares is found by scanning every
+    cut: no iterations, restarts or random initialization.
+    """
+    x = np.asarray(values, dtype=float)
+    order = np.argsort(x)
+    s = x[order]
+    n = s.size
+    if n < 2:
+        return np.zeros(n, dtype=int)
+    cumsum, cumsq = np.cumsum(s), np.cumsum(s * s)
+    k = np.arange(1, n)  # sizes of the low cluster
+    low = cumsq[:-1] - cumsum[:-1] ** 2 / k
+    high = (cumsq[-1] - cumsq[:-1]) - (cumsum[-1] - cumsum[:-1]) ** 2 / (n - k)
+    cut = int(np.argmin(low + high)) + 1
+    labels = np.empty(n, dtype=int)
+    labels[order[:cut]] = 0
+    labels[order[cut:]] = 1
+    return labels
 
 
 @dataclass
@@ -192,15 +209,9 @@ class RegimeCalibrator:
 
         vol_series = vol_series.dropna()
 
-        # Identify 2 regimes using K-means or simple threshold
-        if HAS_SKLEARN and len(vol_series) > 10:
-            kmeans = KMeans(n_clusters=2, random_state=42, n_init=10)
-            labels = kmeans.fit_predict(vol_series.values.reshape(-1, 1))
-
-            # Sort regimes by volatility (0 = low, 1 = high)
-            centers = kmeans.cluster_centers_.flatten()
-            if centers[0] > centers[1]:
-                labels = 1 - labels  # Flip
+        # Identify 2 regimes (0 = low volatility, 1 = high) by 1-D two-means, or a median threshold when short
+        if len(vol_series) > 10:
+            labels = two_means_1d(vol_series.values)
         else:
             # Simple threshold at median
             threshold = vol_series.median()

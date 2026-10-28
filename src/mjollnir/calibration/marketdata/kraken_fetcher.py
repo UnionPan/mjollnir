@@ -9,11 +9,14 @@ Author: Yunian Pan
 Email: yp1170@nyu.edu
 """
 
-import requests
+from mjollnir._optional import require
+
 import pandas as pd
 import time
 from datetime import datetime, timedelta
 import logging
+
+requests = require("requests", "data")
 
 logger = logging.getLogger(__name__)
 

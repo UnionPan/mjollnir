@@ -9,18 +9,8 @@ from typing import ClassVar, Any
 
 import numpy as np
 
-try:
-    import gymnasium as gym
-    from gymnasium import spaces
-except ImportError:
-    print("Warning: gymnasium not installed. Install with: pip install gymnasium")
-    gym = None
-    spaces = None
+from mjollnir._optional import require
 
-try:
-    import zarr
-except ImportError:  # pragma: no cover
-    zarr = None
 
 from mjollnir.simulations.heston_env import HestonParams, Liability
 from mjollnir.processes import Heston
@@ -29,6 +19,10 @@ from mjollnir.synthetic_data.synthetic_equity import (
     SyntheticEquityOptionChainGenerator,
     HestonVolatilityProfile,
 )
+
+gym = require("gymnasium", "envs")
+spaces = gym.spaces
+zarr = require("zarr", "envs")
 
 
 def build_heston_cache(
@@ -52,8 +46,6 @@ def build_heston_cache(
       - option_prices: (n_paths, n_steps+1, n_options)
       - option_features: (n_paths, n_steps+1, n_feature_dim)
     """
-    if zarr is None:
-        raise ImportError("zarr is required. Install with: pip install zarr")
 
     params = params if params is not None else HestonParams()
     if option_maturities is None:
@@ -244,8 +236,6 @@ class CachedHestonEnv(gym.Env if gym else object):
         render_mode: str | None = None,
         random_seed: int | None = None,
     ):
-        if zarr is None:
-            raise ImportError("zarr is required. Install with: pip install zarr")
 
         self.root = zarr.open_group(store_path, mode="r")
         self.spot_arr = self.root["spot"]

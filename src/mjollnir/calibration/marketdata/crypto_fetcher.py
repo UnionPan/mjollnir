@@ -11,13 +11,16 @@ email: yp1170@nyu.edu
 """
 
 from typing import ClassVar
-import yfinance as yf
+from mjollnir._optional import require
+
 import pandas as pd
 import numpy as np
 from datetime import date, datetime, timedelta
 import warnings
 from pathlib import Path
 from mjollnir.calibration.marketdata.errors import FETCH_ERRORS
+
+yf = require("yfinance", "data")
 
 
 class CryptoFetcher:

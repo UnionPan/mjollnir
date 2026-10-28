@@ -10,13 +10,17 @@ tick data, or latency-guaranteed infrastructure.
 ## Install
 
 ```bash
-pip install -e .            # core (CPU jax)
-pip install -e ".[cuda]"    # NVIDIA GPUs
-pip install -e ".[metal]"   # Apple silicon
-pip install -e ".[dev]"     # + pytest, ruff, mypy
+pip install -e .              # core (CPU jax): simulators, pricers, hedging, scenarios, calibrators
+pip install -e ".[data]"      # + yfinance and exchange fetchers
+pip install -e ".[pipeline]"  # + price/results stores and the universe calibration runner
+pip install -e ".[envs]"      # + gymnasium environments, their zarr cache, the renderer
+pip install -e ".[cuda]"      # NVIDIA GPUs
+pip install -e ".[metal]"     # Apple silicon
+pip install -e ".[dev]"       # every extra, + pytest, ruff, mypy
 ```
 
 Requires Python >= 3.11 (floor set by jax 0.9 and flax).
+A module that needs an extra says which one when it is imported without it.
 
 ## Two consumption modes
 

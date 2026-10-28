@@ -29,10 +29,13 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from joblib import Parallel, delayed
+from mjollnir._optional import require
 
 from .heston_qmle import HestonQMLECalibrator, HestonQMLEResult
 from mjollnir.calibration.errors import NUMERICAL_ERRORS
+
+_joblib = require("joblib", "pipeline")
+Parallel, delayed = _joblib.Parallel, _joblib.delayed
 
 logger = logging.getLogger(__name__)
 

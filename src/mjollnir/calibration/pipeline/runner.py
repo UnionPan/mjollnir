@@ -14,7 +14,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from joblib import Parallel, delayed
+from mjollnir._optional import require
 
 from ..cross_asset import fit_dcc, fit_factor_model, pool_parameters
 from ..marketdata.price_store import PriceStore
@@ -28,6 +28,9 @@ from .results_store import (
     write_manifest,
 )
 from mjollnir.calibration.errors import NUMERICAL_ERRORS
+
+_joblib = require("joblib", "pipeline")
+Parallel, delayed = _joblib.Parallel, _joblib.delayed
 
 # a cross-asset stage also fails on its inputs: a model's results not on disk (OSError)
 STAGE_ERRORS = (*NUMERICAL_ERRORS, OSError)

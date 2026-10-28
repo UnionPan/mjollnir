@@ -9,16 +9,13 @@ from typing import ClassVar, Any
 
 import numpy as np
 
-try:
-    import gymnasium as gym
-    from gymnasium import spaces
-except ImportError:
-    print("Warning: gymnasium not installed. Install with: pip install gymnasium")
-    gym = None
-    spaces = None
+from mjollnir._optional import require
 
 from mjollnir.processes import RoughBergomi
 from mjollnir.processes.base import SimulationConfig
+
+gym = require("gymnasium", "envs")
+spaces = gym.spaces
 
 
 @dataclass

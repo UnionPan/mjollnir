@@ -5,7 +5,8 @@ author: Yunian Pan
 email: yp1170@nyu.edu
 """
 
-import yfinance as yf
+from mjollnir._optional import require
+
 import pandas as pd
 import numpy as np
 from datetime import date, datetime
@@ -13,6 +14,8 @@ import logging
 
 from .data_provider import DataProvider, OptionChain, OptionQuote, MarketData
 from mjollnir.calibration.marketdata.errors import FETCH_ERRORS, ROW_ERRORS
+
+yf = require("yfinance", "data")
 
 
 logger = logging.getLogger(__name__)
