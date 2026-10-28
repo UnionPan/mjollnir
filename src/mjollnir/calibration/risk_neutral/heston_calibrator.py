@@ -17,6 +17,7 @@ from ..marketdata.data_provider import OptionChain
 from ...pricer import COSPricer
 from ...processes import Heston
 from ...derivatives import EuropeanCall, EuropeanPut
+from ...pricer._jax_iv import implied_vol_batch_np
 
 
 @dataclass
@@ -32,7 +33,7 @@ class CalibrationResult:
 
     # Fit quality
     rmse: float                    # Root mean squared error
-    rmse_iv: float | None       # RMSE in IV terms
+    rmse_iv: float               # RMSE in implied-vol terms (NaN when no price inverts)
     max_error: float               # Maximum absolute error
 
     # Optimization info
@@ -224,8 +225,15 @@ class HestonCalibrator:
         rmse = np.sqrt(np.mean(errors**2))
         max_error = np.max(np.abs(errors))
 
-        # RMSE in IV terms (approximate)
-        rmse_iv = None  # TODO: implement proper IV conversion
+        # RMSE in implied-vol terms: model and market prices inverted the same way (Black-Scholes,
+        # no dividend, as priced here), over the contracts where both invert
+        def to_iv(prices):
+            return implied_vol_batch_np(S0, targets['strikes'], targets['maturities'], r, 0.0, prices,
+                                        targets['is_calls'])
+
+        iv_gap = to_iv(model_prices) - to_iv(targets['prices'])
+        inverted = np.isfinite(iv_gap)
+        rmse_iv = float(np.sqrt(np.mean(iv_gap[inverted] ** 2))) if inverted.any() else float("nan")
 
         computation_time = time.time() - start_time
 
@@ -369,8 +377,8 @@ class HestonCalibrator:
                 try:
                     result = self.pricer.price(option, heston, X0=np.array([S0, v0]))
                     prices[i] = max(result.price, 0.0)
-                except Exception:
-                    # Fallback to intrinsic value if pricing fails
+                except (ValueError, ArithmeticError):
+                    # these parameters cannot be priced here: the intrinsic value keeps the objective finite
                     if is_call:
                         prices[i] = max(S0 - K * np.exp(-r * T), 0)
                     else:
