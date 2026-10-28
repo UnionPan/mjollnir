@@ -44,6 +44,7 @@ __getattr__, __dir__, __all__ = lazy_exports(__name__, globals(), {
     "GARCHCalibrationResult": ".garch_calibrator",
     "HestonParticleFilter": ".heston_particle_filter",
     "HestonParticleFilterResult": ".heston_particle_filter",
+    "interval_years": ".heston_particle_filter",
     "HestonQMLECalibrator": ".heston_qmle",
     "HestonQMLEResult": ".heston_qmle",
     "AssetCalibration": ".multi_asset_pipeline",
