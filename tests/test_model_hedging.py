@@ -143,3 +143,18 @@ def test_one_scan_for_all_hedgers_equals_separate_backtests(model):
         np.testing.assert_allclose(together[name].pnl, alone.pnl, rtol=1e-12, atol=1e-12)
         np.testing.assert_allclose(together[name].positions, alone.positions, rtol=1e-12, atol=1e-12)
         np.testing.assert_allclose(together[name].costs, alone.costs, rtol=1e-12, atol=1e-12)
+
+
+@pytest.mark.parametrize("is_call", [True, False])
+def test_black_scholes_greeks_are_the_price_derivatives(is_call):
+    import jax
+
+    from mjollnir.model_pricing import bs_delta, bs_gamma, bs_price, bs_theta, bs_vega
+
+    S, K, T, r, q, sigma = 97.0, 100.0, 0.4, 0.03, 0.01, 0.25
+    price = lambda s, t, v: bs_price(s, K, t, r, q, v, is_call)
+    assert float(bs_delta(S, K, T, r, q, sigma, is_call)) == pytest.approx(float(jax.grad(price, 0)(S, T, sigma)), rel=1e-9)
+    assert float(bs_gamma(S, K, T, r, q, sigma)) == pytest.approx(
+        float(jax.grad(jax.grad(price, 0), 0)(S, T, sigma)), rel=1e-8)
+    assert float(bs_vega(S, K, T, r, q, sigma)) == pytest.approx(float(jax.grad(price, 2)(S, T, sigma)), rel=1e-9)
+    assert float(bs_theta(S, K, T, r, q, sigma, is_call)) == pytest.approx(-float(jax.grad(price, 1)(S, T, sigma)), rel=1e-9)

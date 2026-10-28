@@ -29,7 +29,8 @@ import numpy as np
 from jax.scipy.stats import norm
 
 
-__all__ = ["RegimeTable", "bs_delta", "bs_price", "merton_delta", "merton_price", "regime_table"]
+__all__ = ["RegimeTable", "bs_delta", "bs_gamma", "bs_price", "bs_theta", "bs_vega", "merton_delta", "merton_price",
+           "regime_table"]
 
 MERTON_TERMS = 128   # covers lambda * tau up to ~90 jumps (frequent-small-jump fits)
 REGIME_COS_TERMS = 512
@@ -54,6 +55,28 @@ def bs_delta(spot, strike, tau, rate, dividend, sigma, is_call):
     """Black-Scholes delta dV/dS with continuous rate and dividend yield."""
     call = jnp.exp(-dividend * tau) * norm.cdf(_d1(spot, strike, tau, rate, dividend, sigma))
     return jnp.where(is_call, call, call - jnp.exp(-dividend * tau))
+
+
+def bs_gamma(spot, strike, tau, rate, dividend, sigma):
+    """Black-Scholes gamma d2V/dS2 (the same for calls and puts)."""
+    d1 = _d1(spot, strike, tau, rate, dividend, sigma)
+    return jnp.exp(-dividend * tau) * norm.pdf(d1) / (spot * sigma * jnp.sqrt(tau))
+
+
+def bs_vega(spot, strike, tau, rate, dividend, sigma):
+    """Black-Scholes vega dV/dsigma, per unit of volatility (the same for calls and puts)."""
+    d1 = _d1(spot, strike, tau, rate, dividend, sigma)
+    return spot * jnp.exp(-dividend * tau) * norm.pdf(d1) * jnp.sqrt(tau)
+
+
+def bs_theta(spot, strike, tau, rate, dividend, sigma, is_call):
+    """Black-Scholes theta dV/dt, per year of calendar time (the negative of dV/dtau)."""
+    d1 = _d1(spot, strike, tau, rate, dividend, sigma)
+    d2 = d1 - sigma * jnp.sqrt(tau)
+    decay = -spot * jnp.exp(-dividend * tau) * norm.pdf(d1) * sigma / (2.0 * jnp.sqrt(tau))
+    call = decay + dividend * spot * jnp.exp(-dividend * tau) * norm.cdf(d1) - rate * strike * jnp.exp(-rate * tau) * norm.cdf(d2)
+    put = decay - dividend * spot * jnp.exp(-dividend * tau) * norm.cdf(-d1) + rate * strike * jnp.exp(-rate * tau) * norm.cdf(-d2)
+    return jnp.where(is_call, call, put)
 
 
 def _merton_terms(tau, rate, sigma, lambda_j, mu_j, sigma_j):
