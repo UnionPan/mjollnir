@@ -21,10 +21,7 @@ from scipy.stats import norm
 import warnings
 
 from .data_provider import OptionChain, OptionQuote
-try:
-    from mjollnir.pricer._jax_mgf_pricer import heston_price_slice_fast as heston_price_slice
-except ImportError:
-    from mjollnir.pricer.heston_mgf_pricer import heston_price_slice
+from mjollnir.pricer.heston_mgf_pricer import heston_price_slice
 
 
 def get_default_moneyness_by_maturity() -> dict[int, list[float]]:
