@@ -34,6 +34,7 @@ import pandas as pd
 from scipy import optimize
 from dataclasses import dataclass
 import warnings
+from mjollnir.calibration.errors import NUMERICAL_ERRORS
 
 
 @dataclass
@@ -421,7 +422,7 @@ def compare_volatility_methods(
     try:
         garch_est = GARCHEstimator()
         results['garch'] = garch_est.estimate(returns, annualize=annualize)
-    except Exception as e:
+    except NUMERICAL_ERRORS as e:
         warnings.warn(f"GARCH estimation failed: {e}", stacklevel=2)
         results['garch'] = None
 

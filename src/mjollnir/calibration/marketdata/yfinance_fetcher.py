@@ -12,6 +12,7 @@ from datetime import date, datetime
 import logging
 
 from .data_provider import DataProvider, OptionChain, OptionQuote, MarketData
+from mjollnir.calibration.marketdata.errors import FETCH_ERRORS, ROW_ERRORS
 
 
 logger = logging.getLogger(__name__)
@@ -138,7 +139,7 @@ class YFinanceFetcher(DataProvider):
                                 df = df.drop(columns=[col], errors='ignore')
                                 df = df.join(actions[[col]], how='left')
                                 df[col] = df[col].fillna(0)
-                except Exception as e:
+                except FETCH_ERRORS as e:
                     logger.debug(f"Could not fetch actions separately: {e}")
                     # Ensure columns exist even if fetch failed
                     for col in ['Dividends', 'Stock Splits', 'Capital Gains']:
@@ -191,7 +192,7 @@ class YFinanceFetcher(DataProvider):
         # Get available expiries
         try:
             available_expiries = stock.options
-        except Exception as e:
+        except FETCH_ERRORS as e:
             raise ValueError(f"Could not get options for {ticker}: {e}") from e
 
         if not available_expiries:
@@ -223,7 +224,7 @@ class YFinanceFetcher(DataProvider):
                     if opt:
                         options.append(opt)
 
-            except Exception as e:
+            except FETCH_ERRORS as e:
                 logger.warning(f"Error fetching {exp_str}: {e}")
                 continue
 
@@ -274,7 +275,7 @@ class YFinanceFetcher(DataProvider):
                 open_interest=int(row.get('openInterest', 0) or 0),
                 implied_volatility=iv,
             )
-        except Exception as e:
+        except ROW_ERRORS as e:
             logger.debug(f"Error parsing option row: {e}")
             return None
 

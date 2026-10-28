@@ -32,6 +32,7 @@ import pandas as pd
 from joblib import Parallel, delayed
 
 from .heston_qmle import HestonQMLECalibrator, HestonQMLEResult
+from mjollnir.calibration.errors import NUMERICAL_ERRORS
 
 logger = logging.getLogger(__name__)
 
@@ -93,8 +94,11 @@ class AssetCalibration:
 
 def _fetch_one_close(ticker: str, period: str = "5y") -> np.ndarray | None:
     """Pull daily adjusted-close for one ticker via yfinance. None on failure."""
+    import yfinance as yf
+
+    from mjollnir.calibration.marketdata.errors import FETCH_ERRORS
+
     try:
-        import yfinance as yf
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             df = yf.download(ticker, period=period, progress=False, auto_adjust=True)
@@ -106,7 +110,7 @@ def _fetch_one_close(ticker: str, period: str = "5y") -> np.ndarray | None:
             close = close.iloc[:, 0]
         prices = close.dropna().to_numpy(dtype=np.float64).ravel()
         return prices if prices.size >= 60 else None
-    except Exception as e:
+    except FETCH_ERRORS as e:
         logger.warning("yfinance fetch failed for %s: %s", ticker, e)
         return None
 
@@ -126,7 +130,7 @@ def _calibrate_one(
             )
         result = HestonQMLECalibrator(smooth_window=smooth_window).fit(prices, dt=dt)
         return AssetCalibration.from_qmle_result(ticker, result, cal_date)
-    except Exception as e:
+    except NUMERICAL_ERRORS as e:
         return AssetCalibration.failed(
             ticker, f"{type(e).__name__}: {e}", cal_date,
         )

@@ -94,7 +94,7 @@ class RegimeSwitchingMerton(RegimeSwitchingProcess):
                     antithetic=config.antithetic,
                 )
                 return t_grid, paths
-            except Exception as exc:
+            except RuntimeError as exc:  # XLA backend initialization failures
                 if not should_fallback_to_numpy(exc):
                     raise
                 warnings.warn(

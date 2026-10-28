@@ -18,7 +18,7 @@ from ._jax_backend import should_fallback_to_numpy
 try:
     from . import _jax_kernels
     _JAX_AVAILABLE = True
-except Exception:
+except ImportError:  # JAX not installed
     _JAX_AVAILABLE = False
 
 @dataclass(frozen=True)
@@ -217,7 +217,7 @@ class StochasticProcess(ABC):
                         post_step_fn=spec.get('post_step_fn'),
                         diffusion_deriv_fn=spec.get('diffusion_deriv_fn'),
                     )
-                except Exception as exc:
+                except RuntimeError as exc:  # XLA backend initialization failures
                     if not should_fallback_to_numpy(exc):
                         raise
                     warnings.warn(

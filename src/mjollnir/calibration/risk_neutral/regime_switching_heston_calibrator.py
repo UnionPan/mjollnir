@@ -507,19 +507,20 @@ class RegimeSwitchingHestonCalibrator:
                 rate=rate,
                 maxiter=500,  # Faster for regime-switching
             )
-        except Exception as e:
+        except (ValueError, ArithmeticError) as e:
             warnings.warn(f"Calibration failed for {regime_name}: {e}", stacklevel=2)
-            # Return default parameters
+            # no fit: every parameter is NaN, never a default that looks like one
+            nan = float("nan")
             return RegimeHestonParameters(
                 regime_id=regime_id,
                 regime_name=regime_name,
-                kappa=2.0,
-                theta=0.04,
-                xi=0.5,
-                rho=-0.7,
-                v0=0.04,
-                rmse=999.0,
-                max_error=999.0,
+                kappa=nan,
+                theta=nan,
+                xi=nan,
+                rho=nan,
+                v0=nan,
+                rmse=nan,
+                max_error=nan,
                 feller_satisfied=False,
                 n_observations=len(regime_chains),
                 duration_days=0,

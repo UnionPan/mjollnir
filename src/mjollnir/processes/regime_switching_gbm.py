@@ -56,7 +56,7 @@ class RegimeSwitchingGBM(RegimeSwitchingProcess):
                     X0, T, config.n_paths, config.n_steps, seed=seed, dim=self.dim,
                 )
                 return t_grid, paths
-            except Exception as exc:
+            except RuntimeError as exc:  # XLA backend initialization failures
                 if not should_fallback_to_numpy(exc):
                     raise
                 warnings.warn(

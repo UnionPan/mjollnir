@@ -155,10 +155,9 @@ class CFCalibrator:
 
                 try:
                     X0 = self._get_X0(process, S0)
-                    result = pricer.price(deriv, process, X0)
-                    model_price = result.price
-                except Exception:
-                    model_price = 0.0
+                    model_price = pricer.price(deriv, process, X0).price
+                except (ValueError, ArithmeticError):
+                    return 1e6  # these parameters cannot be priced: the same penalty as an invalid process
 
                 diff = model_price - market_prices[i]
                 total_error += diff ** 2
@@ -201,8 +200,8 @@ class CFCalibrator:
             try:
                 X0 = self._get_X0(process, S0)
                 model_prices.append(pricer.price(deriv, process, X0).price)
-            except Exception:
-                model_prices.append(0.0)
+            except (ValueError, ArithmeticError):
+                model_prices.append(np.nan)  # reported as unpriced, not as a zero price
 
         model_prices = np.array(model_prices)
         price_errors = model_prices - market_prices
@@ -219,10 +218,11 @@ class CFCalibrator:
                         model_prices[i], S0, K, T, r, option_types[i] == 'call'
                     )
                     iv_errors[i] = model_iv - market_ivs[i]
-                except Exception:
-                    iv_errors[i] = 0.0
-            rmse_iv = float(np.sqrt(np.mean(iv_errors[valid_iv] ** 2)))
-            max_error_iv = float(np.max(np.abs(iv_errors[valid_iv])))
+                except (ValueError, ArithmeticError):
+                    iv_errors[i] = np.nan  # no implied vol: left out of the error statistics
+            measured = valid_iv & np.isfinite(iv_errors)
+            rmse_iv = float(np.sqrt(np.mean(iv_errors[measured] ** 2))) if measured.any() else float("nan")
+            max_error_iv = float(np.max(np.abs(iv_errors[measured]))) if measured.any() else float("nan")
         else:
             rmse_iv = 0.0
             max_error_iv = 0.0

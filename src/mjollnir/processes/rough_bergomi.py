@@ -92,7 +92,7 @@ class RoughBergomi(MultiFactorProcess):
                     ),
                     X0, T, config.n_paths, config.n_steps, seed=seed,
                 )
-            except Exception as exc:
+            except RuntimeError as exc:  # XLA backend initialization failures
                 if not should_fallback_to_numpy(exc):
                     raise
                 warnings.warn(

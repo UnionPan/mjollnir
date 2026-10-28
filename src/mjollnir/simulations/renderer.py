@@ -467,10 +467,8 @@ class HestonEnvRenderer:
                 markerscale=0.8
             )
 
-        except Exception as e:
-            # If gridding fails, just skip this update
-            print(f"Warning: IV surface update failed: {e}")
-            pass
+        except (ValueError, RuntimeError) as e:  # gridding a degenerate chain (QhullError is a RuntimeError)
+            warnings.warn(f"IV surface update skipped: {e}", stacklevel=2)
 
     def _update_smile(self, option_chain, S: float):
         """
@@ -547,9 +545,8 @@ class HestonEnvRenderer:
             # Add ATM line
             self.ax_smile.axvline(x=1.0, color='gray', linestyle='--', linewidth=0.8, alpha=0.5)
 
-        except Exception as e:
-            print(f"Warning: Smile update failed: {e}")
-            pass
+        except (ValueError, RuntimeError) as e:
+            warnings.warn(f"Smile update skipped: {e}", stacklevel=2)
 
     def reset(self):
         """Reset renderer for new episode."""

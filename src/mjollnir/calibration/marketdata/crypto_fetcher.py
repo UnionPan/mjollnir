@@ -17,6 +17,7 @@ import numpy as np
 from datetime import date, datetime, timedelta
 import warnings
 from pathlib import Path
+from mjollnir.calibration.marketdata.errors import FETCH_ERRORS
 
 
 class CryptoFetcher:
@@ -227,7 +228,7 @@ class CryptoFetcher:
                     interval=interval,
                 )
                 results[ticker] = df
-            except Exception as e:
+            except FETCH_ERRORS as e:
                 warnings.warn(f"Failed to fetch {ticker}: {e}", stacklevel=2)
                 results[ticker] = None
 

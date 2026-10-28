@@ -83,7 +83,7 @@ line-length = 100
 src = ["src", "tests", "examples", "benchmarks"]
 
 [tool.ruff.lint]
-select = ["E", "F", "W", "B", "UP", "RUF"]
+select = ["E", "F", "W", "B", "UP", "RUF", "BLE"]  # BLE: no blind except
 ignore = [
     "E501",   # long lines: scientific formulas read better unwrapped
     "E741",   # ambiguous single-letter names: standard math notation (l, I) in kernels

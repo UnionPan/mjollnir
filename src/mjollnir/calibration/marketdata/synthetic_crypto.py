@@ -26,6 +26,7 @@ from scipy.stats import norm
 import warnings
 
 from .data_provider import OptionChain, OptionQuote
+from mjollnir.calibration.errors import NUMERICAL_ERRORS
 
 if TYPE_CHECKING:
     from ..risk_neutral.regime_switching_heston_calibrator import RegimeSwitchingHestonResult
@@ -382,7 +383,7 @@ class SyntheticOptionChainGenerator:
 
             return price
 
-        except Exception as e:
+        except NUMERICAL_ERRORS as e:
             warnings.warn(f"Heston CF integration failed: {e}. Returning intrinsic.", stacklevel=2)
             intrinsic = max(S - K, 0) if is_call else max(K - S, 0)
             return max(intrinsic, self.price_floor)

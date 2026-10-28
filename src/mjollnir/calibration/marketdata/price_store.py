@@ -224,6 +224,7 @@ def fetch_yfinance(
     import time
 
     import yfinance as yf
+    from mjollnir.calibration.marketdata.errors import FETCH_ERRORS
 
     out: dict[str, pd.DataFrame] = {}
     n_chunks = (len(tickers) + chunk_size - 1) // chunk_size
@@ -238,7 +239,7 @@ def fetch_yfinance(
                     progress=False, threads=True,
                 )
                 break
-            except Exception as e:
+            except FETCH_ERRORS as e:
                 logger.warning("yfinance chunk %d/%d attempt %d failed: %s",
                                i // chunk_size + 1, n_chunks, attempt + 1, e)
                 time.sleep(pause * (2 ** attempt))

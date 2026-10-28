@@ -22,6 +22,7 @@ import pandas as pd
 from datetime import datetime, timedelta, date
 import time
 import warnings
+from mjollnir.calibration.marketdata.errors import FETCH_ERRORS
 
 
 class BinanceFetcher:
@@ -381,7 +382,7 @@ class BinanceFetcher:
                     end_date=end_date,
                 )
                 results[symbol] = df
-            except Exception as e:
+            except FETCH_ERRORS as e:
                 warnings.warn(f"Failed to fetch {symbol}: {e}", stacklevel=2)
                 results[symbol] = None
 

@@ -22,6 +22,7 @@ import numpy as np
 from datetime import datetime, date
 import time
 import warnings
+from mjollnir.calibration.marketdata.errors import FETCH_ERRORS
 
 
 class CoinGeckoFetcher:
@@ -354,7 +355,7 @@ class CoinGeckoFetcher:
 
             return df[['Date', 'Volume']]
 
-        except Exception as e:
+        except FETCH_ERRORS as e:
             warnings.warn(f"Could not fetch volume data: {e}", stacklevel=2)
             return None
 
@@ -394,7 +395,7 @@ class CoinGeckoFetcher:
             try:
                 df = self.get_ohlcv(coin_id, days, start_date, end_date)
                 results[coin_id] = df
-            except Exception as e:
+            except FETCH_ERRORS as e:
                 warnings.warn(f"Failed to fetch {coin_id}: {e}", stacklevel=2)
                 results[coin_id] = None
 

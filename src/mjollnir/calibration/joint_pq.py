@@ -378,8 +378,8 @@ class JointPQCalibrator:
                 q_rmse = cal_q._evaluate_rmse(
                     chain, S0, rate, q, kappa_Q, theta_Q, sigma_v, rho, v0,
                 )
-            except Exception:
-                q_rmse = 1e6
+            except (ValueError, ArithmeticError):
+                q_rmse = 1e6  # unpriceable parameters: a penalty the optimizer moves away from
 
             return p_weight * (-p_ll / n) + q_weight * q_rmse
 
@@ -406,8 +406,8 @@ class JointPQCalibrator:
                 seed=42, tol=1e-6, polish=True,
             )
             mu_P, kappa_P, theta_P, kappa_Q, theta_Q, sigma_v, rho, v0 = res.x
-        except Exception:
-            logger.warning("Joint optimization failed, using sequential results")
+        except (ValueError, ArithmeticError) as exc:
+            logger.warning("Joint optimization failed (%s), using sequential results", exc)
             return (q_init, p_init, shared_init,
                     q_init.get('rmse', 0), 0, 0)
 
@@ -427,7 +427,7 @@ class JointPQCalibrator:
             q_rmse = cal_q._evaluate_rmse(
                 chain, S0, rate, q, kappa_Q, theta_Q, sigma_v, rho, v0,
             )
-        except Exception:
+        except (ValueError, ArithmeticError):
             q_rmse = float('nan')
 
         joint = p_weight * (-p_ll / n) + q_weight * q_rmse

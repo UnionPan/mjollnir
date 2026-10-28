@@ -8,6 +8,8 @@ import os
 import numpy as np
 import pytest
 
+from mjollnir.calibration.marketdata.errors import FETCH_ERRORS
+
 from mjollnir.calibration.marketdata import YFinanceFetcher
 from mjollnir.calibration.physical import (
     RoughBergomiCalibrator,
@@ -25,7 +27,7 @@ def test_particle_filters_sp500():
 
     try:
         history = fetcher.get_history("^GSPC", start=start_date, end=end_date)
-    except Exception as exc:
+    except FETCH_ERRORS as exc:
         pytest.skip(f"yfinance fetch failed: {exc}")
 
     prices = history["Close"].values

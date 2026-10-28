@@ -119,7 +119,7 @@ def is_metal_backend() -> bool:
     """Return True if the active JAX backend is Apple Metal (MPS)."""
     try:
         return jax.default_backend() == "mps"
-    except Exception:
+    except RuntimeError:  # no backend could be initialized
         return False
 
 
@@ -162,18 +162,13 @@ def configure_jax_runtime() -> str:
     if _CONFIGURED:
         return backend
 
-    try:
-        jax.config.update("jax_platforms", backend)
-    except Exception:
-        # If JAX is already initialized, platform selection cannot be changed.
-        pass
+    # Once JAX has initialized its backends the platform is fixed; the update
+    # then has no effect (current JAX does not raise).
+    jax.config.update("jax_platforms", backend)
 
     # Enable float64 only on backends that support it
     if not is_metal_backend() and backend not in ("mps", "metal"):
-        try:
-            jax.config.update("jax_enable_x64", True)
-        except Exception:
-            pass
+        jax.config.update("jax_enable_x64", True)
 
     _CONFIGURED = True
     return backend

@@ -27,6 +27,10 @@ from .results_store import (
     save_model_results,
     write_manifest,
 )
+from mjollnir.calibration.errors import NUMERICAL_ERRORS
+
+# a cross-asset stage also fails on its inputs: a model's results not on disk (OSError)
+STAGE_ERRORS = (*NUMERICAL_ERRORS, OSError)
 
 logger = logging.getLogger(__name__)
 
@@ -59,7 +63,7 @@ def _calibrate_one(model_name: str, ticker: str,
         out = spec.fit(np.asarray(prices, dtype=np.float64), dt)
         out.setdefault("converged", True)
         return {"ticker": ticker, "error": "", **out}
-    except Exception as e:
+    except NUMERICAL_ERRORS as e:
         return {"ticker": ticker, "converged": False,
                 "error": f"{type(e).__name__}: {e}"}
 
@@ -209,7 +213,7 @@ def _calibrate_batch(
         ticker_to_row = {r["ticker"]: r for r in valid_rows + invalid_rows}
         return [ticker_to_row[t] for t in tickers]
 
-    except Exception as e:
+    except NUMERICAL_ERRORS as e:
         # Batch calibration failed -> fall back to per-asset path
         logger.warning(
             "Batch calibration for model %s raised %s: %s; "
@@ -312,7 +316,7 @@ def _calibrate_batch_ohlc(
         ticker_to_row = {r["ticker"]: r for r in valid_rows + invalid_rows}
         return [ticker_to_row[t] for t in tickers]
 
-    except Exception as e:
+    except NUMERICAL_ERRORS as e:
         # Batch calibration failed -> NO fallback for OHLC models
         logger.error(
             "Batch calibration for OHLC model %s raised %s: %s; "
@@ -417,7 +421,7 @@ def _run_cross_asset_stage(
                 write_manifest(run_dir, {"cross_asset": ca_manifest})
                 logger.info("Factor model: k=%d, mp_edge=%.4f", fm.k, fm.mp_edge)
 
-            except Exception as e:
+            except STAGE_ERRORS as e:
                 err_msg = f"{type(e).__name__}: {e}"
                 logger.error("Stage 'factor' failed: %s", err_msg)
                 ca_manifest["errors"]["factor"] = err_msg
@@ -465,7 +469,7 @@ def _run_cross_asset_stage(
                 logger.info("DCC: a=%.4f, b=%.4f, converged=%s",
                             dcc_result.a, dcc_result.b, dcc_result.converged)
 
-            except Exception as e:
+            except STAGE_ERRORS as e:
                 err_msg = f"{type(e).__name__}: {e}"
                 logger.error("Stage 'dcc' failed: %s", err_msg)
                 ca_manifest["errors"]["dcc"] = err_msg
@@ -522,7 +526,7 @@ def _run_cross_asset_stage(
                 logger.info("Pooling complete: %d parameters, output=%s",
                             len(params), pooled_path.name)
 
-            except Exception as e:
+            except STAGE_ERRORS as e:
                 err_msg = f"{type(e).__name__}: {e}"
                 logger.error("Stage 'pooling' failed: %s", err_msg)
                 ca_manifest["errors"]["pooling"] = err_msg
