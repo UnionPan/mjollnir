@@ -1,4 +1,4 @@
-"""Gradient-based risk-neutral Heston calibration.
+"""Gradient-based risk-neutral Heston and Bates calibration.
 
 Where the classic :class:`HestonCalibrator` drives scipy with finite-difference
 gradients, this calibrator differentiates the library's own COS pricer exactly
@@ -23,12 +23,19 @@ from theta says so with a large error rather than a confident number.
 The result is returned as a Q-measure :class:`~mjollnir.params.ParamSet`, so a
 calibration plugs directly into the artifact store, the scenario library, and
 the simulation kernel.
+
+:func:`fit_bates_surface` fits Bates (Heston with lognormal Merton jumps) the
+same way. Pure Heston can only bend a steep short-dated skew with extreme mean
+reversion and vol of vol; jumps carry the short end, and the diffusion
+parameters stay plausible.
 """
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from functools import cache
+from typing import NamedTuple
 
 import jax
 import jax.numpy as jnp
@@ -36,16 +43,21 @@ import numpy as np
 
 from mjollnir.params import ParamSet
 from mjollnir.pricer._jax_fourier_pricer import (
+    BatesCFParams,
     HestonCFParams,
     _cos_cf_weights,
     _cos_payoff_coefficients,
+    jax_bates_cf,
     jax_heston_cf,
 )
 from mjollnir.pricer._jax_iv import implied_vol_batch_np
 
-__all__ = ["BUCKETS", "MATURITY_BUCKETS", "MAX_QUOTES", "GradientHestonResult", "fit_heston_surface"]
+__all__ = ["BUCKETS", "MATURITY_BUCKETS", "MAX_QUOTES", "GradientHestonResult", "fit_bates_surface",
+           "fit_heston_surface"]
 
 PARAM_NAMES = ("v0", "kappa", "theta", "sigma_v", "rho")
+BATES_PARAM_NAMES = (*PARAM_NAMES, "lambda_j", "mu_j", "sigma_j")
+_MAX_JUMP_MEAN = 0.5  # |mean log jump| below 50%
 BUCKETS = (16, 32, 64, 128, 256, 512)
 MAX_QUOTES = BUCKETS[-1]
 MATURITY_BUCKETS = (4, 8, 16, 32, 64)
@@ -76,8 +88,40 @@ def _constrain(u):
     )
 
 
-def _constrain_vec(u):
-    return jnp.stack(_constrain(u))
+def _constrain_bates(u):
+    """Unconstrained R^8 -> Heston's five, then (lambda_j, mu_j, sigma_j)."""
+    return (
+        *_constrain(u[:5]),
+        _softplus(u[5]),                          # jumps a year > 0
+        _MAX_JUMP_MEAN * jnp.tanh(u[6]),          # mean log jump
+        _softplus(u[7]),                          # log jump spread > 0
+    )
+
+
+class _Model(NamedTuple):
+    """A model the surface fit can calibrate: its parameters and characteristic function."""
+
+    name: str
+    names: tuple[str, ...]
+    constrain: Callable
+    cf: Callable  # (params, frequencies, log_S0, T, mu) -> characteristic function of log S_T
+
+
+def _heston_cf(params, freqs, log_S0, T, mu):
+    v0, kappa, theta, sigma_v, rho = params
+    cf_params = HestonCFParams(v0=v0, kappa=kappa, theta=theta, sigma_v=sigma_v, rho=rho, mu=mu)
+    return jax_heston_cf(cf_params, freqs, log_S0, v0, T)
+
+
+def _bates_cf(params, freqs, log_S0, T, mu):
+    v0, kappa, theta, sigma_v, rho, lambda_j, mu_j, sigma_j = params
+    cf_params = BatesCFParams(v0=v0, kappa=kappa, theta=theta, sigma_v=sigma_v, rho=rho, mu=mu,
+                              lambda_j=lambda_j, mu_J=mu_j, sigma_J=sigma_j)
+    return jax_bates_cf(cf_params, freqs, log_S0, v0, T)
+
+
+HESTON = _Model("heston", PARAM_NAMES, _constrain, _heston_cf)
+BATES = _Model("bates", BATES_PARAM_NAMES, _constrain_bates, _bates_cf)
 
 
 @dataclass(frozen=True)
@@ -104,17 +148,16 @@ def _windows(S0, r, q, expiries, lo_logk, hi_logk, window_vol):
             np.maximum(centre + half, hi_logk + _STRIKE_MARGIN))
 
 
-def _model_prices(u, S0, coefficients, discounts, parity, quote_expiry, expiries, a, b, r, q):
+def _model_prices(model, u, S0, coefficients, discounts, parity, quote_expiry, expiries, a, b, r, q):
     """COS price of every quote: the characteristic function once per expiry (a
     chain has a handful), then one dot product per quote with its precomputed
     put coefficients; calls add their parity term (bounded put payoffs keep
     wide windows accurate)."""
-    v0, kappa, theta, sigma_v, rho = _constrain(u)
-    cf_params = HestonCFParams(v0=v0, kappa=kappa, theta=theta, sigma_v=sigma_v, rho=rho, mu=r - q)
+    params = model.constrain(u)
     k = jnp.arange(_COS_TERMS)
 
     def expiry_weights(T, a_e, b_e):
-        cf = jax_heston_cf(cf_params, k * jnp.pi / (b_e - a_e), jnp.log(S0), v0, T)
+        cf = model.cf(params, k * jnp.pi / (b_e - a_e), jnp.log(S0), T, r - q)
         return _cos_cf_weights(cf, a_e, b_e)
 
     weights = jax.vmap(expiry_weights)(expiries, a, b)          # (expiries, N)
@@ -129,13 +172,13 @@ def _put_coefficients(strikes, quote_expiry, a, b):
 
 
 @cache
-def _fitter(quote_bucket: int, expiry_bucket: int):
-    """The compiled multi-start Levenberg-Marquardt fit for one pair of size buckets."""
+def _fitter(quote_bucket: int, expiry_bucket: int, model: _Model = HESTON):
+    """The compiled multi-start Levenberg-Marquardt fit for one model and pair of size buckets."""
     del quote_bucket, expiry_bucket  # the cache key: shapes, hence one compile, per pair
 
     def fit(starts, S0, market, mids, sqrt_w, r, q):
         def residuals(u):
-            return sqrt_w * (_model_prices(u, S0, *market, r, q) - mids)
+            return sqrt_w * (_model_prices(model, u, S0, *market, r, q) - mids)
 
         def cost(u):
             res = residuals(u)
@@ -170,7 +213,7 @@ def _fitter(quote_bucket: int, expiry_bucket: int):
         best = jnp.argmin(jnp.where(jnp.isfinite(costs), costs, jnp.inf))
         u = us[best]
         jac = jax.jacfwd(residuals)(u)
-        return u, costs[best], jac.T @ jac, jax.jacfwd(_constrain_vec)(u)
+        return u, costs[best], jac.T @ jac, jax.jacfwd(lambda x: jnp.stack(model.constrain(x)))(u)
 
     return jax.jit(fit)
 
@@ -213,6 +256,54 @@ def fit_heston_surface(
     Returns:
         :class:`GradientHestonResult` with a Q-measure ParamSet.
     """
+    return _fit_surface(HESTON, quotes, S0, r, q, weights=weights, asset=asset, source=source, buckets=buckets)
+
+
+def fit_bates_surface(
+    quotes,
+    S0: float,
+    r: float,
+    q: float = 0.0,
+    *,
+    weights=None,
+    asset: str | None = None,
+    source: str = "gradient COS calibration (Bates)",
+    buckets: tuple[int, int] | None = None,
+) -> GradientHestonResult:
+    """Calibrate Bates (Heston with lognormal jumps) to an option surface with exact gradients.
+
+    The arguments are :func:`fit_heston_surface`'s. The ParamSet's model is
+    ``"bates"``: Heston's ``v0, kappa, theta, sigma_v, rho`` plus ``lambda_j``
+    (jumps a year), ``mu_j`` (mean log jump) and ``sigma_j`` (its spread).
+    """
+    return _fit_surface(BATES, quotes, S0, r, q, weights=weights, asset=asset, source=source, buckets=buckets)
+
+
+def _starts(model: _Model, var0: float) -> jnp.ndarray:
+    """Multi-start points: three variance levels by two correlations, and for Bates two jump regimes."""
+    heston = [[_inv_softplus(scale * var0), _inv_softplus(2.0), _inv_softplus(var0), _inv_softplus(0.5),
+               float(np.arctanh(rho0 / 0.999))]
+              for scale in (0.5, 1.0, 2.0) for rho0 in (-0.7, -0.2)]
+    if model is HESTON:
+        return jnp.asarray(heston)
+    # a few large crashes a year, or frequent small down-moves
+    jumps = [[_inv_softplus(1.0), float(np.arctanh(-0.1 / _MAX_JUMP_MEAN)), _inv_softplus(0.1)],
+             [_inv_softplus(5.0), float(np.arctanh(-0.03 / _MAX_JUMP_MEAN)), _inv_softplus(0.05)]]
+    return jnp.asarray([h + j for h in heston for j in jumps])
+
+
+def _fit_surface(
+    model: _Model,
+    quotes,
+    S0: float,
+    r: float,
+    q: float,
+    *,
+    weights,
+    asset: str | None,
+    source: str,
+    buckets: tuple[int, int] | None,
+) -> GradientHestonResult:
     quotes = list(quotes)
     if not quotes:
         raise ValueError("no quotes supplied")
@@ -260,37 +351,33 @@ def fit_heston_surface(
               jnp.asarray(expiries), jnp.asarray(a), jnp.asarray(b))
 
     var0 = _atm_variance(quotes, S0, r, q)
-    starts = jnp.asarray([
-        [_inv_softplus(scale * var0), _inv_softplus(2.0), _inv_softplus(var0),
-         _inv_softplus(0.5), float(np.arctanh(rho0 / 0.999))]
-        for scale in (0.5, 1.0, 2.0) for rho0 in (-0.7, -0.2)
-    ])
+    starts = _starts(model, var0)
 
-    u, best_cost, hess, dparams = _fitter(quote_bucket, expiry_bucket)(
+    u, best_cost, hess, dparams = _fitter(quote_bucket, expiry_bucket, model)(
         starts, float(S0), market, jnp.asarray(arr[:, 3]), jnp.asarray(sqrt_w), float(r), float(q),
     )
-    values = np.asarray(_constrain_vec(u), float)
-    params = dict(zip(PARAM_NAMES, (float(x) for x in values), strict=True))
+    values = np.asarray(jnp.stack(model.constrain(u)), float)
+    params = dict(zip(model.names, (float(x) for x in values), strict=True))
     rmse = float(np.sqrt(2.0 * float(best_cost) / n))
 
     # Gauss-Newton covariance: s^2 (J'J)^-1 in u, then the delta method into params.
-    dof = max(n - len(PARAM_NAMES), 1)
+    dof = max(n - len(model.names), 1)
     s2 = 2.0 * float(best_cost) / dof
     try:
         cov_u = s2 * np.linalg.inv(np.asarray(hess, float))
         g = np.asarray(dparams, float)
         std = np.sqrt(np.clip(np.diag(g @ cov_u @ g.T), 0.0, None))
     except np.linalg.LinAlgError:
-        std = np.full(len(PARAM_NAMES), np.inf)
-    std_errors = dict(zip(PARAM_NAMES, (float(x) for x in std), strict=True))
+        std = np.full(len(model.names), np.inf)
+    std_errors = dict(zip(model.names, (float(x) for x in std), strict=True))
 
-    model = np.asarray(_model_prices(u, float(S0), *market, float(r), float(q)))[:n]
-    iv_model = implied_vol_batch_np(spot, arr[:n, 0], arr[:n, 1], rate, div, model, calls)
+    fitted = np.asarray(_model_prices(model, u, float(S0), *market, float(r), float(q)))[:n]
+    iv_model = implied_vol_batch_np(spot, arr[:n, 0], arr[:n, 1], rate, div, fitted, calls)
     both = np.isfinite(iv_model) & np.isfinite(iv_market)
     iv_rmse = float(np.sqrt(np.mean((iv_model[both] - iv_market[both]) ** 2))) if both.any() else None
 
     converged = bool(np.all(np.isfinite(values)) and params["sigma_v"] > 1e-4 and np.isfinite(best_cost))
-    ps = ParamSet.create("heston", "Q", params, asset=asset, source=source)
+    ps = ParamSet.create(model.name, "Q", params, asset=asset, source=source)
     return GradientHestonResult(
         param_set=ps, rmse=rmse, n_quotes=n, converged=converged,
         std_errors=std_errors, iv_rmse=iv_rmse,

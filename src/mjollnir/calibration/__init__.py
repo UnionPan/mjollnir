@@ -36,6 +36,7 @@ _LAZY_ATTRS = {
     "RegimeParameters": ".physical",
     # Q-measure calibrators
     "fit_heston_surface": ".risk_neutral.gradient_heston",
+    "fit_bates_surface": ".risk_neutral.gradient_heston",
     "GradientHestonResult": ".risk_neutral.gradient_heston",
     "HestonCalibrator": ".risk_neutral",
     "CalibrationResult": ".risk_neutral",
